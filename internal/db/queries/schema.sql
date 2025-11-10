@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot BOOLEAN DEFAULT FALSE NOT NULL,
     local BOOLEAN DEFAULT TRUE NOT NULL,
     ap_id VARCHAR(255) NOT NULL,
@@ -7,14 +7,14 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     domain VARCHAR(64),
     summary TEXT,
-    inbox VARCHAR(255),
+    inbox TEXT,
     outbox VARCHAR(255),
     followers VARCHAR(255),
     public_key TEXT,
     private_key TEXT,
-    created TIMESTAMP DEFAULT NOW() NOT NULL,
-    last_updated TIMESTAMP DEFAULT NOW() NOT NULL,
-    last_fetched TIMESTAMP,
+    created TEXT NOT NULL,
+    last_updated TEXT NOT NULL,
+    last_fetched TEXT,
 
     UNIQUE (username, domain),
     UNIQUE (ap_id),
@@ -24,27 +24,28 @@ CREATE TABLE users (
 
 -- Store also the key the user used to sign up, if they signed up using an invitation
 CREATE TABLE accounts (
-    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    password BYTEA NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    password VARCHAR(60) NOT NULL,
     admin BOOLEAN DEFAULT false NOT NULL,
     email VARCHAR(255) NOT NULL,
     email_verified BOOLEAN DEFAULT false NOT NULL,
     approved BOOLEAN DEFAULT false NOT NULL,
     user_id INTEGER NOT NULL,
-    created TIMESTAMP DEFAULT NOW() NOT NULL,
-    last_updated TIMESTAMP NOT NULL,
+    created TEXT NOT NULL,
+    last_updated TEXT NOT NULL,
 
     UNIQUE (email),
+    UNIQUE (user_id),
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 CREATE TABLE invitations (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    id VARCHAR PRIMARY KEY,
     used BOOLEAN DEFAULT FALSE NOT NULL,
-    used_by INT,
-    used_at TIMESTAMP,
+    used_by INTEGER,
+    used_at TEXT,
     made_by INT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    created_at TEXT NOT NULL,
 
     FOREIGN KEY (made_by) REFERENCES accounts (id),
     FOREIGN KEY (used_by) REFERENCES accounts (id),
@@ -52,12 +53,12 @@ CREATE TABLE invitations (
 );
 
 CREATE TABLE approval_requests (
-    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     account_id INT NOT NULL,
     reason TEXT NOT NULL,
     approved BOOLEAN,
     reviewer INT,
-    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    created_at TEXT NOT NULL,
     
     UNIQUE (account_id),
     FOREIGN KEY (reviewer) REFERENCES accounts (id),

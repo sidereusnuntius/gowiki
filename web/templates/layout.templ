@@ -1,0 +1,20 @@
+package templates
+
+templ Layout(template templ.Component, signuproute, loginroute, username string, err error) {
+    if username == "" {
+        if loginroute != "" {
+            <a href={ loginroute }>Login</a>
+        }
+        if signuproute != "" {
+            <a href={ signuproute }>Sign up</a>
+        }
+    } else {
+        <a href={ "/@" + username }>{ username }</a>
+    }
+
+    if err != nil {
+        <p>{ err.Error() }</p>
+    }
+
+    @template
+}

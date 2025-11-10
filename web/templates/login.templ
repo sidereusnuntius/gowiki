@@ -1,0 +1,20 @@
+package templates
+
+
+// Perhaps create a struct containing data for the login route, so it becomes easier if we need to change the names
+// of fields or the action attribute of the form.
+templ Login(postRoute string) {
+    <form action={ postRoute } method="POST">
+        <div>
+            <label for="user">Name or username</label>
+            <input id="user" name="user" type="text" required />
+        </div>
+
+        <div>
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required />
+        </div>
+        <a href="/">Forgot my password</a>
+        <button type="submit">Login</button>
+    </form>
+}
