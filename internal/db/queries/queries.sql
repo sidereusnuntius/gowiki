@@ -3,22 +3,21 @@ INSERT INTO users (
     ap_id,
     username,
     name,
+    trusted,
     summary,
     inbox,
     outbox,
     followers,
     public_key,
-    private_key,
-    created,
-    last_updated
+    private_key
     )
-VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING id;
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING id;
 
 -- name: CreateAccount :exec
 INSERT INTO 
-    accounts (password, admin, email, user_id, created, last_updated)
+    accounts (password, admin, email, user_id)
 VALUES 
-    (?, ?, ?, ?, ?, ?);
+    (?, ?, ?, ?);
 
 -- name: AuthUserByEmail :one
 SELECT
@@ -45,3 +44,122 @@ JOIN accounts AS a
 ON a.user_id = u.id
 WHERE u.local AND u.username = ?1
 LIMIT 1;
+
+-- name: GetLocalArticleByTitle :one
+SELECT
+    title,
+    summary,
+    content,
+    protected,
+    media_type,
+    language
+FROM
+    articles
+where local AND title = ?1
+LIMIT 1;
+
+-- name: IsUserTrusted :one
+SELECT trusted FROM users where id = ?1 LIMIT 1;
+
+-- name: CreateArticle :one
+INSERT INTO articles (
+    ap_id,
+    url,
+    instance_id,
+    language,
+    media_type,
+    title,
+    content
+) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id;
+
+-- name: EditArticle :one
+INSERT INTO revisions (
+    ap_id,
+    article_id,
+    user_id,
+    summary,
+    diff,
+    reviewed,
+    published,
+    prev,
+    based_on
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id;
+
+-- name: GetArticleIDS :one
+SELECT
+    a.ap_id,
+    a.id AS article_id,
+    r.id AS rev_id
+FROM articles a JOIN revisions r ON r.article_id = a.id
+WHERE lower(a.title) = lower(@title)
+ORDER BY r.created DESC
+LIMIT 1;
+
+-- name: InsertRevision :exec
+INSERT INTO revisions (
+    ap_id,
+    article_id,
+    user_id,
+    summary,
+    diff,
+    published,
+    prev
+) VALUES (?1, ?2, ?3, ?4, ?5, true, ?6);
+
+-- name: UpdateArticle :exec
+UPDATE articles
+SET
+    content = ?1,
+    last_updated = (cast(strftime('%s','now') as int))
+WHERE id = ?2;
+
+-- name: GetArticleContent :one
+SELECT content FROM articles WHERE id = ?;
+
+-- name: GetRevisionList :many
+SELECT
+    r.id,
+    r.reviewed,
+    r.summary,
+    u.username,
+    r.created
+FROM (
+    SELECT id, title from articles WHERE lower(title) = lower(@title) LIMIT 1
+) a
+JOIN revisions r ON r.article_id = a.id
+JOIN users u ON r.user_id = u.id
+ORDER BY r.created DESC;
+
+-- name: GetLocalUserData :one
+SELECT
+    id,
+    username,
+    name,
+    url,
+    summary
+FROM users
+WHERE local AND username = lower(?);
+
+-- name: GetForeignUserData :one
+SELECT
+    id,
+    username,
+    name,
+    domain,
+    url,
+    local,
+    summary
+FROM users
+WHERE username = lower(?) AND NOT local AND domain = ?;
+
+-- name: GetRevisionsByUserId :many
+SELECT
+    r.id,
+    a.title,
+    r.summary,
+    r.reviewed,
+    r.created
+FROM revisions r
+JOIN articles a
+ON a.id = r.article_id
+WHERE r.user_id = ?;

@@ -3,6 +3,7 @@ CREATE TABLE users (
     bot BOOLEAN DEFAULT FALSE NOT NULL,
     local BOOLEAN DEFAULT TRUE NOT NULL,
     ap_id VARCHAR(255) NOT NULL,
+    url VARCHAR(255),
     username VARCHAR(64) NOT NULL,
     name VARCHAR(255) NOT NULL,
     domain VARCHAR(64),
@@ -12,6 +13,7 @@ CREATE TABLE users (
     followers VARCHAR(255),
     public_key TEXT,
     private_key TEXT,
+    trusted BOOLEAN NOT NULL,
     created TEXT NOT NULL,
     last_updated TEXT NOT NULL,
     last_fetched TEXT,
@@ -45,7 +47,7 @@ CREATE TABLE invitations (
     used_by INTEGER,
     used_at TEXT,
     made_by INT NOT NULL,
-    created_at TEXT NOT NULL,
+    created TEXT NOT NULL,
 
     FOREIGN KEY (made_by) REFERENCES accounts (id),
     FOREIGN KEY (used_by) REFERENCES accounts (id),
@@ -58,9 +60,56 @@ CREATE TABLE approval_requests (
     reason TEXT NOT NULL,
     approved BOOLEAN,
     reviewer INT,
-    created_at TEXT NOT NULL,
+    created TEXT NOT NULL,
     
     UNIQUE (account_id),
     FOREIGN KEY (reviewer) REFERENCES accounts (id),
     CHECK (reviewer != account_id)
 );
+
+CREATE TABLE articles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    local BOOLEAN DEFAULT TRUE NOT NULL,
+    ap_id VARCHAR NOT NULL,
+    url VARCHAR,
+    instance_id INTEGER,
+    language VARCHAR NOT NULL,
+    media_type VARCHAR NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    protected BOOLEAN DEFAULT FALSE NOT NULL,
+    summary TEXT,
+    content TEXT NOT NULL,
+    created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+    last_updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+    last_fetched INT,
+
+    UNIQUE (ap_id),
+    UNIQUE (title, instance_id),
+    FOREIGN KEY (instance_id) REFERENCES instances (id)
+);
+
+CREATE TABLE revisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ap_id VARCHAR(255),
+    article_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    summary TEXT,
+    diff TEXT NOT NULL,
+    -- reviewed remains false until another user reads and either rejects or approves it.
+    reviewed BOOLEAN DEFAULT FALSE NOT NULL,
+    reviewer INTEGER,
+    reviewed_at TEXT,
+    -- The latest revision with published = true is the current revision of the article.
+    published BOOLEAN DEFAULT FALSE NOT NULL,
+    prev INTEGER,
+    based_on INTEGER,
+    created INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+
+    UNIQUE (ap_id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (reviewer) REFERENCES users (id),
+    FOREIGN KEY (article_id) REFERENCES articles (id),
+    FOREIGN KEY (prev) REFERENCES revisions (id),
+    FOREIGN KEY (based_on) REFERENCES revisions (id)
+);
+

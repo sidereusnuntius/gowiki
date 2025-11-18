@@ -1,0 +1,24 @@
+package templates
+
+templ Editor(postRoute, previewRoute, title, summary, preview, content string) {
+    <form id="editor-form" action={ postRoute } method="POST" enctype="multipart/form-data">
+        <textarea id="article-editor" name="content" required>{ content }</textarea>
+        
+        <div>
+            <label for="summary">Revision summary</label>
+            <input id="summary" type="text" name="summary" value={ summary } />
+        </div>
+
+        <div>
+            <button type="submit">Submit</button>
+            <button type="submit" formaction={ previewRoute }>Preview</button>
+        </div>
+        if preview != "" {
+            <div class="preview">
+                <hr>
+                <h3>Preview</h3>
+                @templ.Raw(preview)
+            </div>
+        }
+    </form>
+}

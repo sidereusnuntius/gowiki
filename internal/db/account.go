@@ -13,11 +13,16 @@ type Account interface {
 }
 
 type UserData struct {
-	UserID int64
+	UserID    int64
 	AccountID int64
-	Username string
-	Password string
-	Admin bool
+	Username  string
+	Password  string
+	Admin     bool
+}
+
+func (d *DB) IsUserTrusted(ctx context.Context, id int64) (bool, error) {
+	trusted, err := d.queries.IsUserTrusted(ctx, id)
+	return trusted, d.HandleError(err)
 }
 
 func (d *DB) GetAuthDataByUsername(ctx context.Context, username string) (UserData, error) {
@@ -35,7 +40,7 @@ func (d *DB) GetAuthDataByEmail(ctx context.Context, email string) (UserData, er
 		// Treat error to hide implementation details.
 		return UserData{}, err
 	}
-	
+
 	return UserData(u), nil
 }
 

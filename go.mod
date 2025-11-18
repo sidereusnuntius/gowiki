@@ -7,6 +7,7 @@ require (
 	github.com/alexedwards/scs v1.4.1
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/mattn/go-sqlite3 v1.14.32
+	github.com/sergi/go-diff v1.4.0
 	golang.org/x/crypto v0.43.0
 )
 

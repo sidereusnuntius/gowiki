@@ -8,9 +8,9 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/sidereusnuntius/wiki/internal/config"
 	"github.com/sidereusnuntius/wiki/internal/db"
 	"github.com/sidereusnuntius/wiki/internal/db/queries"
@@ -28,14 +28,17 @@ const (
 
 type Service struct {
 	Config config.Configuration
-	DB *db.DB
+	DB     *db.DB
+	DMP    *diffmatchpatch.DiffMatchPatch
 }
 
 func New(state state.State) Service {
-	DB := db.New(state)	
-	return Service {
+	dmp := diffmatchpatch.New()
+	DB := db.New(state)
+	return Service{
 		Config: state.Config,
-		DB: &DB,
+		DB:     &DB,
+		DMP:    dmp,
 	}
 }
 
@@ -43,7 +46,7 @@ func New(state state.State) Service {
 // in the login session, such as the user's name and id. user is either the user's Id or their
 func (s *Service) AuthenticateUser(ctx context.Context, user, password string) (u db.UserData, authenticated bool, err error) {
 	user = strings.ToLower(strings.TrimSpace(user))
-	
+
 	err = validate.Email(user)
 	if err == nil {
 		u, err = s.DB.GetAuthDataByEmail(ctx, user)
@@ -74,7 +77,7 @@ func (s *Service) CreateUser(ctx context.Context, username, password, email, rea
 		return fmt.Errorf("%w: %s", ErrInvalidInput, err)
 	}
 
-	u, err := populateUser(s.Config.Url, username, "", "")
+	u, err := s.populateUser(username, "", "")
 	if err != nil {
 		return err
 	}
@@ -90,15 +93,15 @@ func (s *Service) CreateUser(ctx context.Context, username, password, email, rea
 func populateAccount(email, password string, admin bool) (account queries.CreateAccountParams, err error) {
 	p, err := bcrypt.GenerateFromPassword([]byte(password), BcryptCost)
 	account = queries.CreateAccountParams{
-		Admin: admin,
+		Admin:    admin,
 		Password: string(p),
-		Email: email,
+		Email:    email,
 	}
 	return
 }
 
-func populateUser(u *url.URL, username, name, summary string) (user queries.CreateLocalUserParams, err error) {
-	apId := u.JoinPath("/u/" + username)
+func (s *Service) populateUser(username, name, summary string) (user queries.CreateLocalUserParams, err error) {
+	apId := s.Config.Url.JoinPath("/u/" + username)
 
 	key, err := rsa.GenerateKey(rand.Reader, RsaKeySize)
 	if err != nil {
@@ -116,14 +119,17 @@ func populateUser(u *url.URL, username, name, summary string) (user queries.Crea
 	}
 
 	user = queries.CreateLocalUserParams{
-		ApID: apId.String(),
-		Username: username,
-		Name: name,
-		Inbox: apId.JoinPath("/inbox").String(),
-		Outbox: apId.JoinPath("/outbox").String(),
-		Followers: apId.JoinPath("/followers").String(),
-		PublicKey: pub,
+		ApID:       apId.String(),
+		Username:   username,
+		Name:       name,
+		Inbox:      apId.JoinPath("/inbox").String(),
+		Outbox:     apId.JoinPath("/outbox").String(),
+		Followers:  apId.JoinPath("/followers").String(),
+		PublicKey:  pub,
 		PrivateKey: priv,
+		// If an invitation is required, then it is assumed that the people who sign up are trustworthy
+		// and known to the instance's administrator.
+		Trusted: s.Config.InvitationRequired,
 	}
 
 	return
@@ -136,7 +142,7 @@ func privateKeyPem(key *rsa.PrivateKey) (string, error) {
 	}
 
 	return string(pem.EncodeToMemory(&pem.Block{
-		Type: "PRIVATE KEY",
+		Type:  "PRIVATE KEY",
 		Bytes: der,
 	})), nil
 }
@@ -147,7 +153,7 @@ func publicKeyPem(key *rsa.PublicKey) (string, error) {
 		return "", err
 	}
 	return string(pem.EncodeToMemory(&pem.Block{
-		Type: "PUBLIC KEY",
+		Type:  "PUBLIC KEY",
 		Bytes: der,
 	})), err
 }

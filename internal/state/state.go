@@ -7,6 +7,6 @@ import (
 )
 
 type State struct {
-	DB *sql.DB
+	DB     *sql.DB
 	Config config.Configuration
 }

@@ -26,16 +26,49 @@ type ApprovalRequest struct {
 	Reason    string
 	Approved  sql.NullBool
 	Reviewer  sql.NullInt64
-	CreatedAt string
+	Created   string
+}
+
+type Article struct {
+	ID          int64
+	Local       bool
+	ApID        string
+	Url         sql.NullString
+	InstanceID  sql.NullInt64
+	Language    string
+	MediaType   string
+	Title       string
+	Protected   bool
+	Summary     sql.NullString
+	Content     string
+	Created     int64
+	LastUpdated int64
+	LastFetched sql.NullInt64
 }
 
 type Invitation struct {
-	ID        string
-	Used      bool
-	UsedBy    sql.NullInt64
-	UsedAt    sql.NullString
-	MadeBy    int64
-	CreatedAt string
+	ID      string
+	Used    bool
+	UsedBy  sql.NullInt64
+	UsedAt  sql.NullString
+	MadeBy  int64
+	Created string
+}
+
+type Revision struct {
+	ID         int64
+	ApID       sql.NullString
+	ArticleID  int64
+	UserID     int64
+	Summary    sql.NullString
+	Diff       string
+	Reviewed   bool
+	Reviewer   sql.NullInt64
+	ReviewedAt sql.NullString
+	Published  bool
+	Prev       sql.NullInt64
+	BasedOn    sql.NullInt64
+	Created    int64
 }
 
 type User struct {
@@ -43,6 +76,7 @@ type User struct {
 	Bot         bool
 	Local       bool
 	ApID        string
+	Url         sql.NullString
 	Username    string
 	Name        string
 	Domain      sql.NullString
@@ -52,6 +86,7 @@ type User struct {
 	Followers   string
 	PublicKey   string
 	PrivateKey  string
+	Trusted     bool
 	Created     string
 	LastUpdated string
 	LastFetched sql.NullString

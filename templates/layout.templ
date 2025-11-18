@@ -1,0 +1,160 @@
+package templates
+
+import "net/url"
+
+// Place defines what the reader is currently doing with the article. Usually, an authenticated user can either be reading the article,
+// editing, looking at the revision history or reading the discussion page; Place records this, so we can properly render the page
+// and, for instance, forbid the user from clicking to edit an article when they already are edit it. More constants will be
+// created when we add new features to the wiki regarding the articles, such as printing them as PDFs or generating citations.
+type Place string
+// If we ever add a screen that does not center on a user-made article, such as an admin control panel, then we will need to change
+// this. Perhaps these less essential features (printing, citing etc.) should be put on the sidebar?
+
+var places []Place = []Place{Read, Edit, History}
+
+const (
+    Read Place = "read"
+    Edit Place = "edit"
+    History Place = "history"
+    Discussion Place = "discussion"
+    Auth Place = "login"
+    PlaceSignup Place = "signup"
+    PlaceProfile Place = "profile"
+)
+
+// ArticleData gathers all data needed to properly display an article.
+type ArticleData struct {
+    Title string
+    // Domain of the server from which the article was retrieved. Domain is the zero value if the article is local.
+    Domain string
+    // URL is the link to read the article in its home server.
+    URL *url.URL
+    Content string
+    Language string
+    License string
+}
+
+type PageData struct {
+    Authenticated bool
+    Username string
+    ProfilePath string
+    PageTitle string
+    Place Place
+    // Hrefs is a map associating each Place (read, edit, etc.) with its corresponding link. Perhaps this should be in PageData?
+    Hrefs map[Place]string
+    IsArticle bool
+    Article ArticleData
+    Child templ.Component
+    // FixedArticles contains the articles fixed by the wiki administrator, which are display on the left bar,
+    // below utilities such as the recent changes page.
+    FixedArticles []string
+    Path *url.URL
+    Logout string
+    Login string
+    SignUp string
+    Err error
+}
+
+templ Layout(page PageData) {
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8" />
+        <title></title>
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body>
+        <header id="top-nav-bar">
+            <input id="search" type="text" placeholder="Search" />
+            
+                <div id="auth-links">
+            if page.Authenticated {
+                <a href={ "/@" + page.Username }>{ page.Username }</a>
+                <a href={ page.Logout }>Logout</a>
+            } else {
+                <a href="/login">Login</a> | <a href="/signup">Sign up</a>
+            }
+                </div>
+        </header>
+
+        <div id="main-layout-wrapper">
+        
+        <div id="article-content"> 
+            
+            @Bar(&page)
+            
+            <main>
+                if page.IsArticle {
+                    <article>
+                        @Article(page.Article.Title, page.Article.Content)
+                    </article>
+                } else {
+                    @page.Child
+                }
+            </main>
+
+        </div> 
+        
+        <aside id="toc-sidebar">
+            
+            <section id="sidebar-utilities">
+                <p class="sidebar-section-title">Site Links</p>
+                <nav id="utility-nav-sidebar">
+                    <a href="/">Recent changes</a>
+                    <a href="/About">About</a>
+                    //TODO: allow admnistrator to fixate articles.
+                    <a href="/a/FixedArticle1">Fixed Article 1</a>
+                    <a href="/a/FixedArticle2">Fixed Article 2</a>
+                </nav>
+            </section>
+            
+            /*
+            <section id="toc">
+                <p class="toc-title">Contents</p>
+                <ul>
+                    <li><a href="#section-1">1 History</a></li>
+                    <li><a href="#section-2">2 Core Concepts</a>
+                        <ul>
+                            <li><a href="#subsection-2-1">2.1 Algorithms</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#section-3">3 Applications</a></li>
+                </ul>
+            </section>
+            */
+        </aside>
+    </div> 
+        
+        <footer>
+            <p>Source code available on <a href="https://github.com/sidereusnuntius/gowiki" target="_blank">Github</a></p>
+
+            if page.IsArticle && page.Article.License != "" {
+                <p>Content is licensed under the <a href="/Special:License">{ page.Article.License }</a>.</p>
+            }
+        </footer>
+    </body>
+    </html>
+}
+
+templ Bar(page *PageData) {
+    <header class="article-header">
+        <h1 class="article-title">{ page.PageTitle }</h1>
+        <nav>
+            <ul class="article-controls">
+                for _, p := range places {
+                    {{ h, ok := page.Hrefs[p] }}
+                    if ok {
+                        <li
+                            if p == page.Place {
+                                class="control disabled"
+                            } else {
+                                class="control"
+                            }>
+                            <a href={ h }>{ p }</a>
+                        </li>
+                    }
+                }
+            </ul>
+        </nav>
+    </header>
+}

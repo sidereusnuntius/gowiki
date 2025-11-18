@@ -1,0 +1,30 @@
+package templates
+
+import (
+    "github.com/sidereusnuntius/wiki/internal/domain"
+)
+
+templ Profile(p domain.Profile) {
+    <h2 class="handle">{ p.Name }
+    if p.Domain != "" {
+        \@{ p.Domain }
+    }
+    </h2>
+    <p>
+    if p.Summary == "" {
+        Nothing to read here.
+    } else {
+        { p.Summary }
+    }
+    </p>
+
+    if p.Edits == nil || len(p.Edits) == 0 {
+        <p>This user has not done any contribution yet.</p>
+    } else {
+        <ul>
+            for _, e := range p.Edits {
+                @Revision(e.Title, e.Summary, "", "", e.ID, e.Created)
+            }
+        </ul>
+    }
+}

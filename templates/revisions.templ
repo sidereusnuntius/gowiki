@@ -1,0 +1,35 @@
+package templates
+
+import "github.com/sidereusnuntius/wiki/internal/db/queries"
+import "strconv"
+import "time"
+
+templ Revisions(title string, revisions []queries.GetRevisionListRow) {
+    <div>
+        <ul>
+            for _, r := range revisions {
+                //TODO: allow for revisions from foreign users.
+                @Revision(title, r.Summary.String, r.Username, "", r.ID, r.Created)
+            }
+        </ul>
+    </div>
+}
+
+templ Revision(article, summary, username, domain string, id, timestamp int64) {
+    <li>
+        <a href={ "/a/" + article + strconv.FormatInt(id, 10) }>{ id }</a> 
+        <span>{ time.Unix(timestamp, 0).Format("Mon Jan 2 15:04:05 MST 2006") }</span>
+        if summary != "" {
+            <span>{ summary }</span>
+        }
+        if username != "" {
+            {{ var domainStr string }}
+            if domain != "" {
+                {{ domainStr = "/@" + domain }}
+            }
+            <a href={ "/@" + username + domainStr }>
+                \@{ username }{domainStr}
+            </a>
+        }
+    </li>
+}

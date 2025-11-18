@@ -15,11 +15,11 @@ const (
 func SignUpForm(name, password, email, reason string, approvalRequired bool) error {
 
 	// TODO: validate reason
-	
+
 	var errs = []error{}
-	
+
 	errs = append(errs, Username(name))
-	
+
 	errs = append(errs, Email(email))
 
 	errs = append(errs, Password(password))
@@ -29,6 +29,13 @@ func SignUpForm(name, password, email, reason string, approvalRequired bool) err
 	}
 
 	return errors.Join(errs...)
+}
+
+func Title(title string) error {
+	if len(title) == 0 {
+		return errors.New("empty title")
+	}
+	return nil
 }
 
 func Password(password string) error {

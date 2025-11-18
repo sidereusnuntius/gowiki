@@ -1,0 +1,11 @@
+package templates
+
+templ Article(title, content string) {
+    <article>
+        <!--
+            The article's content must have been sanitized before rendering the template.
+            Perhaps we should do it here, in the template?
+        -->
+        @templ.Raw(content)
+    </article>
+}
