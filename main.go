@@ -12,12 +12,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
 	zero "github.com/rs/zerolog/log"
-	"github.com/sidereusnuntius/wiki/internal/config"
-	db "github.com/sidereusnuntius/wiki/internal/db/impl"
-	"github.com/sidereusnuntius/wiki/internal/domain"
-	service "github.com/sidereusnuntius/wiki/internal/service/impl"
-	"github.com/sidereusnuntius/wiki/internal/state"
-	"github.com/sidereusnuntius/wiki/internal/web"
+	"github.com/sidereusnuntius/gowiki/internal/config"
+	db "github.com/sidereusnuntius/gowiki/internal/db/impl"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
+	service "github.com/sidereusnuntius/gowiki/internal/service/impl"
+	"github.com/sidereusnuntius/gowiki/internal/state"
+	"github.com/sidereusnuntius/gowiki/internal/web"
 
 	_ "github.com/mattn/go-sqlite3"
 )
