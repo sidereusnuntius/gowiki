@@ -10,9 +10,9 @@ import (
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/chi/v5"
 	"github.com/sidereusnuntius/wiki/internal/config"
-	db "github.com/sidereusnuntius/wiki/internal/db/core"
+	db "github.com/sidereusnuntius/wiki/internal/db/impl"
 	"github.com/sidereusnuntius/wiki/internal/domain"
-	service "github.com/sidereusnuntius/wiki/internal/service/core"
+	service "github.com/sidereusnuntius/wiki/internal/service/impl"
 	"github.com/sidereusnuntius/wiki/internal/state"
 	"github.com/sidereusnuntius/wiki/internal/web"
 

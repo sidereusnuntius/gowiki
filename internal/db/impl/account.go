@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/sidereusnuntius/wiki/internal/db"
-	"github.com/sidereusnuntius/wiki/internal/db/core/queries"
+	"github.com/sidereusnuntius/wiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/wiki/internal/domain"
 )
 

@@ -7,7 +7,7 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/sidereusnuntius/wiki/internal/config"
 	"github.com/sidereusnuntius/wiki/internal/db"
-	"github.com/sidereusnuntius/wiki/internal/db/core/queries"
+	"github.com/sidereusnuntius/wiki/internal/db/impl/queries"
 )
 
 type dbImpl struct {
