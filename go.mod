@@ -14,7 +14,7 @@ require (
 require (
 	code.superseriousbusiness.org/activity v1.17.0
 	codeberg.org/gruf/go-mempool v0.0.0-20251003110531-b54adae66253 // indirect
-	codeberg.org/gruf/go-mutexes v1.5.8 // indirect
+	codeberg.org/gruf/go-mutexes v1.5.8
 	github.com/a-h/parse v0.0.0-20250122154542-74294addb73e // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
