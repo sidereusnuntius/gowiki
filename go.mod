@@ -11,6 +11,8 @@ require (
 	golang.org/x/crypto v0.43.0
 )
 
+require github.com/rs/zerolog v1.34.0
+
 require (
 	code.superseriousbusiness.org/activity v1.17.0
 	codeberg.org/gruf/go-mempool v0.0.0-20251003110531-b54adae66253 // indirect

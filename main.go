@@ -6,9 +6,12 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog"
+	zero "github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/wiki/internal/config"
 	db "github.com/sidereusnuntius/wiki/internal/db/impl"
 	"github.com/sidereusnuntius/wiki/internal/domain"
@@ -21,6 +24,7 @@ import (
 
 // This is a basic, hard wired configuration that only exists for testing. It will change!
 func main() {
+	zero.Logger = zero.Output(zerolog.ConsoleWriter{ Out: os.Stderr })
 	u, _ := url.Parse("http://localhost:8080/")
 
 	connString := "file:test.db"

@@ -7,6 +7,7 @@ import (
 
 	"github.com/sidereusnuntius/wiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/wiki/internal/domain"
+	"github.com/rs/zerolog/log"
 )
 
 func (d *dbImpl) GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error) {
@@ -83,7 +84,7 @@ func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId in
 func (d *dbImpl) GetLastRevisionID(ctx context.Context, title string) (int64, *url.URL, int64, error) {
 	a, err := d.queries.GetArticleIDS(ctx, title)
 	if err != nil {
-		return 0, nil, 0, err
+		return 0, nil, 0, d.HandleError(err)
 	}
 	iri, err := url.Parse(a.ApID)
 	return a.ArticleID, iri, a.RevID, d.HandleError(err)
@@ -91,6 +92,9 @@ func (d *dbImpl) GetLastRevisionID(ctx context.Context, title string) (int64, *u
 
 // CreateArticle creates a new local article, also inserting the article's first revision.
 func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article domain.ArticleFed, initialEdit domain.Revision) (err error) {
+	log.Info().
+		Str("title", article.Title).
+		Msg("creating new local article")
 	t, err := d.db.Begin()
 	if err != nil {
 		// TODO: handle error.
@@ -103,6 +107,7 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 		} else {
 			err = t.Commit()
 		}
+		err = d.HandleError(err)
 	}()
 
 	var apid string

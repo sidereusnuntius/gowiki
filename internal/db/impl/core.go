@@ -40,3 +40,23 @@ func (d *dbImpl) HandleError(err error) error {
 		return err
 	}
 }
+
+func (d *dbImpl) WithTx(f func(tx *queries.Queries) error) (err error) {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return d.HandleError(err)
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			_ = tx.Rollback()
+		} else if err != nil {
+			_ = tx.Rollback()
+		} else {
+			err = d.HandleError(tx.Commit())
+		}
+	}()
+
+	err = f(d.queries.WithTx(tx))
+	return
+}

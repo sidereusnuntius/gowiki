@@ -15,6 +15,9 @@ const (
 )
 
 type Configuration struct {
+	// FsRoot is the root of the directory on which files, such as the images and videos present in articles,
+	// are stored.
+	FsRoot string
 	// FixedArticle is a list of the titles of articles deemed important by the wiki administrator, which are
 	// displayed at the left side bar.
 	FixedArticles []string

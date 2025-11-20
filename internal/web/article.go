@@ -60,13 +60,17 @@ func EditArticle(handler *Handler) http.HandlerFunc {
 		if !ok {
 
 		}
-
+		
+		var newarticle bool
 		title := chi.URLParam(r, "title")
 		article, err := handler.service.GetLocalArticle(ctx, title)
 		if err != nil {
-			//TODO: if error = not found, then the user is trying to create a new page.
-			// Otherwise, an internal error has happened, and you must deal with it.
-			return
+			if errors.Is(err, db.ErrNotFound) {
+				newarticle = true
+			} else {
+				http.Error(w, "internal error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		err = r.ParseMultipartForm(MaxMemory)
@@ -91,6 +95,14 @@ func EditArticle(handler *Handler) http.HandlerFunc {
 		edit := r.URL.String()
 		// TODO: store article URL in database, use it to generate paths.
 		path, _ := url.Parse("/a/" + title)
+		hrefs := map[templates.Place]string{
+			templates.Edit:    edit,
+		}
+		if !newarticle {
+			hrefs[templates.Read] = path.String()
+			hrefs[templates.History] = path.JoinPath("history").String()
+		}
+
 		templates.Layout(templates.PageData{
 			Authenticated: ok,
 			Username:      u.Username,
@@ -98,11 +110,7 @@ func EditArticle(handler *Handler) http.HandlerFunc {
 			PageTitle:     "Editing " + article.Title,
 			Place:         templates.Edit,
 			Path:          r.URL,
-			Hrefs: map[templates.Place]string{
-				templates.Read:    path.String(),
-				templates.Edit:    edit,
-				templates.History: path.JoinPath("history").String(),
-			},
+			Hrefs: hrefs,
 			IsArticle: false,
 			Child:     templates.Editor(path.String(), edit, title, summary, preview, content),
 		}).Render(ctx, w)
