@@ -192,3 +192,9 @@ SELECT ap_id from users where inbox = ?;
 
 -- name: OutboxForInbox :one
 SELECT outbox from users where inbox = ?;
+
+-- name: GetInstanceId :one
+SELECT id from instances where hostname = ?;
+
+-- name: InsertInstance :one
+INSERT INTO instances (hostname, public_key, inbox) VALUES (?, ?, ?) RETURNING id;

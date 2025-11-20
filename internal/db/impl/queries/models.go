@@ -46,6 +46,15 @@ type Article struct {
 	LastFetched sql.NullInt64
 }
 
+type Instance struct {
+	ID        int64
+	Hostname  string
+	PublicKey sql.NullString
+	Inbox     sql.NullString
+	Created   int64
+	Updated   int64
+}
+
 type Invitation struct {
 	ID      string
 	Used    bool

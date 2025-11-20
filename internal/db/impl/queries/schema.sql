@@ -113,3 +113,11 @@ CREATE TABLE revisions (
     FOREIGN KEY (based_on) REFERENCES revisions (id)
 );
 
+CREATE TABLE instances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hostname VARCHAR(255) NOT NULL,
+    public_key TEXT,
+    inbox VARCHAR(255),
+    created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+    updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
+);

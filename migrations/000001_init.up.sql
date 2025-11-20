@@ -73,8 +73,9 @@ CREATE TABLE approval_requests (
 
 CREATE TABLE instances (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    domain VARCHAR(255) NOT NULL,
+    hostname VARCHAR(255) NOT NULL,
     public_key TEXT,
     inbox VARCHAR(255),
-    fetched INT
+    created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+    updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
 );

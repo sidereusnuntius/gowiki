@@ -309,6 +309,17 @@ func (q *Queries) GetForeignUserData(ctx context.Context, arg GetForeignUserData
 	return i, err
 }
 
+const getInstanceId = `-- name: GetInstanceId :one
+SELECT id from instances where hostname = ?
+`
+
+func (q *Queries) GetInstanceId(ctx context.Context, hostname string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getInstanceId, hostname)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getLocalArticleByTitle = `-- name: GetLocalArticleByTitle :one
 SELECT
     title,
@@ -531,6 +542,23 @@ func (q *Queries) GetUserFull(ctx context.Context, apID string) (GetUserFullRow,
 		&i.LastUpdated,
 	)
 	return i, err
+}
+
+const insertInstance = `-- name: InsertInstance :one
+INSERT INTO instances (hostname, public_key, inbox) VALUES (?, ?, ?) RETURNING id
+`
+
+type InsertInstanceParams struct {
+	Hostname  string
+	PublicKey sql.NullString
+	Inbox     sql.NullString
+}
+
+func (q *Queries) InsertInstance(ctx context.Context, arg InsertInstanceParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertInstance, arg.Hostname, arg.PublicKey, arg.Inbox)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const insertRevision = `-- name: InsertRevision :exec

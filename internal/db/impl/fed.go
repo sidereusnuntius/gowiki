@@ -1,10 +1,12 @@
-package core
+package impl
 
 import (
 	"context"
+	"database/sql"
 	"net/url"
 	"time"
 
+	"github.com/sidereusnuntius/wiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/wiki/internal/domain"
 )
 
@@ -86,5 +88,23 @@ func (d *dbImpl) GetUserFed(ctx context.Context, id *url.URL) (user domain.UserF
 		Created:     time.Unix(u.Created, 0),
 		LastUpdated: time.Unix(u.LastUpdated, 0),
 	}
+	return
+}
+
+func (d *dbImpl) GetInstanceIdOrCreate(ctx context.Context, hostname string) (id int64, err error) {
+	id, err = d.queries.GetInstanceId(ctx, hostname)
+
+	if err == sql.ErrNoRows {
+		id, err = d.queries.InsertInstance(ctx, queries.InsertInstanceParams{
+			Hostname: hostname,
+			PublicKey: sql.NullString{},
+			Inbox: sql.NullString{},
+		})
+	}
+	
+	if err != nil {
+		err = d.HandleError(err)
+	}
+
 	return
 }
