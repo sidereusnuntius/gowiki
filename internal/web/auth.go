@@ -165,6 +165,5 @@ func renderLogin(ctx context.Context, w http.ResponseWriter, r *http.Request, er
 		Place:         templates.Auth,
 		IsArticle:     false,
 		Child:         templates.Login("/login"),
-		SignUp:        "/signup",
 	}).Render(r.Context(), w)
 }

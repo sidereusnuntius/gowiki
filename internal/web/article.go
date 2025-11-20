@@ -11,13 +11,14 @@ import (
 
 const MaxMemory = 64 * 1024
 
+// ArticleHistory renders a template displaying all edits made to an article, if such article exists.
 func ArticleHistory(handler *Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		u, ok := GetSession(ctx)
 		title := chi.URLParam(r, "title")
 		//page := r.PathValue.Get("after")
-		list, err := handler.service.DB.GetRevisionList(ctx, title)
+		list, err := handler.service.GetRevisionList(ctx, title)
 		if err != nil {
 			//TODO: handle error
 			http.Error(w, err.Error(), http.StatusNotFound)
@@ -41,13 +42,12 @@ func ArticleHistory(handler *Handler) http.HandlerFunc {
 			},
 			IsArticle: false,
 			Child:     templates.Revisions(title, list),
-			Logout:    "/logout",
-			Login:     "/login",
-			SignUp:    "/signup",
 		}).Render(ctx, w)
 	}
 }
 
+// EditArticle renders the article editing screen, showing a textarea populated with the article's text and
+// a summary of the edit.
 func EditArticle(handler *Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO: should I verify whether the user is logged in, or should I just assume that? I think I can't, since I need to use the user's username on the template.
@@ -103,9 +103,6 @@ func EditArticle(handler *Handler) http.HandlerFunc {
 			},
 			IsArticle: false,
 			Child:     templates.Editor(path.String(), edit, title, summary, preview, content),
-			Logout:    "/logout",
-			Login:     "/login",
-			SignUp:    "/signup",
 		}).Render(ctx, w)
 	}
 }
@@ -147,9 +144,6 @@ func GetArticle(handler *Handler) http.HandlerFunc {
 				Language: article.Language,
 				License:  "", //TODO
 			},
-			Logout: "/logout",
-			Login:  "/login",
-			SignUp: "/signup",
 		}).Render(ctx, w)
 	}
 }
@@ -174,7 +168,7 @@ func PostArticle(handler *Handler) http.HandlerFunc {
 		//prev := r.Form.Get("")
 		id, err := handler.service.AlterArticle(ctx, title, summary, content, session.UserID)
 		if err == nil {
-			http.Redirect(w, r, id, http.StatusSeeOther)
+			http.Redirect(w, r, id.String(), http.StatusSeeOther)
 			return
 		}
 

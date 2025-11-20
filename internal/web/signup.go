@@ -43,8 +43,6 @@ func renderSignup(ctx context.Context, w http.ResponseWriter, r *http.Request, a
 		Place:     templates.PlaceSignup,
 		IsArticle: false,
 		Child:     templates.SignUp("/signup", approvalRequired),
-		Login:     "/login",
-		SignUp:    "/signup",
 	}).Render(ctx, w)
 }
 

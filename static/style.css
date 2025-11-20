@@ -1,4 +1,3 @@
-/* 1. Global Reset and Base Styles */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,22 +5,22 @@
 }
 
 body {
-    /* UPDATED: Switched to a readable sans-serif font stack */
-    font-family: Arial, Helvetica, sans-serif;
-    /* UPDATED: Changed background to a clean, cool gray for a modern paper feel */
-    background-color: #f0f3f6; 
-    /* UPDATED: Slightly reduced line height for sans-serif */
-    line-height: 1.5; 
-    color: #333; 
+    font-family: "Times New Roman", Times, serif;
+    background-color: #ffffff;
+    color: #000000;
+    line-height: 1.4;
+    
+    /* Ensure footer sticks to bottom if content is short */
     min-height: 100vh;
     display: flex;
-    flex-direction: column; 
-    padding-top: 50px; 
+    flex-direction: column;
+    
+    /* Padding for the whole page */
+    padding: 20px;
 }
 
 a {
-    /* Retained standard blue link color */
-    color: #0000cc;
+    color: #0000EE; 
     text-decoration: none;
 }
 
@@ -29,227 +28,117 @@ a:hover {
     text-decoration: underline;
 }
 
-/* 2. FULL WIDTH TOP NAVIGATION BAR */
-#top-nav-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 50px;
-    
-    /* UPDATED: Lighter background */
-    background-color: #eef2f6; 
-    /* UPDATED: Lighter, crisper line */
-    border-bottom: 1px solid #dcdfe4; 
-    
+a:visited {
+    color: #551A8B;
+}
+
+#site-header {
+    margin-bottom: 40px;
+    /* Limit width to match content */
+    max-width: 900px;
+}
+
+.header-top-row {
     display: flex;
     align-items: center;
-    padding: 0 15px;
-    z-index: 1000;
+    gap: 15px;
+    margin-bottom: 10px;
 }
 
 #search {
-    width: 200px; 
-    padding: 4px 6px;
-    margin-right: auto; 
-    /* UPDATED: Lighter, less intrusive border */
-    border: 1px solid #dcdfe4; 
-    font-size: 14px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1rem;
+    padding: 2px 5px;
+    border: 1px solid #000;
+    width: 250px;
 }
 
-#auth-links {
-    font-size: 0.8em;
+#site-nav {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.9rem;
 }
 
-/* 3. MAIN LAYOUT CONTAINER */
-#main-layout-wrapper {
-    display: flex;
-    width: 100%;
-    padding: 20px;
+#site-nav a {
+    margin-right: 10px;
+}
+
+main {
     flex-grow: 1;
+    width: 100%;
+    /* Limit line length for readability on wide screens */
+    max-width: 900px; 
 }
 
-/* 4. ARTICLE CONTENT AREA */
-#article-content {
-    width: calc(100% - 250px); 
-    max-width: 900px;
-    
-    background-color: #ffffff; 
-    padding: 30px;
-    margin-right: 20px;
-    
-    /* UPDATED: Removed border and relied on a cleaner shadow */
-    border: none;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); 
-}
-
-/* 5. RIGHT SIDEBAR (Sticky: Utilities + TOC) */
-aside#toc-sidebar {
-    position: sticky; 
-    top: 70px; 
-    align-self: flex-start; 
-    width: 230px; 
-    
-    max-height: calc(100vh - 80px); 
-    overflow-y: auto;
-    
-    padding: 10px; 
-    /* UPDATED: Lighter border */
-    border: 1px solid #dcdfe4; 
-    background-color: #fff;
-    font-size: 0.9em;
-}
-
-/* 6. SIDEBAR UTILITIES SECTION */
-.sidebar-section-title {
-    font-weight: bold;
-    padding-bottom: 3px;
-    border-bottom: 1px solid #000;
-    margin-bottom: 8px;
-    font-size: 1em;
-}
-
-#utility-nav-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    /* UPDATED: Lighter border */
-    border-bottom: 1px solid #dcdfe4; 
-}
-
-#utility-nav-sidebar a {
-    font-size: 0.95em;
-    display: block; 
-}
-
-/* 7. TOC STYLES */
-#toc {
-    width: 100%; 
-    padding: 0; 
-    border: none; 
-    background-color: transparent; 
-}
-
-.toc-title {
-    font-weight: bold;
-    text-align: left; 
-    margin-bottom: 5px;
-    padding-bottom: 3px;
-    border-bottom: 1px solid #000; 
-}
-
-#toc ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-#toc ul ul {
-    padding-left: 15px;
-}
-
-/* 8. ARTICLE HEADER (Title and Tabs - Raw Look) */
 .article-header {
-    display: flex; 
-    align-items: flex-end; 
-    /* UPDATED: Lighter header line */
-    border-bottom: 1px solid #dcdfe4; 
-    margin-bottom: 15px; 
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    
+    /* A simple separator line */
+    border-bottom: 1px solid #000;
+    margin-bottom: 20px;
+    padding-bottom: 5px;
 }
 
 .article-title {
-    font-size: 1.3em;
-    margin-bottom: 0; 
-    padding-bottom: 3px;
-    margin-right: auto; 
-    border-bottom: none; 
-    font-weight: 700;
+    font-size: 2em;
+    font-weight: bold;
+    margin-right: 20px;
 }
 
 .article-controls {
     list-style: none;
     display: flex;
-    padding: 0;
-    margin-bottom: -1px; 
+    gap: 10px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.9em;
 }
 
 .control a {
-    display: block;
-    padding: 4px 8px;
-    color: #000;
-    border: none;
-    background-color: transparent;
-    font-size: 0.9em;
-    text-transform: capitalize;
-    margin-right: 4px; 
+    text-decoration: none;
+    color: #000; /* strictly black for controls */
 }
 
 .control a:hover {
-    background-color: #f0f0f0;
-    text-decoration: none;
+    text-decoration: underline;
+}
+
+.control a::before {
+    content: "[";
+    margin-right: 2px;
+}
+.control a::after {
+    content: "]";
+    margin-left: 2px;
 }
 
 .control.disabled a {
-    border: none;
-    background-color: transparent;
-    /* UPDATED: Deep blue underline for a digital, modern highlight */
-    border-bottom: 2px solid #0056b3; 
-    padding-bottom: 3px;
-    margin-bottom: 0;
     font-weight: bold;
     cursor: default;
+    text-decoration: none;
 }
 
-.control.disabled a:hover {
-    background-color: transparent;
-}
-
-/* 9. ARTICLE BODY SPACING */
-main {
-    padding-top: 15px;
-}
-
-article p {
-    margin-bottom: 0.8em; 
+article {
+    margin-bottom: 50px;
 }
 
 article h2, article h3 {
-    clear: none; 
-    /* UPDATED: Increased top margin slightly for better vertical separation */
-    margin-top: 1.8em; 
+    margin-top: 1.5em;
     margin-bottom: 0.5em;
-    padding-bottom: 3px;
-    /* UPDATED: Solid, light line for a cleaner science paper look */
-    border-bottom: 1px solid #dcdfe4; 
+    font-family: "Helvetica", "Arial", sans-serif;
 }
 
-/* 10. FOOTER */
+article p {
+    margin-bottom: 1em;
+    text-align: justify;
+}
+
 footer {
-    clear: both; 
-    text-align: center;
-    font-size: 0.8em;
-    color: #555;
-    padding: 15px 0;
-    /* UPDATED: Lighter border */
-    border-top: 1px solid #dcdfe4; 
-    margin-top: 20px;
+    margin-top: auto; /* Pushes footer to bottom */
+    padding-top: 20px;
+    border-top: 1px dashed #000; /* Dashed line for separation */
+    font-size: 0.85em;
+    font-family: "Courier New", Courier, monospace;
+    max-width: 900px;
 }
-
- /* Editor */
-
-#article-editor {
-    resize: none;
-    width: 100%;
-    min-height: 32ch;
-}
-
-
-label[for="summary"] {
-    display: block;
-}
-
-
-#summary {
-    width: 100%;
-} 

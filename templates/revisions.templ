@@ -1,15 +1,15 @@
 package templates
 
-import "github.com/sidereusnuntius/wiki/internal/db/queries"
 import "strconv"
 import "time"
+import "github.com/sidereusnuntius/wiki/internal/domain"
 
-templ Revisions(title string, revisions []queries.GetRevisionListRow) {
+templ Revisions(title string, revisions []domain.Revision) {
     <div>
         <ul>
             for _, r := range revisions {
                 //TODO: allow for revisions from foreign users.
-                @Revision(title, r.Summary.String, r.Username, "", r.ID, r.Created)
+                @Revision(title, r.Summary, r.Username, "", r.ID, r.Created)
             }
         </ul>
     </div>

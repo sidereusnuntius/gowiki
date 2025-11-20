@@ -24,20 +24,26 @@ type Configuration struct {
 	License   string
 	MediaType string
 	// AutoPublish defines whether edits to articles are published automatically, or they should first be
-	// reviewed and accepted by a trusted user before being published to readers.
+	// reviewed and accepted by a trusted user before being published to readers. Will be removed.
 	AutoPublish bool
 	// InvitationRequired specifies whether new accounts on the instance can only be created through an invitation
 	// link.
 	InvitationRequired bool
 	// ApprovalRequired specifies whether new accounts need to be reviewed and approved by an administrator before
-	// being able to edit and create articles. Both InvitationRequired and AutoPublish cannot be true.
+	// being able to edit and create articles. Both InvitationRequired and AutoPublish cannot be true. Will be removed;
+	// if the wiki does not require an invitation, it will automatically ask for a reason.
 	ApprovalRequired bool
-	RsaKeySize       int
-	Debug            bool
-	DbUrl            string
+	// RsaKeySize specifies the size of the RSA keys to be used by the wiki in signing its outgoing activities.
+	RsaKeySize int
+	// Debug, if true, will make the application log all HTTP requests and other events.
+	Debug bool
+	// DbUrl is the path to the database file. Perhaps change this?
+	DbUrl string
 	// Name of the wiki.
-	Name   string
-	Https  bool
+	Name  string
+	Https bool
+	// The name of the host runnig the application. Rename to host.
 	Domain string
-	Url    *url.URL
+	// Url is the instance's url.
+	Url *url.URL
 }

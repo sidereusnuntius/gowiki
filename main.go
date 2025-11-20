@@ -10,14 +10,16 @@ import (
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/chi/v5"
 	"github.com/sidereusnuntius/wiki/internal/config"
-	"github.com/sidereusnuntius/wiki/internal/db"
-	"github.com/sidereusnuntius/wiki/internal/service"
+	db "github.com/sidereusnuntius/wiki/internal/db/core"
+	"github.com/sidereusnuntius/wiki/internal/domain"
+	service "github.com/sidereusnuntius/wiki/internal/service/core"
 	"github.com/sidereusnuntius/wiki/internal/state"
 	"github.com/sidereusnuntius/wiki/internal/web"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// This is a basic, hard wired configuration that only exists for testing. It will change!
 func main() {
 	u, _ := url.Parse("http://localhost:8080/")
 
@@ -27,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	gob.Register(db.UserData{})
+	gob.Register(domain.Account{})
 	manager := scs.NewCookieManager("u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4")
 
 	config := config.Configuration{
@@ -42,13 +44,15 @@ func main() {
 		Url:                u,
 	}
 
+	dd := db.New(config, d)
+
 	state := state.State{
-		DB:     d,
+		DB:     dd,
 		Config: config,
 	}
 
 	service := service.New(state)
-	handler := web.New(&config, &service, manager)
+	handler := web.New(&config, service, manager)
 	r := chi.NewRouter()
 	handler.Mount(r)
 	if config.Debug {

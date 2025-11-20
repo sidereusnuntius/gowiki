@@ -14,11 +14,11 @@ const (
 
 type Handler struct {
 	Config         *config.Configuration
-	service        *service.Service
+	service        service.Service
 	SessionManager *scs.Manager
 }
 
-func New(config *config.Configuration, service *service.Service, manager *scs.Manager) Handler {
+func New(config *config.Configuration, service service.Service, manager *scs.Manager) Handler {
 	return Handler{
 		Config:         config,
 		service:        service,
