@@ -1,0 +1,8 @@
+package templates
+
+templ NonexistingArticle(createURL, title string) {
+    <p>
+        The article { title } does not exist in this wiki, 
+        but you can create it by following this <a href={ templ.SafeURL(createURL) }>link</a>.
+    </p>
+}

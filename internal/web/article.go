@@ -1,11 +1,13 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/sidereusnuntius/wiki/internal/db"
 	"github.com/sidereusnuntius/wiki/templates"
 )
 
@@ -117,8 +119,21 @@ func GetArticle(handler *Handler) http.HandlerFunc {
 		// TODO: deal with the case in which the article has not been created, which should redirect to the editor.
 		if err != nil {
 			// TODO: render template
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			if errors.Is(err, db.ErrNotFound) {
+				templates.Layout(templates.PageData{
+					Authenticated: ok,
+					Username:      u.Username,
+					ProfilePath:   "TODO",
+					PageTitle:     title,
+					Place:         templates.Read,
+					Path:          r.URL,
+					IsArticle: false,
+					Child: templates.NonexistingArticle(r.URL.JoinPath("edit").String(), title),
+					}).Render(ctx, w)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(err.Error()))
+			}
 			return
 		}
 
