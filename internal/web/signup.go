@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/sidereusnuntius/wiki/internal/db"
-	"github.com/sidereusnuntius/wiki/internal/service"
-	"github.com/sidereusnuntius/wiki/templates"
+	"github.com/sidereusnuntius/gowiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/internal/service"
+	"github.com/sidereusnuntius/gowiki/templates"
 )
 
 func SignUp(s *Handler) http.HandlerFunc {

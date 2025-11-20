@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/sidereusnuntius/wiki/templates"
+	"github.com/sidereusnuntius/gowiki/templates"
 )
 
 const SessionKey = "user"

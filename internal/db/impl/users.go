@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"net/url"
 
-	"github.com/sidereusnuntius/wiki/internal/db/impl/queries"
-	"github.com/sidereusnuntius/wiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 func (d *dbImpl) GetUser(ctx context.Context, username, hostname string) (user domain.UserCore, err error) {

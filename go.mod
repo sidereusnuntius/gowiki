@@ -1,4 +1,4 @@
-module github.com/sidereusnuntius/wiki
+module github.com/sidereusnuntius/gowiki
 
 go 1.25.1
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/sidereusnuntius/wiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 func (s *AppService) GetUserProfile(ctx context.Context, username, domain string) (p domain.Profile, err error) {

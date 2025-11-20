@@ -9,8 +9,8 @@ import (
 
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"codeberg.org/gruf/go-mutexes"
-	"github.com/sidereusnuntius/wiki/internal/config"
-	"github.com/sidereusnuntius/wiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/internal/config"
+	"github.com/sidereusnuntius/gowiki/internal/db"
 )
 
 type FedDB struct {

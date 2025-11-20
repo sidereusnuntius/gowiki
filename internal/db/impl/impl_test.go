@@ -10,8 +10,8 @@ import (
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/sqlite3"
-	"github.com/sidereusnuntius/wiki/internal/config"
-	"github.com/sidereusnuntius/wiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/internal/config"
+	"github.com/sidereusnuntius/gowiki/internal/db"
 	_ "github.com/golang-migrate/migrate/source/file"
 	_ "github.com/mattn/go-sqlite3"
 )

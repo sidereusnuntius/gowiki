@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
-	"github.com/sidereusnuntius/wiki/internal/storage"
+	"github.com/sidereusnuntius/gowiki/internal/storage"
 )
 
 type FileStore struct {

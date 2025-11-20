@@ -5,7 +5,7 @@ import (
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
-	"github.com/sidereusnuntius/wiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 func UserToActor(u domain.UserFed) vocab.Type {

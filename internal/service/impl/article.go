@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sidereusnuntius/wiki/internal/db"
-	"github.com/sidereusnuntius/wiki/internal/domain"
-	"github.com/sidereusnuntius/wiki/internal/validate"
+	"github.com/sidereusnuntius/gowiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/validate"
 )
 
 // AlterArticle modifies the article with the given title or creates it if the article does not exist; the operation

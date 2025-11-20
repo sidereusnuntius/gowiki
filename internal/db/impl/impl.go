@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
-	"github.com/sidereusnuntius/wiki/internal/config"
-	"github.com/sidereusnuntius/wiki/internal/db"
-	"github.com/sidereusnuntius/wiki/internal/db/impl/queries"
+	"github.com/sidereusnuntius/gowiki/internal/config"
+	"github.com/sidereusnuntius/gowiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
 )
 
 type dbImpl struct {

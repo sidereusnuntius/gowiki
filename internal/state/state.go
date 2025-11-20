@@ -1,8 +1,8 @@
 package state
 
 import (
-	"github.com/sidereusnuntius/wiki/internal/config"
-	"github.com/sidereusnuntius/wiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/internal/config"
+	"github.com/sidereusnuntius/gowiki/internal/db"
 )
 
 // State is a struct holding global objects relevant to many parts of the application. Probably needs refactoring

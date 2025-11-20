@@ -7,8 +7,8 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sidereusnuntius/wiki/internal/db"
-	"github.com/sidereusnuntius/wiki/templates"
+	"github.com/sidereusnuntius/gowiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/templates"
 )
 
 const MaxMemory = 64 * 1024

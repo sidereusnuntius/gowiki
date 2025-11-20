@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/rs/zerolog/log"
-	"github.com/sidereusnuntius/wiki/internal/storage"
+	"github.com/sidereusnuntius/gowiki/internal/storage"
 )
 
 var store storage.Storage

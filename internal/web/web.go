@@ -2,8 +2,8 @@ package web
 
 import (
 	"github.com/alexedwards/scs"
-	"github.com/sidereusnuntius/wiki/internal/config"
-	"github.com/sidereusnuntius/wiki/internal/service"
+	"github.com/sidereusnuntius/gowiki/internal/config"
+	"github.com/sidereusnuntius/gowiki/internal/service"
 )
 
 const (

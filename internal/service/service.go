@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/sidereusnuntius/wiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 var ErrInvalidInput = errors.New("invalid")

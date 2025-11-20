@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/sidereusnuntius/wiki/internal/db/impl/queries"
-	"github.com/sidereusnuntius/wiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 func (d *dbImpl) ActorIdByOutbox(ctx context.Context, iri *url.URL) (*url.URL, error) {

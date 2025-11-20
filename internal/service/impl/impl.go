@@ -2,10 +2,10 @@ package core
 
 import (
 	"github.com/sergi/go-diff/diffmatchpatch"
-	"github.com/sidereusnuntius/wiki/internal/config"
-	"github.com/sidereusnuntius/wiki/internal/db"
-	"github.com/sidereusnuntius/wiki/internal/service"
-	"github.com/sidereusnuntius/wiki/internal/state"
+	"github.com/sidereusnuntius/gowiki/internal/config"
+	"github.com/sidereusnuntius/gowiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/internal/service"
+	"github.com/sidereusnuntius/gowiki/internal/state"
 )
 
 const (

@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sidereusnuntius/wiki/internal/domain"
-	"github.com/sidereusnuntius/wiki/internal/service"
-	"github.com/sidereusnuntius/wiki/internal/validate"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/service"
+	"github.com/sidereusnuntius/gowiki/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
 

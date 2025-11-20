@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sidereusnuntius/wiki/templates"
+	"github.com/sidereusnuntius/gowiki/templates"
 )
 
 func Profile(h *Handler) http.HandlerFunc {

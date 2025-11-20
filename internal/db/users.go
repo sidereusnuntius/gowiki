@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	"github.com/sidereusnuntius/wiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 type Users interface {

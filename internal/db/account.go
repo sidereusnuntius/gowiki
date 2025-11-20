@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/sidereusnuntius/wiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 type Account interface {
