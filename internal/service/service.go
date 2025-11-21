@@ -8,7 +8,10 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
-var ErrInvalidInput = errors.New("invalid")
+var (
+	ErrConflict = errors.New("conflict")
+	ErrInvalidInput = errors.New("invalid")
+)
 
 // Remove the use of sqlc generated and db-defined structs.
 type Service interface {

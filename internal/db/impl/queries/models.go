@@ -54,7 +54,7 @@ type ArticleFile struct {
 type File struct {
 	ID         int64
 	Digest     string
-	Path       string
+	Path       sql.NullString
 	ApID       string
 	Name       sql.NullString
 	Filename   sql.NullString

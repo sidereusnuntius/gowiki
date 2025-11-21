@@ -231,6 +231,17 @@ func (q *Queries) EditArticle(ctx context.Context, arg EditArticleParams) (int64
 	return id, err
 }
 
+const fileExists = `-- name: FileExists :one
+SELECT COUNT(id) == 1 FROM files WHERE digest = ?
+`
+
+func (q *Queries) FileExists(ctx context.Context, digest string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, fileExists, digest)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const getArticleContent = `-- name: GetArticleContent :one
 SELECT content FROM articles WHERE id = ?
 `
@@ -263,6 +274,66 @@ func (q *Queries) GetArticleIDS(ctx context.Context, title string) (GetArticleID
 	row := q.db.QueryRowContext(ctx, getArticleIDS, title)
 	var i GetArticleIDSRow
 	err := row.Scan(&i.ApID, &i.ArticleID, &i.RevID)
+	return i, err
+}
+
+const getFile = `-- name: GetFile :one
+SELECT
+    f.id,
+    f.digest,
+    f.path,
+    f.ap_id,
+    f.name,
+    f.filename,
+    f.type,
+    f.mime_type,
+    f.size_bytes,
+    f.local,
+    f.url,
+    f.created,
+    u.username,
+    u.domain
+FROM files f
+LEFT JOIN users u ON u.id = f.uploaded_by
+WHERE f.digest = ?
+`
+
+type GetFileRow struct {
+	ID        int64
+	Digest    string
+	Path      sql.NullString
+	ApID      string
+	Name      sql.NullString
+	Filename  sql.NullString
+	Type      string
+	MimeType  string
+	SizeBytes sql.NullInt64
+	Local     bool
+	Url       string
+	Created   int64
+	Username  sql.NullString
+	Domain    sql.NullString
+}
+
+func (q *Queries) GetFile(ctx context.Context, digest string) (GetFileRow, error) {
+	row := q.db.QueryRowContext(ctx, getFile, digest)
+	var i GetFileRow
+	err := row.Scan(
+		&i.ID,
+		&i.Digest,
+		&i.Path,
+		&i.ApID,
+		&i.Name,
+		&i.Filename,
+		&i.Type,
+		&i.MimeType,
+		&i.SizeBytes,
+		&i.Local,
+		&i.Url,
+		&i.Created,
+		&i.Username,
+		&i.Domain,
+	)
 	return i, err
 }
 
@@ -565,7 +636,7 @@ RETURNING id
 type InsertFileParams struct {
 	Local      bool
 	Digest     string
-	Path       string
+	Path       sql.NullString
 	ApID       string
 	Name       sql.NullString
 	Filename   sql.NullString

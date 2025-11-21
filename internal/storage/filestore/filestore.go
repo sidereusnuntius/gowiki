@@ -41,6 +41,28 @@ func New(root string) (fs storage.Storage, err error) {
 	return
 }
 
+func (s *FileStore) Open(path string) (content []byte, err error) {
+	path = filepath.Join(s.Root, path)
+	f, err := os.Open(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			err = storage.ErrNotExist
+		} else {
+			err = storage.ErrInternal
+			log.Error().Err(err).Msg("failed to open file at path " + path)
+		}
+		return
+	}
+	defer f.Close()
+	// Perhaps we should add an optional parameter specifying the file size?
+	content, err = io.ReadAll(f)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to read file " + path)
+		err = storage.ErrInternal
+	}
+	return
+}
+
 func (s *FileStore) Delete(path string) error {
 	path = filepath.Join(s.Root, path)
 	if err := os.Remove(path); err != nil {
