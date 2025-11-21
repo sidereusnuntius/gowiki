@@ -36,6 +36,12 @@ func (h *Handler) Mount(r chi.Router) {
 		r.Get("/history", ArticleHistory(h))
 	})
 
+	r.Route("/f", func(r chi.Router) {
+		r.Get("/upload", UploadView(h))
+		r.Post("/upload", Upload(h))
+		r.Get("/{digest}", GetFile(h))
+	})
+
 	h.MountStaticRoutes(r)
 }
 

@@ -125,7 +125,7 @@ CREATE TABLE instances (
 CREATE TABLE files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     digest CHAR(64) NOT NULL,
-    path VARCHAR(255) NOT NULL,
+    path VARCHAR(255),
     ap_id VARCHAR(255) NOT NULL,
     name VARCHAR(255),
     filename VARCHAR(255),

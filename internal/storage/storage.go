@@ -14,6 +14,7 @@ var (
 )
 
 type Storage interface {
+	Open(path string) ([]byte, error)
 	Create(content io.Reader, path string) error
 	Delete(path string) error	
 }

@@ -215,3 +215,26 @@ INSERT INTO files (
 ) VALUES
     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING id;
+
+-- name: FileExists :one
+SELECT COUNT(id) == 1 FROM files WHERE digest = ?;
+
+-- name: GetFile :one
+SELECT
+    f.id,
+    f.digest,
+    f.path,
+    f.ap_id,
+    f.name,
+    f.filename,
+    f.type,
+    f.mime_type,
+    f.size_bytes,
+    f.local,
+    f.url,
+    f.created,
+    u.username,
+    u.domain
+FROM files f
+LEFT JOIN users u ON u.id = f.uploaded_by
+WHERE f.digest = ?;
