@@ -2,8 +2,8 @@ package impl
 
 import (
 	"database/sql"
-	"log"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/sidereusnuntius/gowiki/internal/config"
 	"github.com/sidereusnuntius/gowiki/internal/db"
@@ -41,20 +41,26 @@ func (d *dbImpl) HandleError(err error) error {
 	}
 }
 
+// WithTx runs a function inside a transaction. It already performs translation of the database errors to the
+// higher level sentinel errors defined in the db package.
 func (d *dbImpl) WithTx(f func(tx *queries.Queries) error) (err error) {
 	tx, err := d.db.Begin()
 	if err != nil {
-		return d.HandleError(err)
+		log.Error().Err(err).Msg("unable to begin transaction")
+		return db.ErrInternal
 	}
 
 	defer func() {
-		if r := recover(); r != nil {
+		switch r := recover(); {
+		case r != nil:
+			fallthrough
+		case err != nil:
 			_ = tx.Rollback()
-		} else if err != nil {
-			_ = tx.Rollback()
-		} else {
-			err = d.HandleError(tx.Commit())
+		default:
+			err = tx.Commit()
 		}
+
+		err = d.HandleError(err)
 	}()
 
 	err = f(d.queries.WithTx(tx))

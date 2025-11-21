@@ -198,3 +198,20 @@ SELECT id from instances where hostname = ?;
 
 -- name: InsertInstance :one
 INSERT INTO instances (hostname, public_key, inbox) VALUES (?, ?, ?) RETURNING id;
+
+-- name: InsertFile :one
+INSERT INTO files (
+    local,
+    digest,
+    path,
+    ap_id,
+    name,
+    filename,
+    type,
+    mime_type,
+    size_bytes,
+    uploaded_by,
+    url
+) VALUES
+    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id;

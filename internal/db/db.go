@@ -14,4 +14,5 @@ type DB interface {
 	Article
 	Fed
 	Users
+	Files
 }

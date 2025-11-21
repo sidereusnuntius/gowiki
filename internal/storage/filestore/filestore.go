@@ -15,6 +15,32 @@ type FileStore struct {
 	Root string
 }
 
+func New(root string) (fs storage.Storage, err error) {
+	fs = &FileStore{
+		Root: root,
+	}
+
+	info, err := os.Stat(root)
+	if err == nil {
+		if !info.IsDir() {
+			log.Error().Msg("not a directory")
+			err = storage.ErrNotDir
+		}
+		return
+	}
+
+	if errors.Is(err, os.ErrNotExist) {
+		err = os.Mkdir(root, os.ModePerm)
+	}
+
+	if err != nil {
+		log.Error().Err(err).Msg("internal error when setting up storage")
+		err = storage.ErrInternal
+	}
+
+	return
+}
+
 func (s *FileStore) Delete(path string) error {
 	path = filepath.Join(s.Root, path)
 	if err := os.Remove(path); err != nil {

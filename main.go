@@ -37,6 +37,7 @@ func main() {
 	manager := scs.NewCookieManager("u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4")
 
 	config := config.Configuration{
+		FsRoot: "./files",
 		StaticDir:          "/static/",
 		RsaKeySize:         2048,
 		InvitationRequired: false,
@@ -55,7 +56,10 @@ func main() {
 		Config: config,
 	}
 
-	service := service.New(state)
+	service, err := service.New(&state)
+	if err != nil {
+		log.Fatal(err)
+	}
 	handler := web.New(&config, service, manager)
 	r := chi.NewRouter()
 	handler.Mount(r)

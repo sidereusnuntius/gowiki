@@ -12,6 +12,7 @@ var ErrInvalidInput = errors.New("invalid")
 
 // Remove the use of sqlc generated and db-defined structs.
 type Service interface {
+	FileService
 	// AuthenticateUser takes the user's identifier, which may be their username of email address, and password
 	// and verifies if these credentials are correct. If authentication fails, authenticated is false and
 	// err is nil; a non nil error indicates that an internal, unexpected error has occured.
