@@ -46,6 +46,27 @@ type Article struct {
 	LastFetched sql.NullInt64
 }
 
+type ArticleFile struct {
+	ArticleID int64
+	FileID    int64
+}
+
+type File struct {
+	ID         int64
+	Digest     string
+	Path       string
+	ApID       string
+	Name       sql.NullString
+	Filename   sql.NullString
+	Type       string
+	MimeType   string
+	SizeBytes  sql.NullInt64
+	Local      bool
+	UploadedBy sql.NullInt64
+	Url        string
+	Created    int64
+}
+
 type Instance struct {
 	ID        int64
 	Hostname  string

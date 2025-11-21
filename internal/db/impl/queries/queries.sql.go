@@ -544,6 +544,57 @@ func (q *Queries) GetUserFull(ctx context.Context, apID string) (GetUserFullRow,
 	return i, err
 }
 
+const insertFile = `-- name: InsertFile :one
+INSERT INTO files (
+    local,
+    digest,
+    path,
+    ap_id,
+    name,
+    filename,
+    type,
+    mime_type,
+    size_bytes,
+    uploaded_by,
+    url
+) VALUES
+    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id
+`
+
+type InsertFileParams struct {
+	Local      bool
+	Digest     string
+	Path       string
+	ApID       string
+	Name       sql.NullString
+	Filename   sql.NullString
+	Type       string
+	MimeType   string
+	SizeBytes  sql.NullInt64
+	UploadedBy sql.NullInt64
+	Url        string
+}
+
+func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertFile,
+		arg.Local,
+		arg.Digest,
+		arg.Path,
+		arg.ApID,
+		arg.Name,
+		arg.Filename,
+		arg.Type,
+		arg.MimeType,
+		arg.SizeBytes,
+		arg.UploadedBy,
+		arg.Url,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertInstance = `-- name: InsertInstance :one
 INSERT INTO instances (hostname, public_key, inbox) VALUES (?, ?, ?) RETURNING id
 `
