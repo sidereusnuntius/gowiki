@@ -37,8 +37,8 @@ func (h *Handler) Mount(r chi.Router) {
 	})
 
 	r.Route("/f", func(r chi.Router) {
-		r.Get("/upload", UploadView(h))
-		r.Post("/upload", Upload(h))
+		r.Get("/upload", authenticated(UploadView(h)))
+		r.Post("/upload", authenticated(Upload(h)))
 		r.Get("/{digest}", GetFile(h))
 	})
 

@@ -24,8 +24,8 @@ func GetSession(ctx context.Context) (Session, bool) {
 	return s, ok
 }
 
-func AuthenticatedMiddleware(handler *Handler) func(http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
+func AuthenticatedMiddleware(handler *Handler) func(http.Handler) http.HandlerFunc {
+	return func(handler http.Handler) http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, ok := GetSession(r.Context())
 			if ok {
