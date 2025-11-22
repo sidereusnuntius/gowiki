@@ -8,6 +8,43 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+func ArticleToObject(a domain.ArticleFed) vocab.Type {
+	o := streams.NewActivityStreamsArticle()
+	id := streams.NewJSONLDIdProperty()
+	id.SetIRI(a.ApID)
+	o.SetJSONLDId(id)
+
+	if a.Title != "" {
+		title := streams.NewActivityStreamsNameProperty()
+		title.AppendXMLSchemaString(a.Title)
+		o.SetActivityStreamsName(title)
+	}
+
+	if a.Summary != "" {
+		summary := streams.NewActivityStreamsSummaryProperty()
+		summary.AppendXMLSchemaString(a.Summary)
+		o.SetActivityStreamsSummary(summary)
+	}
+
+	if a.MediaType != "" {
+		mt := streams.NewActivityStreamsMediaTypeProperty()
+		mt.Set(a.MediaType)
+		o.SetActivityStreamsMediaType(mt)
+	}
+
+	if a.Url != nil {
+		u := streams.NewActivityStreamsUrlProperty()
+		u.AppendIRI(a.Url)
+		o.SetActivityStreamsUrl(u)
+	}
+
+	content := streams.NewActivityStreamsContentProperty()
+	content.AppendXMLSchemaString(a.Content)
+	o.SetActivityStreamsContent(content)
+
+	return o
+}
+
 func UserToActor(u domain.UserFed) vocab.Type {
 	a := streams.NewActivityStreamsPerson()
 

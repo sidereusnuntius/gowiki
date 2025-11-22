@@ -161,3 +161,30 @@ func (d *dbImpl) GetLocalArticle(ctx context.Context, title string) (domain.Arti
 		Language:  a.Language,
 	}, d.HandleError(err)
 }
+
+func (d *dbImpl) GetArticleById(ctx context.Context, id int64) (domain.ArticleFed, error) {
+	a, err := d.queries.GetArticleByID(ctx, id)
+	if err != nil {
+		return domain.ArticleFed{}, d.HandleError(err)
+	}
+
+	iri, err := url.Parse(a.ApID)
+	if err != nil {
+		return domain.ArticleFed{}, err
+	}
+	url, _ := url.Parse(a.Url.String)
+
+	return domain.ArticleFed{
+		ApID: iri,
+    	Url: url,
+		ArticleCore: domain.ArticleCore{
+			Title: a.Title,
+			Summary: a.Summary.String,
+			Content: a.Content,
+			Protected: a.Protected,
+			MediaType: a.MediaType,
+			License: "", // TODO
+			Language: a.Language,
+		},
+	}, err
+}

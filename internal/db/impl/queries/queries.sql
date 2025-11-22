@@ -181,6 +181,23 @@ SELECT
 FROM users
 WHERE local AND ap_id = ?;
 
+-- name: GetUserFullByID :one
+-- name: GetUserFull :one
+SELECT
+    ap_id,
+    url,
+    username,
+    name,
+    summary,
+    inbox,
+    outbox,
+    followers,
+    public_key,
+    created,
+    last_updated
+FROM users
+WHERE id = ?;
+
 -- name: UserExists :one
 SELECT COUNT(id) == 1 FROM users WHERE ap_id = ?;
 
@@ -245,3 +262,23 @@ VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- name: AddToCollection :one
 INSERT INTO ap_collection_members (collection_ap_id, member_ap_id) VALUES (?, ?) RETURNING id;
+
+-- name: GetApObject :one
+SELECT ap_id, local_table, local_id, type, raw_json, last_updated, last_fetched
+FROM ap_object_cache
+WHERE ap_id = ?;
+
+-- name: GetArticleByID :one
+SELECT
+    ap_id,
+    url,
+    instance_id,
+    language,
+    media_type,
+    title,
+    protected,
+    summary,
+    content,
+    created,
+    last_updated
+FROM articles where id = ?;

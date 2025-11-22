@@ -19,6 +19,14 @@ type FedDB struct {
 	locks  mutexes.MutexMap
 }
 
+func New(DB db.DB, config config.Configuration) FedDB {
+	return FedDB{
+		DB: DB,
+		Config: config,
+		locks: mutexes.MutexMap{},
+	}
+}
+
 func (fd *FedDB) Lock(c context.Context, id *url.URL) (unlock func(), err error) {
 	unlock = fd.locks.Lock(id.String())
 	return

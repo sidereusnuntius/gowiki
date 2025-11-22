@@ -258,6 +258,86 @@ func (q *Queries) FileExists(ctx context.Context, digest string) (bool, error) {
 	return column_1, err
 }
 
+const getApObject = `-- name: GetApObject :one
+SELECT ap_id, local_table, local_id, type, raw_json, last_updated, last_fetched
+FROM ap_object_cache
+WHERE ap_id = ?
+`
+
+type GetApObjectRow struct {
+	ApID        string
+	LocalTable  sql.NullString
+	LocalID     sql.NullInt64
+	Type        string
+	RawJson     sql.NullString
+	LastUpdated sql.NullInt64
+	LastFetched sql.NullInt64
+}
+
+func (q *Queries) GetApObject(ctx context.Context, apID string) (GetApObjectRow, error) {
+	row := q.db.QueryRowContext(ctx, getApObject, apID)
+	var i GetApObjectRow
+	err := row.Scan(
+		&i.ApID,
+		&i.LocalTable,
+		&i.LocalID,
+		&i.Type,
+		&i.RawJson,
+		&i.LastUpdated,
+		&i.LastFetched,
+	)
+	return i, err
+}
+
+const getArticleByID = `-- name: GetArticleByID :one
+SELECT
+    ap_id,
+    url,
+    instance_id,
+    language,
+    media_type,
+    title,
+    protected,
+    summary,
+    content,
+    created,
+    last_updated
+FROM articles where id = ?
+`
+
+type GetArticleByIDRow struct {
+	ApID        string
+	Url         sql.NullString
+	InstanceID  sql.NullInt64
+	Language    string
+	MediaType   string
+	Title       string
+	Protected   bool
+	Summary     sql.NullString
+	Content     string
+	Created     int64
+	LastUpdated int64
+}
+
+func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getArticleByID, id)
+	var i GetArticleByIDRow
+	err := row.Scan(
+		&i.ApID,
+		&i.Url,
+		&i.InstanceID,
+		&i.Language,
+		&i.MediaType,
+		&i.Title,
+		&i.Protected,
+		&i.Summary,
+		&i.Content,
+		&i.Created,
+		&i.LastUpdated,
+	)
+	return i, err
+}
+
 const getArticleContent = `-- name: GetArticleContent :one
 SELECT content FROM articles WHERE id = ?
 `
@@ -615,6 +695,56 @@ type GetUserFullRow struct {
 func (q *Queries) GetUserFull(ctx context.Context, apID string) (GetUserFullRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserFull, apID)
 	var i GetUserFullRow
+	err := row.Scan(
+		&i.ApID,
+		&i.Url,
+		&i.Username,
+		&i.Name,
+		&i.Summary,
+		&i.Inbox,
+		&i.Outbox,
+		&i.Followers,
+		&i.PublicKey,
+		&i.Created,
+		&i.LastUpdated,
+	)
+	return i, err
+}
+
+const getUserFullByID = `-- name: GetUserFullByID :one
+SELECT
+    ap_id,
+    url,
+    username,
+    name,
+    summary,
+    inbox,
+    outbox,
+    followers,
+    public_key,
+    created,
+    last_updated
+FROM users
+WHERE id = ?
+`
+
+type GetUserFullByIDRow struct {
+	ApID        string
+	Url         sql.NullString
+	Username    string
+	Name        string
+	Summary     sql.NullString
+	Inbox       string
+	Outbox      string
+	Followers   string
+	PublicKey   string
+	Created     int64
+	LastUpdated int64
+}
+
+func (q *Queries) GetUserFullByID(ctx context.Context, id int64) (GetUserFullByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserFullByID, id)
+	var i GetUserFullByIDRow
 	err := row.Scan(
 		&i.ApID,
 		&i.Url,
