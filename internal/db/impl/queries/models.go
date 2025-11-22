@@ -20,6 +20,24 @@ type Account struct {
 	LastUpdated   string
 }
 
+type ApCollectionMember struct {
+	ID             int64
+	CollectionApID string
+	MemberApID     string
+	InsertedAt     int64
+}
+
+type ApObjectCache struct {
+	ApID        string
+	LocalTable  sql.NullString
+	LocalID     sql.NullInt64
+	Type        string
+	RawJson     sql.NullString
+	InsertedAt  int64
+	LastUpdated sql.NullInt64
+	LastFetched sql.NullInt64
+}
+
 type ApprovalRequest struct {
 	ID        int64
 	AccountID int64

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"net/url"
 
-	"github.com/sidereusnuntius/gowiki/internal/db"
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
@@ -56,53 +55,47 @@ func (d *dbImpl) GetAuthDataByEmail(ctx context.Context, email string) (domain.A
 
 func (d *dbImpl) InsertUser(ctx context.Context, user domain.UserFedInternal, account domain.Account, reason string, invitation string) (err error) {
 	// TODO: validate and process the invitation, if needed.
-	tx, err := d.db.Begin()
-	if err != nil {
-		//Log error
-		err = db.ErrInternal
-		return
-	}
-
-	defer func() {
+	return d.WithTx(func(tx *queries.Queries) error {
+		id, err := tx.CreateLocalUser(ctx, queries.CreateLocalUserParams{
+			Trusted:    user.Trusted,
+			ApID:       user.ApId.String(),
+			Username:   user.Username,
+			Name:       user.Name,
+			Inbox:      user.Inbox.String(),
+			Outbox:     user.Outbox.String(),
+			Followers:  user.Followers.String(),
+			PublicKey:  user.PublicKey,
+			PrivateKey: user.PrivateKey,
+			Summary: sql.NullString{
+				Valid:  user.Summary != "",
+				String: user.Summary,
+			},
+		})
 		if err != nil {
-			tx.Rollback()
-		} else {
-			err = tx.Commit()
+			return err
 		}
-	}()
 
-	t := d.queries.WithTx(tx)
-	id, err := t.CreateLocalUser(ctx, queries.CreateLocalUserParams{
-		Trusted:    user.Trusted,
-		ApID:       user.ApId.String(),
-		Username:   user.Username,
-		Name:       user.Name,
-		Inbox:      user.Inbox.String(),
-		Outbox:     user.Outbox.String(),
-		Followers:  user.Followers.String(),
-		PublicKey:  user.PublicKey,
-		PrivateKey: user.PrivateKey,
-		Summary: sql.NullString{
-			Valid:  user.Summary != "",
-			String: user.Summary,
-		},
+		err = tx.CreateAccount(ctx, queries.CreateAccountParams{
+			Password: account.Password,
+			Admin:    account.Admin,
+			Email:    account.Email,
+			UserID:   id,
+		})
+		if err != nil {
+			return err
+		}
+
+		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
+			ApID: user.ApId.String(),
+			LocalTable: sql.NullString{
+				Valid: true,
+				String: "users",
+			},
+			LocalID: sql.NullInt64{
+				Valid: true,
+				Int64: id,
+			},
+			Type: "Person",
+		})
 	})
-	if err != nil {
-		return
-	}
-
-	account.UserID = id
-
-	err = t.CreateAccount(ctx, queries.CreateAccountParams{
-		Password: account.Password,
-		Admin:    account.Admin,
-		Email:    account.Email,
-		UserID:   account.UserID,
-	})
-
-	if d.Config.ApprovalRequired {
-		// TODO: insert an approval request.
-	}
-
-	return
 }

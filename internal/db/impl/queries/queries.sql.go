@@ -10,6 +10,22 @@ import (
 	"database/sql"
 )
 
+const addToCollection = `-- name: AddToCollection :one
+INSERT INTO ap_collection_members (collection_ap_id, member_ap_id) VALUES (?, ?) RETURNING id
+`
+
+type AddToCollectionParams struct {
+	CollectionApID string
+	MemberApID     string
+}
+
+func (q *Queries) AddToCollection(ctx context.Context, arg AddToCollectionParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, addToCollection, arg.CollectionApID, arg.MemberApID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const authUserByEmail = `-- name: AuthUserByEmail :one
 SELECT
     u.id AS user_id,
@@ -613,6 +629,34 @@ func (q *Queries) GetUserFull(ctx context.Context, apID string) (GetUserFullRow,
 		&i.LastUpdated,
 	)
 	return i, err
+}
+
+const insertApObject = `-- name: InsertApObject :exec
+INSERT INTO ap_object_cache (ap_id, local_table, local_id, type, raw_json, last_updated, last_fetched)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+`
+
+type InsertApObjectParams struct {
+	ApID        string
+	LocalTable  sql.NullString
+	LocalID     sql.NullInt64
+	Type        string
+	RawJson     sql.NullString
+	LastUpdated sql.NullInt64
+	LastFetched sql.NullInt64
+}
+
+func (q *Queries) InsertApObject(ctx context.Context, arg InsertApObjectParams) error {
+	_, err := q.db.ExecContext(ctx, insertApObject,
+		arg.ApID,
+		arg.LocalTable,
+		arg.LocalID,
+		arg.Type,
+		arg.RawJson,
+		arg.LastUpdated,
+		arg.LastFetched,
+	)
+	return err
 }
 
 const insertFile = `-- name: InsertFile :one

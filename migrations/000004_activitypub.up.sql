@@ -1,5 +1,5 @@
 CREATE TABLE ap_object_cache (
-    ap_id VARCHAR(255),
+    ap_id VARCHAR(255) PRIMARY KEY,
 
     local_table VARCHAR(32),
     local_id INTEGER,
@@ -13,7 +13,6 @@ CREATE TABLE ap_object_cache (
     -- last_fetched is null.
     last_fetched INTEGER,
 
-    PRIMARY KEY (ap_id),
     UNIQUE (local_table, local_id)
 );
 

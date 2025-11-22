@@ -92,58 +92,61 @@ func (d *dbImpl) GetLastRevisionID(ctx context.Context, title string) (int64, *u
 
 // CreateArticle creates a new local article, also inserting the article's first revision.
 func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article domain.ArticleFed, initialEdit domain.Revision) (err error) {
-	log.Info().
+	log.Debug().
 		Str("title", article.Title).
-		Msg("creating new local article")
-	t, err := d.db.Begin()
-	if err != nil {
-		// TODO: handle error.
-		return
-	}
-
-	defer func() {
-		if err != nil {
-			t.Rollback()
-		} else {
-			err = t.Commit()
+		Str("iri", article.ApID.String()).
+		Msg("creating article")
+	return d.WithTx(func(tx *queries.Queries) error {
+		var apid string
+		if article.ApID != nil {
+			apid = article.ApID.String()
 		}
-		err = d.HandleError(err)
-	}()
+		articleId, err := tx.CreateArticle(ctx, queries.CreateArticleParams{
+			ApID: article.ApID.String(),
+			Url: sql.NullString{
+				Valid:  article.Url != nil,
+				String: apid,
+			},
+			InstanceID: sql.NullInt64{},
+			Language:   article.Language,
+			MediaType:  article.MediaType,
+			Title:      article.Title,
+			Content:    article.Content,
+		})
+		if err != nil {
+			return err
+		}
 
-	var apid string
-	if article.ApID != nil {
-		apid = article.ApID.String()
-	}
-	tx := d.queries.WithTx(t)
-	articleId, err := tx.CreateArticle(ctx, queries.CreateArticleParams{
-		ApID: article.ApID.String(),
-		Url: sql.NullString{
-			Valid:  article.Url != nil,
-			String: apid,
-		},
-		InstanceID: sql.NullInt64{},
-		Language:   article.Language,
-		MediaType:  article.MediaType,
-		Title:      article.Title,
-		Content:    article.Content,
-	})
-	if err != nil {
-		return
-	}
+		err = tx.InsertApObject(ctx, queries.InsertApObjectParams{
+			ApID: apid,
+			LocalTable: sql.NullString{
+				Valid: true,
+				String: "articles",
+			},
+			LocalID: sql.NullInt64{
+				Valid: true,
+				Int64: articleId,
+			},
+			Type: "Article",
+		})
+		if err != nil {
+			return err
+		}
 
-	_, err = tx.EditArticle(ctx, queries.EditArticleParams{
-		ApID: sql.NullString{
-			// TODO
-		},
-		ArticleID: articleId,
-		UserID:    userId,
-		Summary: sql.NullString{
-			Valid:  initialEdit.Summary != "",
-			String: initialEdit.Summary,
-		},
-		Diff: initialEdit.Diff,
+		_, err = tx.EditArticle(ctx, queries.EditArticleParams{
+			ApID: sql.NullString{
+				// TODO
+			},
+			ArticleID: articleId,
+			UserID:    userId,
+			Summary: sql.NullString{
+				Valid:  initialEdit.Summary != "",
+				String: initialEdit.Summary,
+			},
+			Diff: initialEdit.Diff,
+		})
+		return err
 	})
-	return
 }
 
 func (d *dbImpl) GetLocalArticle(ctx context.Context, title string) (domain.ArticleCore, error) {

@@ -76,6 +76,6 @@ CREATE TABLE instances (
     hostname VARCHAR(255) NOT NULL,
     public_key TEXT,
     inbox VARCHAR(255),
-    created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
-    updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
+    created INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+    updated INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
 );

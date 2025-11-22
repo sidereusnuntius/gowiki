@@ -238,3 +238,10 @@ SELECT
 FROM files f
 LEFT JOIN users u ON u.id = f.uploaded_by
 WHERE f.digest = ?;
+
+-- name: InsertApObject :exec
+INSERT INTO ap_object_cache (ap_id, local_table, local_id, type, raw_json, last_updated, last_fetched)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+-- name: AddToCollection :one
+INSERT INTO ap_collection_members (collection_ap_id, member_ap_id) VALUES (?, ?) RETURNING id;

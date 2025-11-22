@@ -42,7 +42,22 @@ func (d *dbImpl) Save(ctx context.Context, file domain.File) (id int64, err erro
 			Url: file.Url.String(),
 		})
 
-		return err
+		if err != nil {
+			return err
+		}
+
+		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
+			ApID: file.ApId.String(),
+			LocalTable: sql.NullString{
+				Valid: true,
+				String: "files",
+			},
+			LocalID: sql.NullInt64{
+				Valid: true,
+				Int64: id,
+			},
+			Type: file.Type,
+		})
 	})
 
 	return id, err
