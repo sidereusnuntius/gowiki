@@ -17,6 +17,8 @@ require go.uber.org/mock v0.6.0
 
 require github.com/google/go-cmp v0.7.0
 
+require code.superseriousbusiness.org/httpsig v1.4.0 // indirect
+
 require (
 	code.superseriousbusiness.org/activity v1.17.0
 	codeberg.org/gruf/go-mempool v0.0.0-20251003110531-b54adae66253 // indirect

@@ -1,5 +1,7 @@
 code.superseriousbusiness.org/activity v1.17.0 h1:01x4LyvL5fzKgtce+o3mqYbR1O+RaL6j/z7v/B6ivqo=
 code.superseriousbusiness.org/activity v1.17.0/go.mod h1:BTMWJIAuwDH1w+ieRP5N+T5LipbXjw35U6KZy0V/xdg=
+code.superseriousbusiness.org/httpsig v1.4.0 h1:g9+KQMoTG0oR0II5gYb5pVVdNjbc7CiiuqK8vcZjeQg=
+code.superseriousbusiness.org/httpsig v1.4.0/go.mod h1:i2AKpj/WbA/o/UTvia9TAREzt0jP1AH3T1Uxjyhdzlw=
 codeberg.org/gruf/go-mempool v0.0.0-20251003110531-b54adae66253 h1:qPAY72xCWlySVROSNZecfLGAyeV/SiXmPmfhUU+o3Xw=
 codeberg.org/gruf/go-mempool v0.0.0-20251003110531-b54adae66253/go.mod h1:761koiXmqfgzvu5mez2Rk7YlwWilpqJ/zv5hIA6NoNI=
 codeberg.org/gruf/go-mutexes v1.5.8 h1:HRGnvT4COb3jX9xdeoSUUbjPgmk5kXPuDfld9ksUJKA=
