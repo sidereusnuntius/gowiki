@@ -3,6 +3,7 @@ package fedb
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams"
@@ -32,15 +33,48 @@ func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err er
 }
 
 func (fd *FedDB) Create(ctx context.Context, asType vocab.Type) error {
-	return nil
+	props, err := streams.Serialize(asType)
+	if err != nil {
+		return err
+	}
+
+	rawJSON, err := json.Marshal(props)
+	if err != nil {
+		return err
+	}
+	return fd.DB.CreateApObject(ctx, domain.FedObj{
+		Iri: asType.GetJSONLDId().GetIRI(),
+		RawJSON: string(rawJSON),
+		ApType: asType.GetTypeName(),
+	}, 0)
 }
 
 func (fd *FedDB) Update(ctx context.Context, asType vocab.Type) error {
-	return nil
+	iri := asType.GetJSONLDId().GetIRI()
+	exists, err := fd.DB.Exists(ctx, iri)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		
+	}
+
+	s, err := streams.Serialize(asType)
+	if err != nil {
+		return fmt.Errorf("serializing object %s: %w", iri, err)
+	}
+
+	bytes, err := json.Marshal(s)
+	if err != nil {
+		return fmt.Errorf("Update(): serialization error: %w", err)
+	}
+
+	return fd.DB.UpdateAp(ctx, iri, string(bytes))
 }
 
 func (fd *FedDB) Delete(ctx context.Context, id *url.URL) error {
-	return nil
+	return fd.DB.DeleteAp(ctx, id)
 }
 
 func (fd *FedDB) routeQuery(ctx context.Context, table string, id int64) (t vocab.Type, err error) {

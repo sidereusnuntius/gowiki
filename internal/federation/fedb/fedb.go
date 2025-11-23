@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"codeberg.org/gruf/go-mutexes"
@@ -57,12 +56,7 @@ func (fd *FedDB) Owns(ctx context.Context, id *url.URL) (owns bool, err error) {
 }
 
 func (fd *FedDB) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
-	path := id.Path
-	switch {
-	case strings.HasPrefix(path, "/u/"):
-		exists, err = fd.DB.UserExists(ctx, id)
-		// TODO: do the following.
-	}
+	exists, err = fd.DB.Exists(ctx, id)
 	return
 }
 

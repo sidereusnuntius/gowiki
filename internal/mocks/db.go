@@ -72,6 +72,20 @@ func (mr *MockDBMockRecorder) ActorIdByOutbox(ctx, iri any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActorIdByOutbox", reflect.TypeOf((*MockDB)(nil).ActorIdByOutbox), ctx, iri)
 }
 
+// CreateApObject mocks base method.
+func (m *MockDB) CreateApObject(ctx context.Context, obj domain.FedObj, fetched int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateApObject", ctx, obj, fetched)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateApObject indicates an expected call of CreateApObject.
+func (mr *MockDBMockRecorder) CreateApObject(ctx, obj, fetched any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateApObject", reflect.TypeOf((*MockDB)(nil).CreateApObject), ctx, obj, fetched)
+}
+
 // CreateLocalArticle mocks base method.
 func (m *MockDB) CreateLocalArticle(ctx context.Context, userId int64, article domain.ArticleFed, initialEdit domain.Revision) error {
 	m.ctrl.T.Helper()
@@ -84,6 +98,35 @@ func (m *MockDB) CreateLocalArticle(ctx context.Context, userId int64, article d
 func (mr *MockDBMockRecorder) CreateLocalArticle(ctx, userId, article, initialEdit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLocalArticle", reflect.TypeOf((*MockDB)(nil).CreateLocalArticle), ctx, userId, article, initialEdit)
+}
+
+// DeleteAp mocks base method.
+func (m *MockDB) DeleteAp(ctx context.Context, id *url.URL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAp", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAp indicates an expected call of DeleteAp.
+func (mr *MockDBMockRecorder) DeleteAp(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAp", reflect.TypeOf((*MockDB)(nil).DeleteAp), ctx, id)
+}
+
+// Exists mocks base method.
+func (m *MockDB) Exists(ctx context.Context, id *url.URL) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Exists", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Exists indicates an expected call of Exists.
+func (mr *MockDBMockRecorder) Exists(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exists", reflect.TypeOf((*MockDB)(nil).Exists), ctx, id)
 }
 
 // FileExists mocks base method.
@@ -355,6 +398,20 @@ func (m *MockDB) Save(ctx context.Context, file domain.File) (int64, error) {
 func (mr *MockDBMockRecorder) Save(ctx, file any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockDB)(nil).Save), ctx, file)
+}
+
+// UpdateAp mocks base method.
+func (m *MockDB) UpdateAp(ctx context.Context, id *url.URL, rawJSON string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAp", ctx, id, rawJSON)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAp indicates an expected call of UpdateAp.
+func (mr *MockDBMockRecorder) UpdateAp(ctx, id, rawJSON any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAp", reflect.TypeOf((*MockDB)(nil).UpdateAp), ctx, id, rawJSON)
 }
 
 // UpdateArticle mocks base method.

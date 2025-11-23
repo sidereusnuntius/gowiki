@@ -14,5 +14,9 @@ type Fed interface {
 	GetUserFed(ctx context.Context, id *url.URL) (user domain.UserFed, err error)
 	GetInstanceIdOrCreate(ctx context.Context, hostname string) (id int64, err error)
 	GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, error)
+	CreateApObject(ctx context.Context, obj domain.FedObj, fetched int64) error
 	GetUserByID(ctx context.Context, id int64) (domain.UserFed, error)
+	Exists(ctx context.Context, id *url.URL) (bool, error)
+	UpdateAp(ctx context.Context, id *url.URL, rawJSON string) (error)
+	DeleteAp(ctx context.Context, id *url.URL) error
 }

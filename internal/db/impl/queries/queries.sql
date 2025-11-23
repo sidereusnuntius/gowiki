@@ -282,3 +282,17 @@ SELECT
     created,
     last_updated
 FROM articles where id = ?;
+
+-- name: ApExists :one
+SELECT EXISTS(SELECT TRUE FROM ap_object_cache WHERE ap_id = ?);
+
+-- name: UpdateAp :exec
+UPDATE ap_object_cache
+SET
+    raw_json = ?,
+    last_updated = (cast(strftime('%s','now') as int))
+WHERE ap_id = ?;
+
+-- name: DeleteAp :exec
+DELETE FROM ap_object_cache
+WHERE ap_id = ?;

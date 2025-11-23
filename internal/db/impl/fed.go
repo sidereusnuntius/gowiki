@@ -11,6 +11,31 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+func (d *dbImpl) DeleteAp(ctx context.Context, id *url.URL) error {
+	err := d.queries.DeleteAp(ctx, id.String())
+	return d.HandleError(err)
+}
+
+func (d *dbImpl) UpdateAp(ctx context.Context, id *url.URL, rawJSON string) error {
+	err := d.queries.UpdateAp(ctx, queries.UpdateApParams{
+		RawJson: sql.NullString{
+			Valid: true,
+			String: rawJSON,
+		},
+		ApID: id.String(),
+	})
+	return d.HandleError(err)
+}
+
+func (d *dbImpl) Exists(ctx context.Context, id *url.URL) (bool, error) {
+	exists, err := d.queries.ApExists(ctx, id.String())
+	if err != nil {
+		err = d.HandleError(err)
+	}
+
+	return exists != 0, err
+}
+
 func (d *dbImpl) ActorIdByOutbox(ctx context.Context, iri *url.URL) (*url.URL, error) {
 	id, err := d.queries.UserIdByOutbox(ctx, iri.String())
 
@@ -124,6 +149,34 @@ func (d *dbImpl) GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, 
 		LocalTable: obj.LocalTable.String,
 		LocalId: obj.LastFetched.Int64,
 	}, err
+}
+
+func (d *dbImpl) CreateApObject(ctx context.Context, obj domain.FedObj, fetched int64) error {
+	err := d.queries.InsertApObject(ctx, queries.InsertApObjectParams{
+		ApID: obj.Iri.String(),
+		LocalTable: sql.NullString{
+			Valid: obj.LocalTable != "",
+			String: obj.LocalTable,
+		},
+		LocalID: sql.NullInt64{
+			Valid: obj.LocalTable != "" && obj.LocalId != 0,
+			Int64: obj.LocalId,
+		},
+		Type: obj.ApType,
+		RawJson: sql.NullString{
+			Valid: obj.RawJSON != "",
+			String: obj.RawJSON,
+		},
+		LastFetched: sql.NullInt64{
+			Valid: !obj.Local,
+			Int64: fetched,
+		},
+	})
+
+	if err != nil {
+		err = d.HandleError(err)
+	}
+	return err
 }
 
 func (d *dbImpl) GetUserByID(ctx context.Context, id int64) (user domain.UserFed, err error) {

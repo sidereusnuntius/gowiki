@@ -26,6 +26,17 @@ func (q *Queries) AddToCollection(ctx context.Context, arg AddToCollectionParams
 	return id, err
 }
 
+const apExists = `-- name: ApExists :one
+SELECT EXISTS(SELECT TRUE FROM ap_object_cache WHERE ap_id = ?)
+`
+
+func (q *Queries) ApExists(ctx context.Context, apID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, apExists, apID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const authUserByEmail = `-- name: AuthUserByEmail :one
 SELECT
     u.id AS user_id,
@@ -202,6 +213,16 @@ func (q *Queries) CreateLocalUser(ctx context.Context, arg CreateLocalUserParams
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const deleteAp = `-- name: DeleteAp :exec
+DELETE FROM ap_object_cache
+WHERE ap_id = ?
+`
+
+func (q *Queries) DeleteAp(ctx context.Context, apID string) error {
+	_, err := q.db.ExecContext(ctx, deleteAp, apID)
+	return err
 }
 
 const editArticle = `-- name: EditArticle :one
@@ -910,6 +931,24 @@ func (q *Queries) OutboxForInbox(ctx context.Context, inbox string) (string, err
 	var outbox string
 	err := row.Scan(&outbox)
 	return outbox, err
+}
+
+const updateAp = `-- name: UpdateAp :exec
+UPDATE ap_object_cache
+SET
+    raw_json = ?,
+    last_updated = (cast(strftime('%s','now') as int))
+WHERE ap_id = ?
+`
+
+type UpdateApParams struct {
+	RawJson sql.NullString
+	ApID    string
+}
+
+func (q *Queries) UpdateAp(ctx context.Context, arg UpdateApParams) error {
+	_, err := q.db.ExecContext(ctx, updateAp, arg.RawJson, arg.ApID)
+	return err
 }
 
 const updateArticle = `-- name: UpdateArticle :exec
