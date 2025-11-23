@@ -85,7 +85,7 @@ func (d *dbImpl) InsertUser(ctx context.Context, user domain.UserFedInternal, ac
 			return err
 		}
 
-		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
+		err = tx.InsertApObject(ctx, queries.InsertApObjectParams{
 			ApID: user.ApId.String(),
 			LocalTable: sql.NullString{
 				Valid: true,
@@ -97,5 +97,23 @@ func (d *dbImpl) InsertUser(ctx context.Context, user domain.UserFedInternal, ac
 			},
 			Type: "Person",
 		})
+		if err != nil {
+			return err
+		}
+
+		if err = insertCollection(ctx, tx, user.Inbox); err != nil {
+			return err
+		}
+		if err = insertCollection(ctx, tx, user.Outbox); err != nil {
+			return err
+		}
+		return insertCollection(ctx, tx, user.Followers)
+	})
+}
+
+func insertCollection(ctx context.Context, tx *queries.Queries, iri *url.URL) error {
+	return tx.InsertApObject(ctx, queries.InsertApObjectParams{
+		ApID: iri.String(),
+		Type: "OrderedCollection",
 	})
 }
