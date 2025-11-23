@@ -72,6 +72,21 @@ func (mr *MockDBMockRecorder) ActorIdByOutbox(ctx, iri any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActorIdByOutbox", reflect.TypeOf((*MockDB)(nil).ActorIdByOutbox), ctx, iri)
 }
 
+// CollectionContains mocks base method.
+func (m *MockDB) CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CollectionContains", ctx, collection, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CollectionContains indicates an expected call of CollectionContains.
+func (mr *MockDBMockRecorder) CollectionContains(ctx, collection, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CollectionContains", reflect.TypeOf((*MockDB)(nil).CollectionContains), ctx, collection, id)
+}
+
 // CreateApObject mocks base method.
 func (m *MockDB) CreateApObject(ctx context.Context, obj domain.FedObj, fetched int64) error {
 	m.ctrl.T.Helper()
@@ -202,6 +217,21 @@ func (m *MockDB) GetAuthDataByUsername(ctx context.Context, username string) (do
 func (mr *MockDBMockRecorder) GetAuthDataByUsername(ctx, username any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthDataByUsername", reflect.TypeOf((*MockDB)(nil).GetAuthDataByUsername), ctx, username)
+}
+
+// GetCollectionPage mocks base method.
+func (m *MockDB) GetCollectionPage(ctx context.Context, iri *url.URL, last int64) ([]*url.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCollectionPage", ctx, iri, last)
+	ret0, _ := ret[0].([]*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCollectionPage indicates an expected call of GetCollectionPage.
+func (mr *MockDBMockRecorder) GetCollectionPage(ctx, iri, last any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollectionPage", reflect.TypeOf((*MockDB)(nil).GetCollectionPage), ctx, iri, last)
 }
 
 // GetFile mocks base method.

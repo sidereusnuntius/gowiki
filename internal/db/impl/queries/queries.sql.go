@@ -107,6 +107,22 @@ func (q *Queries) AuthUserByUsername(ctx context.Context, username string) (Auth
 	return i, err
 }
 
+const collectionContains = `-- name: CollectionContains :one
+SELECT EXISTS(SELECT TRUE FROM ap_collection_members WHERE collection_ap_id = ? AND member_ap_id = ?)
+`
+
+type CollectionContainsParams struct {
+	CollectionApID string
+	MemberApID     string
+}
+
+func (q *Queries) CollectionContains(ctx context.Context, arg CollectionContainsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, collectionContains, arg.CollectionApID, arg.MemberApID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createAccount = `-- name: CreateAccount :exec
 INSERT INTO 
     accounts (password, admin, email, user_id)
@@ -392,6 +408,33 @@ func (q *Queries) GetArticleIDS(ctx context.Context, title string) (GetArticleID
 	var i GetArticleIDSRow
 	err := row.Scan(&i.ApID, &i.ArticleID, &i.RevID)
 	return i, err
+}
+
+const getCollectionFirstPage = `-- name: GetCollectionFirstPage :many
+SELECT member_ap_id FROM ap_collection_members WHERE collection_ap_id = ? ORDER BY id DESC
+`
+
+func (q *Queries) GetCollectionFirstPage(ctx context.Context, collectionApID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getCollectionFirstPage, collectionApID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var member_ap_id string
+		if err := rows.Scan(&member_ap_id); err != nil {
+			return nil, err
+		}
+		items = append(items, member_ap_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getFile = `-- name: GetFile :one

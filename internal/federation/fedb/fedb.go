@@ -32,12 +32,12 @@ func (fd *FedDB) Lock(c context.Context, id *url.URL) (unlock func(), err error)
 }
 
 func (fd *FedDB) InboxContains(c context.Context, inbox, id *url.URL) (contains bool, err error) {
-	//TODO
+	contains, err = fd.DB.CollectionContains(c, inbox, id)
 	return
 }
 
 func (fd *FedDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
-	//TODO
+	
 	return
 }
 

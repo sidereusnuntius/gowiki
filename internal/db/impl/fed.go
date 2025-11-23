@@ -11,6 +11,44 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+func (d *dbImpl) GetCollectionPage(ctx context.Context, iri *url.URL, last int64) (ids []*url.URL, err error) {
+	var members []string
+
+	if last == 0 {
+		members, err = d.queries.GetCollectionFirstPage(ctx, iri.String())
+	} else {
+		// TODO: query with pagination.
+	}
+
+	if err != nil {
+		err = d.HandleError(err)
+		return
+	}
+
+	var temp *url.URL
+	ids = make([]*url.URL, 0, len(members))
+	for _, id := range members {
+		temp, err = url.Parse(id)
+		if err != nil {
+			return
+		}
+
+		ids = append(ids, temp)
+	}
+	return
+}
+
+func (d *dbImpl) CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error) {
+	exists, err := d.queries.CollectionContains(ctx, queries.CollectionContainsParams{
+		CollectionApID: collection.String(),
+    	MemberApID: id.String(),
+	})
+	if err != nil {
+		err = d.HandleError(err)
+	}
+	return exists != 0, err
+}
+
 func (d *dbImpl) DeleteAp(ctx context.Context, id *url.URL) error {
 	err := d.queries.DeleteAp(ctx, id.String())
 	return d.HandleError(err)

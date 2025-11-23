@@ -296,3 +296,9 @@ WHERE ap_id = ?;
 -- name: DeleteAp :exec
 DELETE FROM ap_object_cache
 WHERE ap_id = ?;
+
+-- name: CollectionContains :one
+SELECT EXISTS(SELECT TRUE FROM ap_collection_members WHERE collection_ap_id = ? AND member_ap_id = ?);
+
+-- name: GetCollectionFirstPage :many
+SELECT member_ap_id FROM ap_collection_members WHERE collection_ap_id = ? ORDER BY id DESC;
