@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/db"
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
@@ -174,8 +175,10 @@ func (d *dbImpl) GetInstanceIdOrCreate(ctx context.Context, hostname string) (id
 }
 
 func (d *dbImpl) GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, error) {
+	log.Debug().Str("iri", iri.String()).Msg("querying ap cache table")
 	obj, err := d.queries.GetApObject(ctx, iri.String())
 	if err != nil {
+		log.Error().Err(err).Msg("at GetApObject")
 		err = d.HandleError(err)
 	}
 
@@ -185,7 +188,7 @@ func (d *dbImpl) GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, 
 		ApType: obj.Type,
 		Local: !obj.LastFetched.Valid,
 		LocalTable: obj.LocalTable.String,
-		LocalId: obj.LastFetched.Int64,
+		LocalId: obj.LocalID.Int64,
 	}, err
 }
 
@@ -218,9 +221,11 @@ func (d *dbImpl) CreateApObject(ctx context.Context, obj domain.FedObj, fetched 
 }
 
 func (d *dbImpl) GetUserByID(ctx context.Context, id int64) (user domain.UserFed, err error) {
+	log.Debug().Int64("id", id).Msg("GetUserByID")
 	u, err := d.queries.GetUserFullByID(ctx, id)
 
 	if err != nil {
+		log.Error().Err(err).Msg("at GetUserByID")
 		err = d.HandleError(err)
 		return
 	}

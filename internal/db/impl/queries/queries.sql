@@ -182,7 +182,6 @@ FROM users
 WHERE local AND ap_id = ?;
 
 -- name: GetUserFullByID :one
--- name: GetUserFull :one
 SELECT
     ap_id,
     url,
