@@ -1,4 +1,4 @@
 package federation
 
-type FedProto struct {
+type ApService struct {
 }
