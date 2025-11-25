@@ -72,7 +72,7 @@ func (s *FileStore) Delete(path string) error {
 		log.Error().Err(err).Msg("file deletion error")
 		return storage.ErrInternal
 	}
-	
+
 	return nil
 }
 
@@ -80,7 +80,7 @@ func (s *FileStore) Create(content io.Reader, path string) error {
 	path = filepath.Join(s.Root, path)
 	_, err := os.Stat(path)
 	if err == nil {
-		return storage.ErrAlreadyExists	
+		return storage.ErrAlreadyExists
 	}
 	if !os.IsNotExist(err) {
 		log.Error().Err(err).Msg("unknown filesystem error")

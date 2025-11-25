@@ -26,8 +26,8 @@ func New(state *state.State) (service.Service, error) {
 	store, err := filestore.New(state.Config.FsRoot)
 	return &AppService{
 		fileServiceImpl: fileServiceImpl{state, store, state.DB},
-		Config: state.Config,
-		DB:     state.DB,
-		DMP:    dmp,
+		Config:          state.Config,
+		DB:              state.DB,
+		DMP:             dmp,
 	}, err
 }

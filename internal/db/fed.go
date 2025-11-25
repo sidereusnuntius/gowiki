@@ -17,7 +17,7 @@ type Fed interface {
 	CreateApObject(ctx context.Context, obj domain.FedObj, fetched int64) error
 	GetUserByID(ctx context.Context, id int64) (domain.UserFed, error)
 	Exists(ctx context.Context, id *url.URL) (bool, error)
-	UpdateAp(ctx context.Context, id *url.URL, rawJSON string) (error)
+	UpdateAp(ctx context.Context, id *url.URL, rawJSON string) error
 	DeleteAp(ctx context.Context, id *url.URL) error
 	CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error)
 	GetCollectionPage(ctx context.Context, iri *url.URL, last int64) (ids []*url.URL, err error)

@@ -17,13 +17,13 @@ func UploadView(h *Handler) http.HandlerFunc {
 
 		templates.Layout(templates.PageData{
 			Authenticated: ok,
-			Username: s.Username,
-			ProfilePath: "",
-			PageTitle: "File upload",
-			Place: templates.PlaceUpload,
-			Child: templates.Upload(),
-			Path: r.URL,
-			Err: nil,
+			Username:      s.Username,
+			ProfilePath:   "",
+			PageTitle:     "File upload",
+			Place:         templates.PlaceUpload,
+			Child:         templates.Upload(),
+			Path:          r.URL,
+			Err:           nil,
 		}).Render(ctx, w)
 	}
 }
@@ -55,20 +55,20 @@ func Upload(h *Handler) http.HandlerFunc {
 		}
 		mime := http.DetectContentType(body)
 		u, _, err := h.service.CreateFile(r.Context(), body, domain.FileMetadata{
-			Name: description,
-			Filename: header.Filename,
-			Type: "Image", // Handle it better.
-			MimeType: mime,
-			SizeBytes: int64(len(body)),
+			Name:       description,
+			Filename:   header.Filename,
+			Type:       "Image", // Handle it better.
+			MimeType:   mime,
+			SizeBytes:  int64(len(body)),
 			UploaderId: s.UserID,
-			Local: true,
+			Local:      true,
 		})
 
 		if err != nil {
 			http.Error(w, "upload failed", http.StatusInternalServerError)
 			return
 		}
-		
+
 		http.Redirect(w, r, u.String(), http.StatusSeeOther)
 	}
 }

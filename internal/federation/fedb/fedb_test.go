@@ -16,16 +16,16 @@ var host = "https://test.wiki"
 var u, _ = url.Parse(host)
 
 func TestMain(m *testing.M) {
-	configuration = config.Configuration {
-		FsRoot: "./files",
-    	Language: "en",
-    	License: config.CcBy,
-    	MediaType: config.Text,
-    	RsaKeySize: 2048,
-    	Debug: true,
-    	Domain: "test.wiki",
-    	Name: "The test wiki",
-    	Url: u,
+	configuration = config.Configuration{
+		FsRoot:     "./files",
+		Language:   "en",
+		License:    config.CcBy,
+		MediaType:  config.Text,
+		RsaKeySize: 2048,
+		Debug:      true,
+		Domain:     "test.wiki",
+		Name:       "The test wiki",
+		Url:        u,
 	}
 
 	m.Run()

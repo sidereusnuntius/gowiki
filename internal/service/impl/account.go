@@ -2,16 +2,13 @@ package core
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 	"github.com/sidereusnuntius/gowiki/internal/service"
+	"github.com/sidereusnuntius/gowiki/internal/utils"
 	"github.com/sidereusnuntius/gowiki/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -78,17 +75,7 @@ func (s *AppService) populateUser(username, name, summary string) (user domain.U
 	apId := s.Config.Url.JoinPath("/u/" + username)
 	_ = s.Config.Url.JoinPath("@" + username)
 
-	key, err := rsa.GenerateKey(rand.Reader, RsaKeySize)
-	if err != nil {
-		return
-	}
-
-	priv, err := privateKeyPem(key)
-	if err != nil {
-		return
-	}
-
-	pub, err := publicKeyPem(&key.PublicKey)
+	pub, priv, err := utils.GenerateKeysPem(RsaKeySize)
 	if err != nil {
 		return
 	}
@@ -112,27 +99,4 @@ func (s *AppService) populateUser(username, name, summary string) (user domain.U
 	}
 
 	return
-}
-
-func privateKeyPem(key *rsa.PrivateKey) (string, error) {
-	der, err := x509.MarshalPKCS8PrivateKey(key)
-	if err != nil {
-		return "", err
-	}
-
-	return string(pem.EncodeToMemory(&pem.Block{
-		Type:  "PRIVATE KEY",
-		Bytes: der,
-	})), nil
-}
-
-func publicKeyPem(key *rsa.PublicKey) (string, error) {
-	der, err := x509.MarshalPKIXPublicKey(key)
-	if err != nil {
-		return "", err
-	}
-	return string(pem.EncodeToMemory(&pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: der,
-	})), err
 }

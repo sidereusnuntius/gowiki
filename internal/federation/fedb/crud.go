@@ -8,15 +8,20 @@ import (
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
+	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/conversions"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
+	id.Scheme = "http"
+	log.Debug().Str("id", id.String()).Msg("trying to get ActivityStreams object")
 	obj, err := fd.DB.GetApObject(ctx, id)
 	if err != nil {
 		return
 	}
+	log.Debug().Any("returned", obj).Msg("at Get:")
+
 	if obj.RawJSON == "" {
 		value, err = fd.routeQuery(ctx, obj.LocalTable, obj.LocalId)
 	} else {
@@ -33,6 +38,7 @@ func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err er
 }
 
 func (fd *FedDB) Create(ctx context.Context, asType vocab.Type) error {
+	log.Info().Any("obj", asType).Msg("creating AS object")
 	props, err := streams.Serialize(asType)
 	if err != nil {
 		return err
@@ -43,9 +49,9 @@ func (fd *FedDB) Create(ctx context.Context, asType vocab.Type) error {
 		return err
 	}
 	return fd.DB.CreateApObject(ctx, domain.FedObj{
-		Iri: asType.GetJSONLDId().GetIRI(),
+		Iri:     asType.GetJSONLDId().GetIRI(),
 		RawJSON: string(rawJSON),
-		ApType: asType.GetTypeName(),
+		ApType:  asType.GetTypeName(),
 	}, 0)
 }
 
@@ -57,7 +63,7 @@ func (fd *FedDB) Update(ctx context.Context, asType vocab.Type) error {
 	}
 
 	if !exists {
-		
+
 	}
 
 	s, err := streams.Serialize(asType)

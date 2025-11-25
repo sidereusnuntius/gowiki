@@ -1,13 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/gob"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
+	"strings"
+	"time"
 
+	"code.superseriousbusiness.org/activity/pub"
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
@@ -15,6 +16,9 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/config"
 	db "github.com/sidereusnuntius/gowiki/internal/db/impl"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/federation"
+	"github.com/sidereusnuntius/gowiki/internal/federation/fedb"
+	"github.com/sidereusnuntius/gowiki/internal/initialization"
 	service "github.com/sidereusnuntius/gowiki/internal/service/impl"
 	"github.com/sidereusnuntius/gowiki/internal/state"
 	"github.com/sidereusnuntius/gowiki/internal/web"
@@ -22,31 +26,39 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Clock struct{}
+
+func (c Clock) Now() time.Time {
+	return time.Now()
+}
+
 // This is a basic, hard wired configuration that only exists for testing. It will change!
 func main() {
-	zero.Logger = zero.Output(zerolog.ConsoleWriter{ Out: os.Stderr })
-	u, _ := url.Parse("http://localhost:8080/")
-
-	connString := "file:test.db"
-	d, err := sql.Open("sqlite3", connString)
+	zero.Logger = zero.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	config, err := config.ReadConfig()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	d, err := initialization.OpenDB(config.DbUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	zero.Info().Msg("database connection established")
+
+	if os.Getenv("SETUP") != "" {
+		err = initialization.SetupDB(&config, d, config.MigrationsFolder, config.DbUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	gob.Register(domain.Account{})
 	manager := scs.NewCookieManager("u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4")
 
-	config := config.Configuration{
-		FsRoot: "./files",
-		StaticDir:          "/static/",
-		RsaKeySize:         2048,
-		InvitationRequired: false,
-		ApprovalRequired:   false,
-		Https:              false,
-		Debug:              true,
-		Domain:             "localhost:8080",
-		DbUrl:              connString,
-		Url:                u,
+	err = initialization.EnsureInstance(d, &config)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	dd := db.New(config, d)
@@ -60,18 +72,53 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fd := fedb.New(state.DB, config)
+	fh := pub.NewActivityStreamsHandler(&fd, Clock{})
+
+	ap := federation.ApService{}
+	actor := pub.NewFederatingActor(&ap, &ap, &fd, Clock{})
+
 	handler := web.New(&config, service, manager)
-	r := chi.NewRouter()
-	handler.Mount(r)
+	router := chi.NewRouter()
+	handler.Mount(router)
+	router.Post("/inbox", func(w http.ResponseWriter, r *http.Request) {
+		success, err := actor.PostInbox(r.Context(), w, r)
+		recover()
+		e := zero.Debug().Bool("success", success)
+		if err != nil {
+			e.Err(err)
+		}
+		e.Msg("attempted to post to inbox.")
+	})
+
+	contentRouter := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accept := r.Header.Get("Accept")
+		if strings.Contains(accept, "application/ld+json") || strings.Contains(accept, "application/activity+json") {
+			zero.Log().Str("url", r.URL.String()).Send()
+			isAp, err := fh(r.Context(), w, r)
+			if err != nil {
+				zero.Error().Err(err).Send()
+				http.Error(w, "", http.StatusInternalServerError)
+			}
+			if !isAp {
+				http.Error(w, "could not process request", http.StatusInternalServerError)
+			}
+		} else {
+			router.ServeHTTP(w, r)
+		}
+	})
+
 	if config.Debug {
 		// Register logging middleware.
 	}
 
 	s := &http.Server{
 		Addr:    ":8080",
-		Handler: r,
+		Handler: contentRouter,
 	}
 
+	zero.Info().Uint16("port", config.Port).Msg("started server")
 	err = s.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)

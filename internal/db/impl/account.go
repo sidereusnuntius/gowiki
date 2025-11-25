@@ -88,7 +88,7 @@ func (d *dbImpl) InsertUser(ctx context.Context, user domain.UserFedInternal, ac
 		err = tx.InsertApObject(ctx, queries.InsertApObjectParams{
 			ApID: user.ApId.String(),
 			LocalTable: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: "users",
 			},
 			LocalID: sql.NullInt64{

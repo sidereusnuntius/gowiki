@@ -12,24 +12,24 @@ import (
 )
 
 func (d *dbImpl) Save(ctx context.Context, file domain.File) (id int64, err error) {
-	err = d.WithTx(func (tx *queries.Queries) error {
+	err = d.WithTx(func(tx *queries.Queries) error {
 		id, err = d.queries.InsertFile(ctx, queries.InsertFileParams{
-			Local: file.Local,
+			Local:  file.Local,
 			Digest: file.Digest,
 			Path: sql.NullString{
 				String: file.Path,
-				Valid: file.Path != "",
+				Valid:  file.Path != "",
 			},
 			ApID: file.ApId.String(),
 			Name: sql.NullString{
-				Valid: file.Name != "",
+				Valid:  file.Name != "",
 				String: file.Name,
 			},
 			Filename: sql.NullString{
-				Valid: file.Filename != "",
+				Valid:  file.Filename != "",
 				String: file.Filename,
 			},
-			Type: file.Type,
+			Type:     file.Type,
 			MimeType: file.MimeType,
 			SizeBytes: sql.NullInt64{
 				Valid: file.SizeBytes != 0,
@@ -49,7 +49,7 @@ func (d *dbImpl) Save(ctx context.Context, file domain.File) (id int64, err erro
 		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
 			ApID: file.ApId.String(),
 			LocalTable: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: "files",
 			},
 			LocalID: sql.NullInt64{
@@ -93,17 +93,17 @@ func (d *dbImpl) GetFile(ctx context.Context, digest string) (file domain.File, 
 
 	file = domain.File{
 		FileMetadata: domain.FileMetadata{
-			Name: f.Name.String,
-			Filename: f.Filename.String,
-			Type: f.Type,
-			MimeType: f.MimeType,
+			Name:      f.Name.String,
+			Filename:  f.Filename.String,
+			Type:      f.Type,
+			MimeType:  f.MimeType,
 			SizeBytes: f.SizeBytes.Int64,
-			Local: f.Local,
+			Local:     f.Local,
 		},
 		Digest: f.Digest,
-		Path: f.Path.String,
-		ApId: id,
-		Url: u,
+		Path:   f.Path.String,
+		ApId:   id,
+		Url:    u,
 	}
 	return
 }

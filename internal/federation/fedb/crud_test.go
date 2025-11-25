@@ -19,8 +19,8 @@ import (
 
 type comparison struct {
 	property string
-	expect string
-	got any
+	expect   string
+	got      any
 }
 
 func TestGet_UserSuccess(t *testing.T) {
@@ -37,40 +37,40 @@ func TestGet_UserSuccess(t *testing.T) {
 
 	noteIRI, _ := url.Parse("https://elysium.social/statuses/247189")
 	noteJSON, note := makeNote(noteIRI)
-	
-	cases := []struct{
-		name string
-		iri *url.URL
-		cacheEntry domain.FedObj
-		returnedValue any
-		expectedErr error
+
+	cases := []struct {
+		name             string
+		iri              *url.URL
+		cacheEntry       domain.FedObj
+		returnedValue    any
+		expectedErr      error
 		returnedAsObject vocab.Type
-		expectErr bool
-		expectedType string
+		expectErr        bool
+		expectedType     string
 	}{
 		{
-			name: "UserSuccess",
-			iri: u.JoinPath("u", "sarah"),
-			cacheEntry: domain.FedObj{Iri: u.JoinPath("u", "sarah"), RawJSON: "", ApType: "Person", Local: true, LocalTable: "users", LocalId: 1,},
-			returnedValue: sarah,
+			name:             "UserSuccess",
+			iri:              u.JoinPath("u", "sarah"),
+			cacheEntry:       domain.FedObj{Iri: u.JoinPath("u", "sarah"), RawJSON: "", ApType: "Person", Local: true, LocalTable: "users", LocalId: 1},
+			returnedValue:    sarah,
 			returnedAsObject: conversions.UserToActor(sarah),
-			expectErr: false,
-			expectedType: streams.ActivityStreamsPersonName,
+			expectErr:        false,
+			expectedType:     streams.ActivityStreamsPersonName,
 		},
 		{
-			name: "ArticleSuccess",
-			iri: u.JoinPath("a", "tests"),
-			cacheEntry: domain.FedObj{Iri: u.JoinPath("a", "tests"), RawJSON: "", ApType: "Article", Local: true, LocalTable: "articles", LocalId: 5,},
-			returnedValue: article,
+			name:             "ArticleSuccess",
+			iri:              u.JoinPath("a", "tests"),
+			cacheEntry:       domain.FedObj{Iri: u.JoinPath("a", "tests"), RawJSON: "", ApType: "Article", Local: true, LocalTable: "articles", LocalId: 5},
+			returnedValue:    article,
 			returnedAsObject: conversions.ArticleToObject(article),
-			expectedType: streams.ActivityStreamsArticleName,
+			expectedType:     streams.ActivityStreamsArticleName,
 		},
 		{
-			name: "RawJSON",
-			iri: u.JoinPath("notes", "123987"),
-			cacheEntry: domain.FedObj{Iri: noteIRI, RawJSON: noteJSON, ApType: "Note", Local: false},
+			name:             "RawJSON",
+			iri:              u.JoinPath("notes", "123987"),
+			cacheEntry:       domain.FedObj{Iri: noteIRI, RawJSON: noteJSON, ApType: "Note", Local: false},
 			returnedAsObject: note,
-			expectedType: streams.ActivityStreamsNoteName,
+			expectedType:     streams.ActivityStreamsNoteName,
 		},
 	}
 
@@ -143,11 +143,11 @@ func makeArticle(title, summary, content string) domain.ArticleFed {
 	iri := u.JoinPath("a", title)
 	return domain.ArticleFed{
 		ApID: iri,
-    	Url: iri,
+		Url:  iri,
 		ArticleCore: domain.ArticleCore{
-			Title: title,
-			Summary: summary,
-			Content: content,
+			Title:     title,
+			Summary:   summary,
+			Content:   content,
 			MediaType: config.Text,
 		},
 	}
@@ -157,19 +157,19 @@ func makeUser(id int64, name string) domain.UserFed {
 	apId := u.JoinPath("u", name)
 	return domain.UserFed{
 		UserCore: domain.UserCore{
-			ID: id,
+			ID:       id,
 			Username: name,
-			Name: name,
-			Domain: host,
-			Summary: "A test user",
-			URL: apId,
+			Name:     name,
+			Domain:   host,
+			Summary:  "A test user",
+			URL:      apId,
 		},
-		ApId: apId,
-		Inbox: apId.JoinPath("inbox"),
-		Outbox: apId.JoinPath("outbox"),
-		Followers: apId.JoinPath("followers"),
-		PublicKey: "",
-		Created: time.Now(),
+		ApId:        apId,
+		Inbox:       apId.JoinPath("inbox"),
+		Outbox:      apId.JoinPath("outbox"),
+		Followers:   apId.JoinPath("followers"),
+		PublicKey:   "",
+		Created:     time.Now(),
 		LastUpdated: time.Now(),
 	}
 }

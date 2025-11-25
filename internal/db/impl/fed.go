@@ -42,7 +42,7 @@ func (d *dbImpl) GetCollectionPage(ctx context.Context, iri *url.URL, last int64
 func (d *dbImpl) CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error) {
 	exists, err := d.queries.CollectionContains(ctx, queries.CollectionContainsParams{
 		CollectionApID: collection.String(),
-    	MemberApID: id.String(),
+		MemberApID:     id.String(),
 	})
 	if err != nil {
 		err = d.HandleError(err)
@@ -58,7 +58,7 @@ func (d *dbImpl) DeleteAp(ctx context.Context, id *url.URL) error {
 func (d *dbImpl) UpdateAp(ctx context.Context, id *url.URL, rawJSON string) error {
 	err := d.queries.UpdateAp(ctx, queries.UpdateApParams{
 		RawJson: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: rawJSON,
 		},
 		ApID: id.String(),
@@ -76,7 +76,7 @@ func (d *dbImpl) Exists(ctx context.Context, id *url.URL) (bool, error) {
 }
 
 func (d *dbImpl) ActorIdByOutbox(ctx context.Context, iri *url.URL) (*url.URL, error) {
-	id, err := d.queries.UserIdByOutbox(ctx, iri.String())
+	id, err := d.queries.ActorIdByOutbox(ctx, iri.String())
 
 	if err != nil {
 		return nil, d.HandleError(err)
@@ -87,7 +87,7 @@ func (d *dbImpl) ActorIdByOutbox(ctx context.Context, iri *url.URL) (*url.URL, e
 }
 
 func (d *dbImpl) ActorIdByInbox(ctx context.Context, iri *url.URL) (*url.URL, error) {
-	id, err := d.queries.UserIdByInbox(ctx, iri.String())
+	id, err := d.queries.ActorIdByInbox(ctx, iri.String())
 
 	if err != nil {
 		return nil, d.HandleError(err)
@@ -161,12 +161,12 @@ func (d *dbImpl) GetInstanceIdOrCreate(ctx context.Context, hostname string) (id
 
 	if err == sql.ErrNoRows {
 		id, err = d.queries.InsertInstance(ctx, queries.InsertInstanceParams{
-			Hostname: hostname,
+			Hostname:  hostname,
 			PublicKey: sql.NullString{},
-			Inbox: sql.NullString{},
+			Inbox:     sql.NullString{},
 		})
 	}
-	
+
 	if err != nil {
 		err = d.HandleError(err)
 	}
@@ -183,12 +183,12 @@ func (d *dbImpl) GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, 
 	}
 
 	return domain.FedObj{
-		Iri: iri,
-		RawJSON: obj.RawJson.String,
-		ApType: obj.Type,
-		Local: !obj.LastFetched.Valid,
+		Iri:        iri,
+		RawJSON:    obj.RawJson.String,
+		ApType:     obj.Type,
+		Local:      !obj.LastFetched.Valid,
 		LocalTable: obj.LocalTable.String,
-		LocalId: obj.LocalID.Int64,
+		LocalId:    obj.LocalID.Int64,
 	}, err
 }
 
@@ -196,7 +196,7 @@ func (d *dbImpl) CreateApObject(ctx context.Context, obj domain.FedObj, fetched 
 	err := d.queries.InsertApObject(ctx, queries.InsertApObjectParams{
 		ApID: obj.Iri.String(),
 		LocalTable: sql.NullString{
-			Valid: obj.LocalTable != "",
+			Valid:  obj.LocalTable != "",
 			String: obj.LocalTable,
 		},
 		LocalID: sql.NullInt64{
@@ -205,7 +205,7 @@ func (d *dbImpl) CreateApObject(ctx context.Context, obj domain.FedObj, fetched 
 		},
 		Type: obj.ApType,
 		RawJson: sql.NullString{
-			Valid: obj.RawJSON != "",
+			Valid:  obj.RawJSON != "",
 			String: obj.RawJSON,
 		},
 		LastFetched: sql.NullInt64{
@@ -253,7 +253,7 @@ func (d *dbImpl) GetUserByID(ctx context.Context, id int64) (user domain.UserFed
 		err = db.ErrInternal
 		return
 	}
-	
+
 	return domain.UserFed{
 		UserCore: domain.UserCore{
 			Username: u.Username,

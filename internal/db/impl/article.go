@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"net/url"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
-	"github.com/rs/zerolog/log"
 )
 
 func (d *dbImpl) GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error) {
@@ -120,7 +120,7 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 		err = tx.InsertApObject(ctx, queries.InsertApObjectParams{
 			ApID: apid,
 			LocalTable: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: "articles",
 			},
 			LocalID: sql.NullInt64{
@@ -176,15 +176,15 @@ func (d *dbImpl) GetArticleById(ctx context.Context, id int64) (domain.ArticleFe
 
 	return domain.ArticleFed{
 		ApID: iri,
-    	Url: url,
+		Url:  url,
 		ArticleCore: domain.ArticleCore{
-			Title: a.Title,
-			Summary: a.Summary.String,
-			Content: a.Content,
+			Title:     a.Title,
+			Summary:   a.Summary.String,
+			Content:   a.Content,
 			Protected: a.Protected,
 			MediaType: a.MediaType,
-			License: "", // TODO
-			Language: a.Language,
+			License:   "", // TODO
+			Language:  a.Language,
 		},
 	}, err
 }

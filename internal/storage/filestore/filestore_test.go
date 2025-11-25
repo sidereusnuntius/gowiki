@@ -28,17 +28,17 @@ func TestMain(m *testing.M) {
 	}
 
 	m.Run()
-	if err =os.RemoveAll(path); err != nil {
+	if err = os.RemoveAll(path); err != nil {
 		log.Fatal().Err(err).Msg("removal of temporary directory failed")
 	}
 }
 
 func TestCreate(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		Casename string
-		Path string
-		Content string
-		Err error
+		Path     string
+		Content  string
+		Err      error
 	}{
 		{"create file", "f1.txt", "hello, world!", nil},
 		{"create duplicate file", "f1.txt", "hello, world!", storage.ErrAlreadyExists},

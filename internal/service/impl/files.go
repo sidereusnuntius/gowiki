@@ -16,9 +16,9 @@ import (
 )
 
 type fileServiceImpl struct {
-	state *state.State
+	state   *state.State
 	storage storage.Storage
-	DB db.Files
+	DB      db.Files
 }
 
 func (s *fileServiceImpl) CreateFile(ctx context.Context, content []byte, metadata domain.FileMetadata) (uri *url.URL, id int64, err error) {
@@ -49,10 +49,10 @@ func (s *fileServiceImpl) CreateFile(ctx context.Context, content []byte, metada
 	uri = s.state.Config.Url.JoinPath("f", hash)
 	id, err = s.DB.Save(ctx, domain.File{
 		FileMetadata: metadata,
-		Digest: hash,
-		Path: hash,
-		ApId: uri,
-		Url: uri,
+		Digest:       hash,
+		Path:         hash,
+		ApId:         uri,
+		Url:          uri,
 	})
 
 	if err != nil {

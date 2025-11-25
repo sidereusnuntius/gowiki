@@ -16,5 +16,5 @@ func (fd *FedDB) Following(c context.Context, actorIRI *url.URL) (following voca
 }
 
 func (fd *FedDB) Liked(c context.Context, actorIRI *url.URL) (liked vocab.ActivityStreamsCollection, err error) {
-	return	
+	return
 }

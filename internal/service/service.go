@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrConflict = errors.New("conflict")
+	ErrConflict     = errors.New("conflict")
 	ErrInvalidInput = errors.New("invalid")
 )
 

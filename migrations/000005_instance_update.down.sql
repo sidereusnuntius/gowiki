@@ -1,4 +1,6 @@
-ALTER TABLE instances DROP COLUMN blocked BOOLEAN DEFAULT FALSE NOT NULL;
-ALTER TABLE instances DROP COLUMN url VARCHAR(255);
-ALTER TABLE instances DROP COLUMN followers VARCHAR(255);
-ALTER TABLE instances DROP COLUMN outbox VARCHAR(255);
+ALTER TABLE instances DROP COLUMN private_key;
+ALTER TABLE instances DROP COLUMN blocked;
+ALTER TABLE instances DROP COLUMN url;
+ALTER TABLE instances DROP COLUMN followers;
+ALTER TABLE instances DROP COLUMN outbox;
+ALTER TABLE instances DROP COLUMN name;

@@ -115,13 +115,16 @@ CREATE TABLE revisions (
 
 CREATE TABLE instances (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    hostname VARCHAR(255) NOT NULL,
-    url VARCHAR(255),
+    name VARCHAR(64),
+    hostname VARCHAR(255) UNIQUE NOT NULL,
+    url VARCHAR(255) UNIQUE,
     public_key TEXT,
-    inbox VARCHAR(255),
-    followers VARCHAR(255),
-    outbox VARCHAR(255),
-    blocked BOOLEAN DEFAULT FALSE NOT NULL
+    private_key TEXT,
+    inbox VARCHAR(255) UNIQUE,
+    outbox VARCHAR(255) UNIQUE,
+    followers VARCHAR(255) UNIQUE,
+    blocked BOOLEAN DEFAULT FALSE NOT NULL,
+
     created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
 );

@@ -60,7 +60,7 @@ func EditArticle(handler *Handler) http.HandlerFunc {
 		if !ok {
 
 		}
-		
+
 		var newarticle bool
 		title := chi.URLParam(r, "title")
 		article, err := handler.service.GetLocalArticle(ctx, title)
@@ -96,7 +96,7 @@ func EditArticle(handler *Handler) http.HandlerFunc {
 		// TODO: store article URL in database, use it to generate paths.
 		path, _ := url.Parse("/a/" + title)
 		hrefs := map[templates.Place]string{
-			templates.Edit:    edit,
+			templates.Edit: edit,
 		}
 		if !newarticle {
 			hrefs[templates.Read] = path.String()
@@ -110,9 +110,9 @@ func EditArticle(handler *Handler) http.HandlerFunc {
 			PageTitle:     "Editing " + article.Title,
 			Place:         templates.Edit,
 			Path:          r.URL,
-			Hrefs: hrefs,
-			IsArticle: false,
-			Child:     templates.Editor(path.String(), edit, title, summary, preview, content),
+			Hrefs:         hrefs,
+			IsArticle:     false,
+			Child:         templates.Editor(path.String(), edit, title, summary, preview, content),
 		}).Render(ctx, w)
 	}
 }
@@ -135,9 +135,9 @@ func GetArticle(handler *Handler) http.HandlerFunc {
 					PageTitle:     title,
 					Place:         templates.Read,
 					Path:          r.URL,
-					IsArticle: false,
-					Child: templates.NonexistingArticle(r.URL.JoinPath("edit").String(), title),
-					}).Render(ctx, w)
+					IsArticle:     false,
+					Child:         templates.NonexistingArticle(r.URL.JoinPath("edit").String(), title),
+				}).Render(ctx, w)
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 				w.Write([]byte(err.Error()))
