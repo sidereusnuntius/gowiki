@@ -200,11 +200,15 @@ WHERE id = ?;
 -- name: UserExists :one
 SELECT COUNT(id) == 1 FROM users WHERE ap_id = ?;
 
--- name: UserIdByOutbox :one
-SELECT ap_id from users where outbox = ?;
+-- name: ActorIdByOutbox :one
+SELECT ap_id from users u where u.outbox = ?1
+UNION
+SELECT url as ap_id FROM instances i WHERE i.outbox = ?1;
 
--- name: UserIdByInbox :one
-SELECT ap_id from users where inbox = ?;
+-- name: ActorIdByInbox :one
+SELECT ap_id FROM users u WHERE u.inbox = ?1
+UNION
+SELECT url AS ap_id FROM instances i WHERE i.inbox = ?1;
 
 -- name: OutboxForInbox :one
 SELECT outbox from users where inbox = ?;

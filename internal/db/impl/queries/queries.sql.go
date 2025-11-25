@@ -10,6 +10,32 @@ import (
 	"database/sql"
 )
 
+const actorIdByInbox = `-- name: ActorIdByInbox :one
+SELECT ap_id FROM users u WHERE u.inbox = ?1
+UNION
+SELECT url AS ap_id FROM instances i WHERE i.inbox = ?1
+`
+
+func (q *Queries) ActorIdByInbox(ctx context.Context, inbox string) (string, error) {
+	row := q.db.QueryRowContext(ctx, actorIdByInbox, inbox)
+	var ap_id string
+	err := row.Scan(&ap_id)
+	return ap_id, err
+}
+
+const actorIdByOutbox = `-- name: ActorIdByOutbox :one
+SELECT ap_id from users u where u.outbox = ?1
+UNION
+SELECT url as ap_id FROM instances i WHERE i.outbox = ?1
+`
+
+func (q *Queries) ActorIdByOutbox(ctx context.Context, outbox string) (string, error) {
+	row := q.db.QueryRowContext(ctx, actorIdByOutbox, outbox)
+	var ap_id string
+	err := row.Scan(&ap_id)
+	return ap_id, err
+}
+
 const addToCollection = `-- name: AddToCollection :one
 INSERT INTO ap_collection_members (collection_ap_id, member_ap_id) VALUES (?, ?) RETURNING id
 `
@@ -1021,26 +1047,4 @@ func (q *Queries) UserExists(ctx context.Context, apID string) (bool, error) {
 	var column_1 bool
 	err := row.Scan(&column_1)
 	return column_1, err
-}
-
-const userIdByInbox = `-- name: UserIdByInbox :one
-SELECT ap_id from users where inbox = ?
-`
-
-func (q *Queries) UserIdByInbox(ctx context.Context, inbox string) (string, error) {
-	row := q.db.QueryRowContext(ctx, userIdByInbox, inbox)
-	var ap_id string
-	err := row.Scan(&ap_id)
-	return ap_id, err
-}
-
-const userIdByOutbox = `-- name: UserIdByOutbox :one
-SELECT ap_id from users where outbox = ?
-`
-
-func (q *Queries) UserIdByOutbox(ctx context.Context, outbox string) (string, error) {
-	row := q.db.QueryRowContext(ctx, userIdByOutbox, outbox)
-	var ap_id string
-	err := row.Scan(&ap_id)
-	return ap_id, err
 }

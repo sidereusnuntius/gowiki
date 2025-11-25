@@ -88,9 +88,12 @@ type File struct {
 type Instance struct {
 	ID        int64
 	Hostname  string
+	Url       sql.NullString
 	PublicKey sql.NullString
 	Inbox     sql.NullString
-	Created   int64
+	Followers sql.NullString
+	Outbox    sql.NullString
+	Blocked   interface{}
 	Updated   int64
 }
 
