@@ -71,12 +71,21 @@ func (fd *FedDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.Act
 }
 
 func (fd *FedDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
-	log.Info().Any("inbox", inbox).Msg("setting inbox")
+	log.Debug().Msg("at SetInbox()")
+	iter := inbox.GetActivityStreamsOrderedItems()
+
+	for item := iter.Begin(); item != nil; item = item.Next() {
+		if item.IsIRI() {
+			fmt.Printf("IRI: %s\n", item.GetIRI())
+		}
+	}
+
 	// Most certainly won't be supported.
 	return nil
 }
 
 func (fd *FedDB) Owns(ctx context.Context, id *url.URL) (owns bool, err error) {
+	log.Debug().Msg("at Owns()")
 	// TODO: rename Domain to Host
 	if id.Host != fd.Config.Domain {
 		return
@@ -86,12 +95,13 @@ func (fd *FedDB) Owns(ctx context.Context, id *url.URL) (owns bool, err error) {
 }
 
 func (fd *FedDB) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
-	log.Debug().Msg("checking if " + id.String() + " exists")
+	log.Debug().Msg("at Exists(): checking if " + id.String() + " exists")
 	exists, err = fd.DB.Exists(ctx, id)
 	return
 }
 
 func (fd *FedDB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
+	log.Debug().Msg("at ActorForOutbox()")
 	actorIRI, err = fd.DB.ActorIdByOutbox(ctx, outboxIRI)
 	return
 }
@@ -103,11 +113,13 @@ func (fd *FedDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI
 }
 
 func (fd *FedDB) OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
+	log.Debug().Msg("at OutboxForInbox()")
 	outboxIRI, err = fd.DB.OutboxForInbox(ctx, inboxIRI)
 	return
 }
 
 func (fd *FedDB) NewID(ctx context.Context, t vocab.Type) (id *url.URL, err error) {
+	log.Debug().Msg("at NewID()")
 	var title, path string
 	switch v := t.(type) {
 	case vocab.ActivityStreamsArticle:

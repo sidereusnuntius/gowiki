@@ -14,8 +14,7 @@ import (
 )
 
 func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
-	id.Scheme = "http"
-	log.Debug().Str("id", id.String()).Msg("trying to get ActivityStreams object")
+	log.Debug().Str("id", id.String()).Msg("at Get(): trying to get ActivityStreams object")
 	obj, err := fd.DB.GetApObject(ctx, id)
 	if err != nil {
 		return
@@ -38,7 +37,7 @@ func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err er
 }
 
 func (fd *FedDB) Create(ctx context.Context, asType vocab.Type) error {
-	log.Info().Any("obj", asType).Msg("creating AS object")
+	log.Info().Any("obj", asType).Msg("at Create(): creating AS object")
 	props, err := streams.Serialize(asType)
 	if err != nil {
 		return err

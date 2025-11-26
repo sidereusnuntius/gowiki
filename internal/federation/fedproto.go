@@ -2,6 +2,7 @@ package federation
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -16,6 +17,7 @@ type ApService struct {
 
 // AuthenticatePostInbox implements pub.FederatingProtocol.
 func (f ApService) AuthenticatePostInbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
+	log.Debug().Msg("at AuthenticatePostInbox()")
 	out = c
 	authenticated = true
 	return
@@ -35,6 +37,7 @@ func (f ApService) DefaultCallback(c context.Context, activity pub.Activity) err
 
 // FederatingCallbacks implements pub.FederatingProtocol.
 func (f ApService) FederatingCallbacks(c context.Context) (wrapped pub.FederatingWrappedCallbacks, other []interface{}, err error) {
+	log.Debug().Msg("at AuthenticatePostInbox()")
 	wrapped = pub.FederatingWrappedCallbacks{
 		Follow: func(ctx context.Context, asf vocab.ActivityStreamsFollow) error {
 			log.Info().Msg("Received a follow activity")
@@ -71,6 +74,8 @@ func (f ApService) MaxInboxForwardingRecursionDepth(c context.Context) int {
 
 // PostInboxRequestBodyHook implements pub.FederatingProtocol.
 func (f ApService) PostInboxRequestBodyHook(c context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
-	log.Debug().Msg("at PostInboxRequestBodyHook():")
+	log.Debug().Msg("at PostInboxRequestBodyHook()")
+	b, _ := streams.Serialize(activity)
+	fmt.Printf("%+v\n", b)
 	return c, nil
 }
