@@ -73,7 +73,7 @@ func EnsureInstance(DB *sql.DB, cfg *config.Configuration) error {
 		return err
 	}
 
-	_, err = DB.Exec(`INSERT INTO instances(
+	res, err := DB.Exec(`INSERT INTO instances(
 				name,
 				hostname,
 				url,
@@ -82,10 +82,20 @@ func EnsureInstance(DB *sql.DB, cfg *config.Configuration) error {
 				inbox,
 				outbox,
 				followers
-			) VALUES (?,?,?,?,?,?,?,?)`,
+			) VALUES (?,?,?,?,?,?,?,?) RETURNING id`,
 		cfg.Name, cfg.Url.Host, cfg.Url.String(), pub, priv, inbox, outbox, followers)
 	if err != nil {
 		log.Error().Err(err).Msg("insert failed")
 	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Error().Err(err).Msg("could not get last inserted id")
+		return err
+	}
+
+	_, err = DB.Exec(`
+INSERT INTO ap_object_cache (ap_id, local_table, local_id, type)
+VALUES (?, ?, ?, ?)`, cfg.Url.String(), "instances", id, "Group")
 	return err
 }

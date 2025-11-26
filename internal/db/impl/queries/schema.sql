@@ -1,27 +1,46 @@
+CREATE TABLE instances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(64),
+    hostname VARCHAR(255) UNIQUE NOT NULL,
+    url VARCHAR(255) UNIQUE,
+    public_key TEXT,
+    private_key TEXT,
+    inbox VARCHAR(255) UNIQUE,
+    outbox VARCHAR(255) UNIQUE,
+    followers VARCHAR(255) UNIQUE,
+    blocked BOOLEAN DEFAULT FALSE NOT NULL,
+
+    created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+    updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
+);
+
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot BOOLEAN DEFAULT FALSE NOT NULL,
     local BOOLEAN DEFAULT TRUE NOT NULL,
     ap_id VARCHAR(255) NOT NULL,
     url VARCHAR(255),
-    username VARCHAR(64) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    domain VARCHAR(64),
+    username VARCHAR(64),
+    name VARCHAR(255),
+    instance_id INTEGER,
     summary TEXT,
     inbox TEXT,
     outbox VARCHAR(255),
     followers VARCHAR(255),
     public_key TEXT,
     private_key TEXT,
+    -- Only trusted users can review other users' revisions; if an instance only accepts signing up via an invitation link,
+    -- then the registered users are approved by default.
     trusted BOOLEAN NOT NULL,
     created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_fetched INT,
 
-    UNIQUE (username, domain),
+    FOREIGN KEY (instance_id) REFERENCES instances (id),
+    UNIQUE (username, instance_id),
     UNIQUE (ap_id),
     UNIQUE (inbox),
-    UNIQUE(outbox)
+    UNIQUE (outbox)
 );
 
 -- Store also the key the user used to sign up, if they signed up using an invitation
@@ -113,22 +132,6 @@ CREATE TABLE revisions (
     FOREIGN KEY (based_on) REFERENCES revisions (id)
 );
 
-CREATE TABLE instances (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name VARCHAR(64),
-    hostname VARCHAR(255) UNIQUE NOT NULL,
-    url VARCHAR(255) UNIQUE,
-    public_key TEXT,
-    private_key TEXT,
-    inbox VARCHAR(255) UNIQUE,
-    outbox VARCHAR(255) UNIQUE,
-    followers VARCHAR(255) UNIQUE,
-    blocked BOOLEAN DEFAULT FALSE NOT NULL,
-
-    created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
-    updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
-);
-
 CREATE TABLE files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     digest CHAR(64) NOT NULL,
@@ -183,4 +186,18 @@ CREATE TABLE ap_collection_members (
     inserted_at INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
 
     UNIQUE (collection_ap_id, member_ap_id)
+);
+
+CREATE TABLE follows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    follow_ap_id VARCHAR(255) NOT NULL,
+    follower_ap_id VARCHAR(255) NOT NULL,
+    followee_ap_id VARCHAR(255) NOT NULL,
+    follower_inbox_url VARCHAR(255),
+    approved BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at INTEGER DEFAULT (cast(strftime('%s','now') as int)),
+
+    UNIQUE (follow_ap_id),
+    UNIQUE (follower_ap_id, followee_ap_id),
+    CHECK (follower_ap_id != followee_ap_id)
 );

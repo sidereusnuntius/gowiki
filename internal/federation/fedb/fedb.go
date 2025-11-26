@@ -14,6 +14,11 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/db"
 )
 
+var (
+	ErrMissingProperty = errors.New("missing property")
+	ErrNotFoundIRI = errors.New("unknown IRI")
+)
+
 type FedDB struct {
 	DB     db.DB
 	Config config.Configuration

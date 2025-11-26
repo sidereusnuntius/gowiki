@@ -23,7 +23,7 @@ func (d *dbImpl) GetRevisionList(ctx context.Context, title string) ([]domain.Re
 			Reviewed: r.Reviewed,
 			Title:    r.Title,
 			Summary:  r.Summary.String,
-			Username: r.Username,
+			Username: r.Username.String,
 			Created:  r.Created,
 		})
 	}

@@ -23,7 +23,10 @@ func (d *dbImpl) IsUserTrusted(ctx context.Context, id int64) (bool, error) {
 }
 
 func (d *dbImpl) GetAuthDataByUsername(ctx context.Context, username string) (domain.Account, error) {
-	u, err := d.queries.AuthUserByUsername(ctx, username)
+	u, err := d.queries.AuthUserByUsername(ctx, sql.NullString{
+		Valid: true,
+		String: username,
+	})
 	if err != nil {
 		return domain.Account{}, err
 	}
@@ -31,7 +34,7 @@ func (d *dbImpl) GetAuthDataByUsername(ctx context.Context, username string) (do
 	return domain.Account{
 		UserID:    u.UserID,
 		AccountID: u.AccountID,
-		Username:  u.Username,
+		Username:  u.Username.String,
 		Password:  u.Password,
 		Admin:     u.Admin,
 	}, nil
@@ -47,7 +50,7 @@ func (d *dbImpl) GetAuthDataByEmail(ctx context.Context, email string) (domain.A
 	return domain.Account{
 		UserID:    u.UserID,
 		AccountID: u.AccountID,
-		Username:  u.Username,
+		Username:  u.Username.String,
 		Password:  u.Password,
 		Admin:     u.Admin,
 	}, nil
@@ -59,8 +62,14 @@ func (d *dbImpl) InsertUser(ctx context.Context, user domain.UserFedInternal, ac
 		id, err := tx.CreateLocalUser(ctx, queries.CreateLocalUserParams{
 			Trusted:    user.Trusted,
 			ApID:       user.ApId.String(),
-			Username:   user.Username,
-			Name:       user.Name,
+			Username:   sql.NullString{
+				Valid: user.Username != "",
+				String: user.Username,
+			},
+			Name:       sql.NullString{
+				Valid: user.Name != "",
+				String: user.Name,
+			},
 			Inbox:      user.Inbox.String(),
 			Outbox:     user.Outbox.String(),
 			Followers:  user.Followers.String(),

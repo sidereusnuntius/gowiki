@@ -140,8 +140,8 @@ func (d *dbImpl) GetUserFed(ctx context.Context, id *url.URL) (user domain.UserF
 
 	user = domain.UserFed{
 		UserCore: domain.UserCore{
-			Username: u.Username,
-			Name:     u.Name,
+			Username: u.Username.String,
+			Name:     u.Name.String,
 			Summary:  u.Summary.String,
 			//URL: , TODO
 		},
@@ -159,17 +159,36 @@ func (d *dbImpl) GetUserFed(ctx context.Context, id *url.URL) (user domain.UserF
 func (d *dbImpl) GetInstanceIdOrCreate(ctx context.Context, hostname string) (id int64, err error) {
 	id, err = d.queries.GetInstanceId(ctx, hostname)
 
-	if err == sql.ErrNoRows {
+	if err == nil || err != sql.ErrNoRows {
+		err = d.HandleError(err)
+		return
+	}
+
+	err = d.WithTx(func(tx *queries.Queries) error {
 		id, err = d.queries.InsertInstance(ctx, queries.InsertInstanceParams{
 			Hostname:  hostname,
 			PublicKey: sql.NullString{},
 			Inbox:     sql.NullString{},
 		})
-	}
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		err = d.HandleError(err)
-	}
+		apId, _ := url.Parse("https://" + hostname)
+
+		return d.queries.InsertApObject(ctx, queries.InsertApObjectParams{
+			ApID: apId.String(),
+			LocalTable: sql.NullString{
+				Valid: true,
+				String: "instances",
+			},
+			LocalID: sql.NullInt64{
+				Valid: true,
+				Int64: id,
+			},
+			Type: "Group",
+		})
+	})
 
 	return
 }
@@ -256,8 +275,8 @@ func (d *dbImpl) GetUserByID(ctx context.Context, id int64) (user domain.UserFed
 
 	return domain.UserFed{
 		UserCore: domain.UserCore{
-			Username: u.Username,
-			Name:     u.Name,
+			Username: u.Username.String,
+			Name:     u.Name.String,
 			Summary:  u.Summary.String,
 			//URL: , TODO
 		},
@@ -269,4 +288,25 @@ func (d *dbImpl) GetUserByID(ctx context.Context, id int64) (user domain.UserFed
 		Created:     time.Unix(u.Created, 0),
 		LastUpdated: time.Unix(u.LastUpdated, 0),
 	}, err
+}
+
+func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) error {
+	var inbox string
+	if follow.FollowerInbox != nil {
+		inbox = follow.FollowerInbox.String()
+	}
+	err := d.queries.Follow(ctx, queries.FollowParams{
+		FollowApID: follow.IRI.String(),
+		FollowerApID: follow.Follower.String(),
+		FolloweeApID: follow.Followee.String(),
+		FollowerInboxUrl: sql.NullString{
+			Valid: follow.FollowerInbox != nil,
+			String: inbox,
+		},
+	})
+
+	if err != nil {
+		err = d.HandleError(err)
+	}
+	return err
 }

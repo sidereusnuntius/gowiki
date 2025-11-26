@@ -91,7 +91,7 @@ func ReadConfig() (Configuration, error) {
 	}
 
 	port := strconv.FormatUint(uint64(cfg.Port), 10)
-	u, err := url.Parse(schema + "://" + cfg.Domain + ":" + port)
+	u, err := url.Parse(schema + "://" + cfg.Domain + ":" + port + "/")
 	if err != nil {
 		return cfg, err
 	}

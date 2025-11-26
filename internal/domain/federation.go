@@ -14,3 +14,11 @@ type FedObj struct {
 	LocalTable string
 	LocalId    int64
 }
+
+type Follow struct {
+	IRI *url.URL
+	Follower *url.URL
+	Followee *url.URL
+	FollowerInbox *url.URL
+	Raw string
+}

@@ -85,16 +85,29 @@ type File struct {
 	Created    int64
 }
 
+type Follow struct {
+	ID               int64
+	FollowApID       string
+	FollowerApID     string
+	FolloweeApID     string
+	FollowerInboxUrl sql.NullString
+	Approved         bool
+	CreatedAt        sql.NullInt64
+}
+
 type Instance struct {
-	ID        int64
-	Hostname  string
-	Url       sql.NullString
-	PublicKey sql.NullString
-	Inbox     sql.NullString
-	Followers sql.NullString
-	Outbox    sql.NullString
-	Blocked   interface{}
-	Updated   int64
+	ID         int64
+	Name       sql.NullString
+	Hostname   string
+	Url        sql.NullString
+	PublicKey  sql.NullString
+	PrivateKey sql.NullString
+	Inbox      sql.NullString
+	Outbox     sql.NullString
+	Followers  sql.NullString
+	Blocked    bool
+	Created    int64
+	Updated    int64
 }
 
 type Invitation struct {
@@ -128,9 +141,9 @@ type User struct {
 	Local       bool
 	ApID        string
 	Url         sql.NullString
-	Username    string
-	Name        string
-	Domain      sql.NullString
+	Username    sql.NullString
+	Name        sql.NullString
+	InstanceID  sql.NullInt64
 	Summary     sql.NullString
 	Inbox       string
 	Outbox      string

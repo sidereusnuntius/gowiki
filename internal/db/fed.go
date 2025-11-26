@@ -21,4 +21,5 @@ type Fed interface {
 	DeleteAp(ctx context.Context, id *url.URL) error
 	CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error)
 	GetCollectionPage(ctx context.Context, iri *url.URL, last int64) (ids []*url.URL, err error)
+	Follow(ctx context.Context, follow domain.Follow) error
 }

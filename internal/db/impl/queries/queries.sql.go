@@ -80,7 +80,7 @@ LIMIT 1
 type AuthUserByEmailRow struct {
 	UserID    int64
 	AccountID int64
-	Username  string
+	Username  sql.NullString
 	Password  string
 	Admin     bool
 }
@@ -115,12 +115,12 @@ LIMIT 1
 type AuthUserByUsernameRow struct {
 	UserID    int64
 	AccountID int64
-	Username  string
+	Username  sql.NullString
 	Password  string
 	Admin     bool
 }
 
-func (q *Queries) AuthUserByUsername(ctx context.Context, username string) (AuthUserByUsernameRow, error) {
+func (q *Queries) AuthUserByUsername(ctx context.Context, username sql.NullString) (AuthUserByUsernameRow, error) {
 	row := q.db.QueryRowContext(ctx, authUserByUsername, username)
 	var i AuthUserByUsernameRow
 	err := row.Scan(
@@ -228,8 +228,8 @@ VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING id
 
 type CreateLocalUserParams struct {
 	ApID       string
-	Username   string
-	Name       string
+	Username   sql.NullString
+	Name       sql.NullString
 	Trusted    bool
 	Summary    sql.NullString
 	Inbox      string
@@ -319,6 +319,32 @@ func (q *Queries) FileExists(ctx context.Context, digest string) (bool, error) {
 	var column_1 bool
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const follow = `-- name: Follow :exec
+INSERT INTO follows (
+    follow_ap_id,
+    follower_ap_id,
+    followee_ap_id,
+    follower_inbox_url
+) VALUES (?, ?, ?, ?)
+`
+
+type FollowParams struct {
+	FollowApID       string
+	FollowerApID     string
+	FolloweeApID     string
+	FollowerInboxUrl sql.NullString
+}
+
+func (q *Queries) Follow(ctx context.Context, arg FollowParams) error {
+	_, err := q.db.ExecContext(ctx, follow,
+		arg.FollowApID,
+		arg.FollowerApID,
+		arg.FolloweeApID,
+		arg.FollowerInboxUrl,
+	)
+	return err
 }
 
 const getApObject = `-- name: GetApObject :one
@@ -478,9 +504,10 @@ SELECT
     f.url,
     f.created,
     u.username,
-    u.domain
+    i.hostname
 FROM files f
 LEFT JOIN users u ON u.id = f.uploaded_by
+LEFT JOIN instances i ON u.instance_id = i.id
 WHERE f.digest = ?
 `
 
@@ -498,7 +525,7 @@ type GetFileRow struct {
 	Url       string
 	Created   int64
 	Username  sql.NullString
-	Domain    sql.NullString
+	Hostname  sql.NullString
 }
 
 func (q *Queries) GetFile(ctx context.Context, digest string) (GetFileRow, error) {
@@ -518,47 +545,48 @@ func (q *Queries) GetFile(ctx context.Context, digest string) (GetFileRow, error
 		&i.Url,
 		&i.Created,
 		&i.Username,
-		&i.Domain,
+		&i.Hostname,
 	)
 	return i, err
 }
 
 const getForeignUserData = `-- name: GetForeignUserData :one
 SELECT
-    id,
-    username,
-    name,
-    domain,
-    url,
-    local,
-    summary
-FROM users
-WHERE username = lower(?) AND NOT local AND domain = ?
+    u.id,
+    u.username,
+    u.name,
+    i.hostname,
+    u.url,
+    u.local,
+    u.summary
+FROM users u
+JOIN instances i ON u.instance_id = i.id
+WHERE u.username = lower(?) AND NOT u.local AND i.hostname = ?
 `
 
 type GetForeignUserDataParams struct {
-	LOWER  string
-	Domain sql.NullString
+	LOWER    string
+	Hostname string
 }
 
 type GetForeignUserDataRow struct {
 	ID       int64
-	Username string
-	Name     string
-	Domain   sql.NullString
+	Username sql.NullString
+	Name     sql.NullString
+	Hostname string
 	Url      sql.NullString
 	Local    bool
 	Summary  sql.NullString
 }
 
 func (q *Queries) GetForeignUserData(ctx context.Context, arg GetForeignUserDataParams) (GetForeignUserDataRow, error) {
-	row := q.db.QueryRowContext(ctx, getForeignUserData, arg.LOWER, arg.Domain)
+	row := q.db.QueryRowContext(ctx, getForeignUserData, arg.LOWER, arg.Hostname)
 	var i GetForeignUserDataRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.Name,
-		&i.Domain,
+		&i.Hostname,
 		&i.Url,
 		&i.Local,
 		&i.Summary,
@@ -627,8 +655,8 @@ WHERE local AND username = lower(?)
 
 type GetLocalUserDataRow struct {
 	ID       int64
-	Username string
-	Name     string
+	Username sql.NullString
+	Name     sql.NullString
 	Url      sql.NullString
 	Summary  sql.NullString
 }
@@ -667,7 +695,7 @@ type GetRevisionListRow struct {
 	Reviewed bool
 	Summary  sql.NullString
 	Title    string
-	Username string
+	Username sql.NullString
 	Created  int64
 }
 
@@ -771,8 +799,8 @@ WHERE local AND ap_id = ?
 type GetUserFullRow struct {
 	ApID        string
 	Url         sql.NullString
-	Username    string
-	Name        string
+	Username    sql.NullString
+	Name        sql.NullString
 	Summary     sql.NullString
 	Inbox       string
 	Outbox      string
@@ -821,8 +849,8 @@ WHERE id = ?
 type GetUserFullByIDRow struct {
 	ApID        string
 	Url         sql.NullString
-	Username    string
-	Name        string
+	Username    sql.NullString
+	Name        sql.NullString
 	Summary     sql.NullString
 	Inbox       string
 	Outbox      string

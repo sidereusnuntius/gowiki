@@ -159,6 +159,20 @@ func (mr *MockDBMockRecorder) FileExists(ctx, hash any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FileExists", reflect.TypeOf((*MockDB)(nil).FileExists), ctx, hash)
 }
 
+// Follow mocks base method.
+func (m *MockDB) Follow(ctx context.Context, follow domain.Follow) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Follow", ctx, follow)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Follow indicates an expected call of Follow.
+func (mr *MockDBMockRecorder) Follow(ctx, follow any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Follow", reflect.TypeOf((*MockDB)(nil).Follow), ctx, follow)
+}
+
 // GetApObject mocks base method.
 func (m *MockDB) GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, error) {
 	m.ctrl.T.Helper()

@@ -17,12 +17,6 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type comparison struct {
-	property string
-	expect   string
-	got      any
-}
-
 func TestGet_UserSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	DB := mock_db.NewMockDB(ctrl)

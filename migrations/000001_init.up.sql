@@ -1,12 +1,21 @@
+CREATE TABLE instances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hostname VARCHAR(255) UNIQUE NOT NULL,
+    public_key TEXT,
+    inbox VARCHAR(255),
+    created INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+    updated INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
+);
+
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot BOOLEAN DEFAULT FALSE NOT NULL,
     local BOOLEAN DEFAULT TRUE NOT NULL,
     ap_id VARCHAR(255) NOT NULL,
     url VARCHAR(255),
-    username VARCHAR(64) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    domain VARCHAR(64),
+    username VARCHAR(64),
+    name VARCHAR(255),
+    instance_id INTEGER,
     summary TEXT,
     inbox TEXT,
     outbox VARCHAR(255),
@@ -20,10 +29,11 @@ CREATE TABLE users (
     last_updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_fetched INT,
 
-    UNIQUE (username, domain),
+    FOREIGN KEY (instance_id) REFERENCES instances (id),
+    UNIQUE (username, instance_id),
     UNIQUE (ap_id),
     UNIQUE (inbox),
-    UNIQUE(outbox)
+    UNIQUE (outbox)
 );
 
 -- Store also the key the user used to sign up, if they signed up using an invitation
@@ -69,13 +79,4 @@ CREATE TABLE approval_requests (
     UNIQUE (account_id),
     FOREIGN KEY (reviewer) REFERENCES accounts (id),
     CHECK (reviewer != account_id)
-);
-
-CREATE TABLE instances (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    hostname VARCHAR(255) NOT NULL,
-    public_key TEXT,
-    inbox VARCHAR(255),
-    created INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
-    updated INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL
 );

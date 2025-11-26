@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type ApService struct {
+type ApService struct {	
 }
 
 // AuthenticatePostInbox implements pub.FederatingProtocol.

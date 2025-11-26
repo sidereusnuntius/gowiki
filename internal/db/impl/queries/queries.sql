@@ -143,15 +143,16 @@ WHERE local AND username = lower(?);
 
 -- name: GetForeignUserData :one
 SELECT
-    id,
-    username,
-    name,
-    domain,
-    url,
-    local,
-    summary
-FROM users
-WHERE username = lower(?) AND NOT local AND domain = ?;
+    u.id,
+    u.username,
+    u.name,
+    i.hostname,
+    u.url,
+    u.local,
+    u.summary
+FROM users u
+JOIN instances i ON u.instance_id = i.id
+WHERE u.username = lower(?) AND NOT u.local AND i.hostname = ?;
 
 -- name: GetRevisionsByUserId :many
 SELECT
@@ -254,9 +255,10 @@ SELECT
     f.url,
     f.created,
     u.username,
-    u.domain
+    i.hostname
 FROM files f
 LEFT JOIN users u ON u.id = f.uploaded_by
+LEFT JOIN instances i ON u.instance_id = i.id
 WHERE f.digest = ?;
 
 -- name: InsertApObject :exec
@@ -305,3 +307,11 @@ SELECT EXISTS(SELECT TRUE FROM ap_collection_members WHERE collection_ap_id = ? 
 
 -- name: GetCollectionFirstPage :many
 SELECT member_ap_id FROM ap_collection_members WHERE collection_ap_id = ? ORDER BY id DESC;
+
+-- name: Follow :exec
+INSERT INTO follows (
+    follow_ap_id,
+    follower_ap_id,
+    followee_ap_id,
+    follower_inbox_url
+) VALUES (?, ?, ?, ?);
