@@ -2,7 +2,11 @@ package impl
 
 import (
 	"context"
+	"crypto"
+	"crypto/x509"
 	"database/sql"
+	"encoding/pem"
+	"errors"
 	"net/url"
 	"time"
 
@@ -309,4 +313,26 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) error {
 		err = d.HandleError(err)
 	}
 	return err
+}
+
+func (d *dbImpl) GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error) {
+	res, err := d.queries.GetUserKeys(ctx, id)
+	if err != nil {
+		err = d.HandleError(err)
+		return
+	}
+
+	block, _ := pem.Decode([]byte(res.PrivateKey))
+	if block == nil || block.Type != "PRIVATE KEY" {
+		err = errors.New("failure to parse private key")
+		return
+	}
+
+	key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return
+	}
+
+	owner, err = url.Parse(res.ApID)
+	return
 }

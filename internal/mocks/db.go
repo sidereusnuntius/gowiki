@@ -11,6 +11,7 @@ package mock_db
 
 import (
 	context "context"
+	crypto "crypto"
 	url "net/url"
 	reflect "reflect"
 
@@ -383,6 +384,22 @@ func (m *MockDB) GetUserFed(ctx context.Context, id *url.URL) (domain.UserFed, e
 func (mr *MockDBMockRecorder) GetUserFed(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserFed", reflect.TypeOf((*MockDB)(nil).GetUserFed), ctx, id)
+}
+
+// GetUserPrivateKey mocks base method.
+func (m *MockDB) GetUserPrivateKey(ctx context.Context, id int64) (*url.URL, crypto.PrivateKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserPrivateKey", ctx, id)
+	ret0, _ := ret[0].(*url.URL)
+	ret1, _ := ret[1].(crypto.PrivateKey)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetUserPrivateKey indicates an expected call of GetUserPrivateKey.
+func (mr *MockDBMockRecorder) GetUserPrivateKey(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPrivateKey", reflect.TypeOf((*MockDB)(nil).GetUserPrivateKey), ctx, id)
 }
 
 // InsertUser mocks base method.

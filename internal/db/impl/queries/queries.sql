@@ -315,3 +315,6 @@ INSERT INTO follows (
     followee_ap_id,
     follower_inbox_url
 ) VALUES (?, ?, ?, ?);
+
+-- name: GetUserKeys :one
+SELECT ap_id, private_key FROM users WHERE local AND id = ?;

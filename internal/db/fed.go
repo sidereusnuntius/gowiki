@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"crypto"
 	"net/url"
 
 	"github.com/sidereusnuntius/gowiki/internal/domain"
@@ -22,4 +23,5 @@ type Fed interface {
 	CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error)
 	GetCollectionPage(ctx context.Context, iri *url.URL, last int64) (ids []*url.URL, err error)
 	Follow(ctx context.Context, follow domain.Follow) error
+	GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error)
 }

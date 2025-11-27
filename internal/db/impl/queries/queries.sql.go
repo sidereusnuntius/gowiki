@@ -879,6 +879,22 @@ func (q *Queries) GetUserFullByID(ctx context.Context, id int64) (GetUserFullByI
 	return i, err
 }
 
+const getUserKeys = `-- name: GetUserKeys :one
+SELECT ap_id, private_key FROM users WHERE local AND id = ?
+`
+
+type GetUserKeysRow struct {
+	ApID       string
+	PrivateKey string
+}
+
+func (q *Queries) GetUserKeys(ctx context.Context, id int64) (GetUserKeysRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserKeys, id)
+	var i GetUserKeysRow
+	err := row.Scan(&i.ApID, &i.PrivateKey)
+	return i, err
+}
+
 const insertApObject = `-- name: InsertApObject :exec
 INSERT INTO ap_object_cache (ap_id, local_table, local_id, type, raw_json, last_updated, last_fetched)
 VALUES (?, ?, ?, ?, ?, ?, ?)
