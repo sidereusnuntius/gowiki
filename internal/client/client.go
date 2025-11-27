@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"code.superseriousbusiness.org/activity/pub"
+	"code.superseriousbusiness.org/activity/streams"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"code.superseriousbusiness.org/httpsig"
 	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/db"
@@ -55,6 +57,23 @@ func New(db db.DB, client *http.Client, key crypto.PrivateKey, prefs []httpsig.A
 	}, nil
 }
 
+func (c *HttpClient) Get(ctx context.Context, iri *url.URL) (obj vocab.Type, err error) {
+	res, err := c.Dereference(ctx, iri)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+	decoder := json.NewDecoder(res.Body)
+	var props map[string]any
+	err = decoder.Decode(&props)
+	if err != nil {
+		return
+	}
+
+	obj, err = streams.ToType(ctx, props)
+	return
+}
+
 func (c *HttpClient) Dereference(ctx context.Context, iri *url.URL) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, iri.String(), nil)
 	if err != nil {
@@ -64,6 +83,7 @@ func (c *HttpClient) Dereference(ctx context.Context, iri *url.URL) (*http.Respo
 	c.getSignerMutex.Lock()
 	defer c.getSignerMutex.Unlock()
 	req.Header.Set("Date", time.Now().Format(time.RFC3339))
+	req.Header.Set("Accept", "application/activity+json")
 	err = c.getSigner.SignRequest(c.key, c.pubKeyId.String(), req, nil)
 	if err != nil {
 		return nil, err

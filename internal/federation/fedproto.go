@@ -2,6 +2,7 @@ package federation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,6 +11,12 @@ import (
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/rs/zerolog/log"
+)
+
+var (
+	ErrMissingProperty = errors.New("missing property")
+	ErrUnprocessablePropValue = errors.New("unprocessable")
+	ErrNotFoundIRI = errors.New("unknown IRI")
 )
 
 type ApService struct {	

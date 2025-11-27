@@ -336,3 +336,57 @@ func (d *dbImpl) GetUserPrivateKey(ctx context.Context, id int64) (owner *url.UR
 	owner, err = url.Parse(res.ApID)
 	return
 }
+
+func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetched time.Time) error {
+	return d.WithTx(func(tx *queries.Queries) error {
+		id, err := tx.InsertOrUpdateUser(ctx, queries.InsertOrUpdateUserParams{
+			ApID: u.ApId.String(),
+			Url: sql.NullString{
+				Valid: u.URL != nil,
+				String: u.URL.String(),
+			},
+			Username: sql.NullString{
+				Valid: u.Username != "",
+				String: u.Username,
+			},
+			Name: sql.NullString{
+				Valid: u.Name != "",
+				String: u.Name,
+			},
+			Summary: sql.NullString{
+				Valid: u.Summary != "",
+				String: u.Summary,
+			},
+			Inbox: u.Inbox.String(),
+			Outbox: u.Outbox.String(),
+			Followers: u.Followers.String(),
+			PublicKey: u.PublicKey,
+			LastFetched: sql.NullInt64{
+				Valid: true,
+				Int64: fetched.Unix(),
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+
+		return tx.InsertOrUpdateApObject(ctx, queries.InsertOrUpdateApObjectParams{
+			ApID: u.ApId.String(),
+			LocalTable: sql.NullString{
+				Valid: true,
+				String: "users",
+			},
+			LocalID: sql.NullInt64{
+				Valid: true,
+				Int64: id,
+			},
+			Type: "Person",
+			RawJson: sql.NullString{},
+			LastFetched: sql.NullInt64{
+				Valid: true,
+				Int64: fetched.Unix(),
+			},
+		})
+	}) 
+}

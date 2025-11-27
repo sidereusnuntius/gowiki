@@ -318,3 +318,41 @@ INSERT INTO follows (
 
 -- name: GetUserKeys :one
 SELECT ap_id, private_key FROM users WHERE local AND id = ?;
+
+-- name: InsertOrUpdateUser :one
+INSERT INTO users (
+    local,
+    ap_id,
+    url,
+    username,
+    name,
+    summary,
+    inbox,
+    outbox,
+    followers,
+    public_key,
+    trusted,
+    last_updated,
+    last_fetched
+) VALUES (false, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, false, (cast(strftime('%s','now') as int)), ?10)
+ON CONFLICT (ap_id) DO UPDATE
+SET url = ?2,
+    username = ?3,
+    name = ?4,
+    summary = ?5,
+    inbox = ?6,
+    outbox = ?7,
+    followers = ?8,
+    public_key = ?9,
+    last_updated = cast(strftime('%s','now') as int),
+    last_fetched = ?10
+RETURNING id;
+
+-- name: InsertOrUpdateApObject :exec
+INSERT INTO ap_object_cache (ap_id, local_table, local_id, type, raw_json, last_fetched)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+ON CONFLICT (ap_id) DO UPDATE
+SET type = ?4,
+    raw_json = ?5,
+    last_updated = cast(strftime('%s','now') as int),
+    last_fetched = ?6;

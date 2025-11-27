@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/gob"
 	"log"
 	"net/http"
@@ -9,16 +12,19 @@ import (
 	"time"
 
 	"code.superseriousbusiness.org/activity/pub"
+	"code.superseriousbusiness.org/httpsig"
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
 	zero "github.com/rs/zerolog/log"
+	"github.com/sidereusnuntius/gowiki/internal/client"
 	"github.com/sidereusnuntius/gowiki/internal/config"
 	db "github.com/sidereusnuntius/gowiki/internal/db/impl"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 	"github.com/sidereusnuntius/gowiki/internal/federation"
 	"github.com/sidereusnuntius/gowiki/internal/federation/fedb"
 	"github.com/sidereusnuntius/gowiki/internal/initialization"
+	"github.com/sidereusnuntius/gowiki/internal/queue"
 	service "github.com/sidereusnuntius/gowiki/internal/service/impl"
 	"github.com/sidereusnuntius/gowiki/internal/state"
 	"github.com/sidereusnuntius/gowiki/internal/web"
@@ -46,6 +52,12 @@ func main() {
 	}
 	zero.Info().Msg("database connection established")
 
+	q, err := initialization.InitQueue(&config)
+	if err != nil {
+		zero.Fatal().Err(err).Msg("unable to connect with backlite database")
+		os.Exit(1)
+	}
+
 	if os.Getenv("SETUP") != "" {
 		err = initialization.SetupDB(&config, d, config.MigrationsFolder, config.DbUrl)
 		if err != nil {
@@ -62,6 +74,15 @@ func main() {
 	}
 
 	dd := db.New(config, d)
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	
+	client, err := client.New(dd, &http.Client{}, key, []httpsig.Algorithm{httpsig.RSA_SHA256}, config.Url)
+	if err != nil {
+		zero.Fatal().Err(err).Send()
+		os.Exit(1)
+	}
+
+	queue := queue.New(context.Background(), dd, client, q)
 
 	state := state.State{
 		DB:     dd,
@@ -73,7 +94,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fd := fedb.New(state.DB, config)
+	fd := fedb.New(state.DB, queue, config)
 	fh := pub.NewActivityStreamsHandler(&fd, Clock{})
 
 	ap := federation.ApService{}

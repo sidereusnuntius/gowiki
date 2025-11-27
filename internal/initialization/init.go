@@ -3,15 +3,39 @@ package initialization
 
 import (
 	"database/sql"
+	"log/slog"
+	"time"
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/source/file"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mikestefanello/backlite"
 	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/config"
 	"github.com/sidereusnuntius/gowiki/internal/utils"
 )
+
+func InitQueue(cfg *config.Configuration) (client *backlite.Client, err error) {
+	db, err := sql.Open("sqlite3", cfg.QueueDbPath + "?_journal=WAL")
+	if err != nil {
+		return
+	}
+
+	client, err = backlite.NewClient(backlite.ClientConfig{
+		DB: db,
+		Logger: slog.Default(),
+		NumWorkers: 6 ,
+		ReleaseAfter: 10 * time.Minute,
+		CleanupInterval: time.Hour,
+	})
+	if err != nil {
+		return
+	}
+
+	err = client.Install()
+	return
+}
 
 // SetupDB creates the database, if it does not yet exist, and applies all remaining migrations, then closes the
 // connection.

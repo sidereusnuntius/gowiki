@@ -1,12 +1,75 @@
 package conversions
 
 import (
+	"fmt"
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/federation"
 )
+
+func ActorToUser(a vocab.ActivityStreamsPerson) (u domain.UserFed, err error) {
+	idProp := a.GetJSONLDId()
+	if idProp == nil {
+		err = fmt.Errorf("%w: id", federation.ErrMissingProperty)
+	}
+	id := idProp.Get()
+	u.ApId = id
+
+	if name := a.GetActivityStreamsName(); name != nil && name.Len() != 0 {
+		u.Name = name.Begin().GetXMLSchemaString()
+	}
+
+	if username := a.GetActivityStreamsPreferredUsername(); username != nil {
+		u.Username = username.GetXMLSchemaString()
+	}
+
+	u.Domain = id.Host
+	if summary := a.GetActivityStreamsSummary(); summary != nil && summary.Len() != 0 {
+		u.Summary = summary.Begin().GetXMLSchemaString()
+	}
+
+	if url := a.GetActivityStreamsUrl(); url != nil && url.Len() != 0 {
+		u.URL = url.Begin().GetIRI()
+	}
+
+	inbox := a.GetActivityStreamsInbox()
+
+	if inbox == nil {
+		err = fmt.Errorf("%w: inbox", federation.ErrMissingProperty)
+		return
+	}
+	if !inbox.IsIRI() {
+		err = fmt.Errorf("%w: inbox", federation.ErrUnprocessablePropValue)
+	}
+	u.Inbox = inbox.GetIRI()
+
+	if outbox := a.GetActivityStreamsOutbox(); outbox != nil && outbox.IsIRI() {
+		u.Outbox = outbox.GetIRI()
+	}
+
+    if followers := a.GetActivityStreamsFollowers(); followers != nil && followers.IsIRI() {
+		u.Followers = followers.GetIRI()
+	}
+
+    if key := a.GetW3IDSecurityV1PublicKey(); key != nil && key.Len() != 0 {
+		k := key.Begin().Get()
+		keyPem := k.GetW3IDSecurityV1PublicKeyPem()
+		u.PublicKey = keyPem.Get()
+	}
+    
+	if created := a.GetActivityStreamsPublished(); created != nil {
+		// Perhaps use it?
+	}
+    
+	if updated := a.GetActivityStreamsUpdated(); updated != nil {
+
+	}
+	
+	return
+}
 
 func ArticleToObject(a domain.ArticleFed) vocab.Type {
 	o := streams.NewActivityStreamsArticle()

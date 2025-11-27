@@ -20,7 +20,8 @@ import (
 func TestGet_UserSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	DB := mock_db.NewMockDB(ctrl)
-	fdb := New(DB, configuration)
+	// mock queue
+	fdb := New(DB, nil, configuration)
 
 	sarah := makeUser(1, "sarah")
 	article := makeArticle(

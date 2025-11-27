@@ -12,15 +12,12 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/config"
 	"github.com/sidereusnuntius/gowiki/internal/db"
-)
-
-var (
-	ErrMissingProperty = errors.New("missing property")
-	ErrNotFoundIRI = errors.New("unknown IRI")
+	"github.com/sidereusnuntius/gowiki/internal/queue"
 )
 
 type FedDB struct {
 	DB     db.DB
+	Queue queue.ApQueue
 	Config config.Configuration
 	locks  *mutexes.MutexMap
 }
@@ -40,12 +37,13 @@ func (fd *FedDB) SetOutbox(c context.Context, outbox vocab.ActivityStreamsOrdere
 	panic("unimplemented")
 }
 
-func New(DB db.DB, config config.Configuration) FedDB {
+func New(DB db.DB, queue queue.ApQueue, config config.Configuration) FedDB {
 	locks := mutexes.MutexMap{}
 	return FedDB{
 		DB:     DB,
 		Config: config,
 		locks:  &locks,
+		Queue: queue,
 	}
 }
 

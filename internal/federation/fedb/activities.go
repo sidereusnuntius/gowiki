@@ -8,7 +8,9 @@ import (
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
+	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/federation"
 )
 
 // This file contains methods to handle the different types of activities supported by the wiki.
@@ -22,6 +24,14 @@ func (fd *FedDB) handleFollow(ctx context.Context, follow vocab.ActivityStreamsF
 	actor, err := fd.handleActorProp(follow.GetActivityStreamsActor())
 	if err != nil {
 		return err
+	}
+
+	
+	if exists, _ := fd.Exists(ctx, actor); !exists {
+		err = fd.Queue.Fetch(actor)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to enqueue fetch task")
+		}
 	}
 
 	obj, err := fd.handleObjProp(ctx, follow.GetActivityStreamsObject())
@@ -50,19 +60,19 @@ func (fd *FedDB) handleFollow(ctx context.Context, follow vocab.ActivityStreamsF
 
 func (fd *FedDB) handleId(prop vocab.JSONLDIdProperty) (iri *url.URL, err error) {
 	if prop == nil {
-		return nil, fmt.Errorf("%w: id", ErrMissingProperty)
+		return nil, fmt.Errorf("%w: id", federation.ErrMissingProperty)
 	}
 	
 	iri = prop.GetIRI()
 	if iri == nil {
-		err = fmt.Errorf("%w: id", ErrMissingProperty)
+		err = fmt.Errorf("%w: id", federation.ErrMissingProperty)
 	}
 	return
 }
 
 func (fd *FedDB) handleActorProp(prop vocab.ActivityStreamsActorProperty) (*url.URL, error){
 	if prop == nil || prop.Len() == 0 {
-		return nil, fmt.Errorf("%w: actor", ErrMissingProperty)
+		return nil, fmt.Errorf("%w: actor", federation.ErrMissingProperty)
 	}
 	
 	actor := prop.At(0)
@@ -78,7 +88,7 @@ func (fd *FedDB) handleActorProp(prop vocab.ActivityStreamsActorProperty) (*url.
 
 func (fd *FedDB) handleObjProp(ctx context.Context, prop vocab.ActivityStreamsObjectProperty) (*url.URL, error) {
 	if prop == nil || prop.Len() == 0 {
-		return nil, fmt.Errorf("%w: object", ErrMissingProperty)
+		return nil, fmt.Errorf("%w: object", federation.ErrMissingProperty)
 	}
 
 	var iri *url.URL
@@ -93,7 +103,7 @@ func (fd *FedDB) handleObjProp(ctx context.Context, prop vocab.ActivityStreamsOb
 	}
 
 	if !exists {
-		return nil, fmt.Errorf("%w: %s", ErrNotFoundIRI, iri)
+		return nil, fmt.Errorf("%w: %s", federation.ErrNotFoundIRI, iri)
 	}
 
 	return iri, nil

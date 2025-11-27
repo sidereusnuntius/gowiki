@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 	"net/url"
+	"time"
 
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
@@ -24,4 +25,6 @@ type Fed interface {
 	GetCollectionPage(ctx context.Context, iri *url.URL, last int64) (ids []*url.URL, err error)
 	Follow(ctx context.Context, follow domain.Follow) error
 	GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error)
+
+	InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetched time.Time) error
 }

@@ -14,6 +14,7 @@ import (
 	crypto "crypto"
 	url "net/url"
 	reflect "reflect"
+	time "time"
 
 	domain "github.com/sidereusnuntius/gowiki/internal/domain"
 	gomock "go.uber.org/mock/gomock"
@@ -400,6 +401,20 @@ func (m *MockDB) GetUserPrivateKey(ctx context.Context, id int64) (*url.URL, cry
 func (mr *MockDBMockRecorder) GetUserPrivateKey(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPrivateKey", reflect.TypeOf((*MockDB)(nil).GetUserPrivateKey), ctx, id)
+}
+
+// InsertOrUpdateUser mocks base method.
+func (m *MockDB) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetched time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertOrUpdateUser", ctx, u, fetched)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertOrUpdateUser indicates an expected call of InsertOrUpdateUser.
+func (mr *MockDBMockRecorder) InsertOrUpdateUser(ctx, u, fetched any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOrUpdateUser", reflect.TypeOf((*MockDB)(nil).InsertOrUpdateUser), ctx, u, fetched)
 }
 
 // InsertUser mocks base method.
