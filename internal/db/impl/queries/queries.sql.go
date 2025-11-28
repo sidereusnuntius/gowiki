@@ -321,13 +321,14 @@ func (q *Queries) FileExists(ctx context.Context, digest string) (bool, error) {
 	return column_1, err
 }
 
-const follow = `-- name: Follow :exec
+const follow = `-- name: Follow :one
 INSERT INTO follows (
     follow_ap_id,
     follower_ap_id,
     followee_ap_id,
     follower_inbox_url
 ) VALUES (?, ?, ?, ?)
+RETURNING id
 `
 
 type FollowParams struct {
@@ -337,14 +338,16 @@ type FollowParams struct {
 	FollowerInboxUrl sql.NullString
 }
 
-func (q *Queries) Follow(ctx context.Context, arg FollowParams) error {
-	_, err := q.db.ExecContext(ctx, follow,
+func (q *Queries) Follow(ctx context.Context, arg FollowParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, follow,
 		arg.FollowApID,
 		arg.FollowerApID,
 		arg.FolloweeApID,
 		arg.FollowerInboxUrl,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getApObject = `-- name: GetApObject :one
@@ -489,6 +492,49 @@ func (q *Queries) GetCollectionFirstPage(ctx context.Context, collectionApID str
 	return items, nil
 }
 
+const getCollectiveByID = `-- name: GetCollectiveByID :one
+SELECT
+    cache.type,
+    i.name,
+    i.hostname,
+    i.url,
+    i.public_key,
+    i.inbox,
+    i.outbox,
+    i.followers
+FROM instances i
+JOIN ap_object_cache cache ON cache.ap_id = i.url
+WHERE id = ?
+LIMIT 1
+`
+
+type GetCollectiveByIDRow struct {
+	Type      string
+	Name      sql.NullString
+	Hostname  string
+	Url       sql.NullString
+	PublicKey sql.NullString
+	Inbox     sql.NullString
+	Outbox    sql.NullString
+	Followers sql.NullString
+}
+
+func (q *Queries) GetCollectiveByID(ctx context.Context, id int64) (GetCollectiveByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getCollectiveByID, id)
+	var i GetCollectiveByIDRow
+	err := row.Scan(
+		&i.Type,
+		&i.Name,
+		&i.Hostname,
+		&i.Url,
+		&i.PublicKey,
+		&i.Inbox,
+		&i.Outbox,
+		&i.Followers,
+	)
+	return i, err
+}
+
 const getFile = `-- name: GetFile :one
 SELECT
     f.id,
@@ -594,6 +640,20 @@ func (q *Queries) GetForeignUserData(ctx context.Context, arg GetForeignUserData
 	return i, err
 }
 
+const getInboxByActorId = `-- name: GetInboxByActorId :one
+SELECT u.inbox as inbox FROM users u WHERE u.ap_id = ?1
+UNION
+SELECT i.inbox as inbox FROM instances i WHERE i.url = ?1
+LIMIT 1
+`
+
+func (q *Queries) GetInboxByActorId(ctx context.Context, apID string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getInboxByActorId, apID)
+	var inbox string
+	err := row.Scan(&inbox)
+	return inbox, err
+}
+
 const getInstanceId = `-- name: GetInstanceId :one
 SELECT id from instances where hostname = ?
 `
@@ -672,6 +732,17 @@ func (q *Queries) GetLocalUserData(ctx context.Context, lower string) (GetLocalU
 		&i.Summary,
 	)
 	return i, err
+}
+
+const getPrivateKeyByID = `-- name: GetPrivateKeyByID :one
+SELECT private_key FROM users WHERE local AND ap_id = ?
+`
+
+func (q *Queries) GetPrivateKeyByID(ctx context.Context, apID string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getPrivateKeyByID, apID)
+	var private_key string
+	err := row.Scan(&private_key)
+	return private_key, err
 }
 
 const getRevisionList = `-- name: GetRevisionList :many
@@ -1171,6 +1242,20 @@ type UpdateArticleParams struct {
 
 func (q *Queries) UpdateArticle(ctx context.Context, arg UpdateArticleParams) error {
 	_, err := q.db.ExecContext(ctx, updateArticle, arg.Content, arg.ID)
+	return err
+}
+
+const updateFollowInbox = `-- name: UpdateFollowInbox :exec
+UPDATE follows SET follower_inbox_url = ? WHERE follower_ap_id = ?
+`
+
+type UpdateFollowInboxParams struct {
+	FollowerInboxUrl sql.NullString
+	FollowerApID     string
+}
+
+func (q *Queries) UpdateFollowInbox(ctx context.Context, arg UpdateFollowInboxParams) error {
+	_, err := q.db.ExecContext(ctx, updateFollowInbox, arg.FollowerInboxUrl, arg.FollowerApID)
 	return err
 }
 

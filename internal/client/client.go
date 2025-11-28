@@ -19,8 +19,10 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/db"
 )
 
+var prefs = []httpsig.Algorithm{httpsig.RSA_SHA256}
 var getHeaders = []string{httpsig.RequestTarget, "date"}
 var postHeaders = []string{httpsig.RequestTarget, "date", "digest"}
+var mainKey, _ = url.Parse("#main-key")
 
 // HttpClient is a client to be used by the wiki instance actor itself, such as when announcing edits.
 // When it is needed to dereference or deliver objects on behalf of a particular actor, the client
@@ -93,6 +95,26 @@ func (c *HttpClient) Dereference(ctx context.Context, iri *url.URL) (*http.Respo
 	return res, err
 }
 
+func (c *HttpClient) DeliverAs(ctx context.Context, obj map[string]any, to *url.URL, from *url.URL) error {
+	if path := from.Path; path == "" || path == "/" {
+		return c.Deliver(ctx, obj, to)
+	}
+
+	key, err := c.db.GetUserPrivateKeyByURI(ctx, from)
+	if err != nil {
+		return err
+	}
+
+	signer, _, err := httpsig.NewSigner(prefs, httpsig.DigestSha256, postHeaders, httpsig.Signature, 3600)
+	if err != nil {
+		return err
+	}
+
+	pubKeyid := from.ResolveReference(mainKey)
+	transport := pub.NewHttpSigTransport(c.client, "gowiki", c, nil, signer, pubKeyid.String(), key)
+	return transport.Deliver(ctx, obj, to)
+}
+
 func (c *HttpClient) Deliver(ctx context.Context, obj map[string]interface{}, to *url.URL) error {
 	body, err := json.Marshal(obj)
 	if err != nil {
@@ -127,8 +149,8 @@ func (c *HttpClient) BatchDeliver(ctx context.Context, obj map[string]interface{
 	return errors.New("not yet implemented")
 }
 
-func (c *HttpClient) NewTransport(ctx context.Context, prefs []httpsig.Algorithm, id int64) (transport pub.Transport, err error) {
-	owner, key, err := c.db.GetUserPrivateKey(ctx, id)
+func (c *HttpClient) NewTransport(ctx context.Context, prefs []httpsig.Algorithm, id *url.URL) (transport pub.Transport, err error) {
+	key, err := c.db.GetUserPrivateKeyByURI(ctx, id)
 	if err != nil {
 		return
 	}
@@ -145,8 +167,8 @@ func (c *HttpClient) NewTransport(ctx context.Context, prefs []httpsig.Algorithm
 		return
 	}
 
-	owner.Fragment = "main-key"
-	transport = pub.NewHttpSigTransport(c.client, "gowiki", c, getSigner, postSigner, owner.String(), key)
+	id.Fragment = "main-key"
+	transport = pub.NewHttpSigTransport(c.client, "gowiki", c, getSigner, postSigner, id.String(), key)
 	return
 }
 

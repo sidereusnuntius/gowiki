@@ -5,6 +5,17 @@ import (
 	"time"
 )
 
+type Collective struct {
+	Type string
+	Name string
+	Hostname string
+	Url *url.URL
+	Public_key string
+	Inbox *url.URL
+	Outbox *url.URL
+	Followers *url.URL
+}
+
 type Account struct {
 	UserID    int64
 	AccountID int64

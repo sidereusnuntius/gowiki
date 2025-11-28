@@ -114,6 +114,14 @@ func (fd *FedDB) routeQuery(ctx context.Context, table string, id int64) (t voca
 			return
 		}
 		t = conversions.ArticleToObject(a)
+	case "instances":
+		var c domain.Collective
+		c, err = fd.DB.GetCollectiveById(ctx, id)
+		if err != nil {
+			return
+		}
+
+		t = conversions.GroupToActor(c)
 	}
 
 	return

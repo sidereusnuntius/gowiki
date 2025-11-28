@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"net/url"
-	"strconv"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -62,7 +62,11 @@ type Configuration struct {
 
 func ReadConfig() (Configuration, error) {
 	viper.AddConfigPath(".")
-	viper.SetConfigName("config")
+	filename := os.Getenv("CONFIG_NAME")
+	if filename == "" {
+		filename = "config"
+	}
+	viper.SetConfigName(filename)
 
 	viper.SetDefault("fs_root", "./files")
 	viper.SetDefault("debug", true)
@@ -91,12 +95,10 @@ func ReadConfig() (Configuration, error) {
 		schema = "http"
 	}
 
-	port := strconv.FormatUint(uint64(cfg.Port), 10)
-	u, err := url.Parse(schema + "://" + cfg.Domain + ":" + port + "/")
+	u, err := url.Parse(schema + "://" + cfg.Domain + "/")
 	if err != nil {
 		return cfg, err
 	}
 	cfg.Url = u
-	cfg.Domain = cfg.Domain + ":" + port
 	return cfg, err
 }

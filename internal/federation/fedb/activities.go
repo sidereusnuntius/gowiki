@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
-	"github.com/rs/zerolog/log"
+	"github.com/sidereusnuntius/gowiki/internal/conversions"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 	"github.com/sidereusnuntius/gowiki/internal/federation"
 )
@@ -26,14 +27,6 @@ func (fd *FedDB) handleFollow(ctx context.Context, follow vocab.ActivityStreamsF
 		return err
 	}
 
-	
-	if exists, _ := fd.Exists(ctx, actor); !exists {
-		err = fd.Queue.Fetch(actor)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to enqueue fetch task")
-		}
-	}
-
 	obj, err := fd.handleObjProp(ctx, follow.GetActivityStreamsObject())
 	if err != nil {
 		return err
@@ -49,13 +42,25 @@ func (fd *FedDB) handleFollow(ctx context.Context, follow vocab.ActivityStreamsF
 	}
 
 	fmt.Printf("Actor: %s\nObject: %s\n", actor, obj)
-	return fd.DB.Follow(ctx, domain.Follow{
+	returnedId, err := fd.DB.Follow(ctx, domain.Follow{
 		IRI: id,
 		Follower: actor,
 		Followee: obj,
 		FollowerInbox: nil,
 		Raw: string(rawJSON),
 	})
+	if err != nil {
+		return err
+	}
+
+	acceptId := fd.Config.Url.JoinPath("accept", strconv.Itoa(int(returnedId)))
+	accept := conversions.NewAccept(acceptId, obj, id)
+	
+	if err = fd.Queue.Deliver(ctx, accept, actor, obj); err != nil {
+		return err
+	}
+
+	return fd.Create(ctx, accept)
 }
 
 func (fd *FedDB) handleId(prop vocab.JSONLDIdProperty) (iri *url.URL, err error) {

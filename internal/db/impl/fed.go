@@ -294,12 +294,12 @@ func (d *dbImpl) GetUserByID(ctx context.Context, id int64) (user domain.UserFed
 	}, err
 }
 
-func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) error {
+func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error) {
 	var inbox string
 	if follow.FollowerInbox != nil {
 		inbox = follow.FollowerInbox.String()
 	}
-	err := d.queries.Follow(ctx, queries.FollowParams{
+	id, err := d.queries.Follow(ctx, queries.FollowParams{
 		FollowApID: follow.IRI.String(),
 		FollowerApID: follow.Follower.String(),
 		FolloweeApID: follow.Followee.String(),
@@ -312,7 +312,7 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) error {
 	if err != nil {
 		err = d.HandleError(err)
 	}
-	return err
+	return id, err
 }
 
 func (d *dbImpl) GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error) {
@@ -334,6 +334,24 @@ func (d *dbImpl) GetUserPrivateKey(ctx context.Context, id int64) (owner *url.UR
 	}
 
 	owner, err = url.Parse(res.ApID)
+	return
+}
+
+func (d *dbImpl) GetUserPrivateKeyByURI(ctx context.Context, url *url.URL) (key crypto.PrivateKey, err error) {
+	k, err := d.queries.GetPrivateKeyByID(ctx, url.String())
+
+	if err != nil {
+		err = d.HandleError(err)
+		return
+	}
+
+	block, _ := pem.Decode([]byte(k))
+	if block == nil || block.Type != "PRIVATE KEY" {
+		err = errors.New("failure to parse private key")
+		return
+	}
+
+	key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	return
 }
 
@@ -371,7 +389,7 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 			return err
 		}
 
-		return tx.InsertOrUpdateApObject(ctx, queries.InsertOrUpdateApObjectParams{
+		err =  tx.InsertOrUpdateApObject(ctx, queries.InsertOrUpdateApObjectParams{
 			ApID: u.ApId.String(),
 			LocalTable: sql.NullString{
 				Valid: true,
@@ -388,5 +406,67 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 				Int64: fetched.Unix(),
 			},
 		})
+		if err != nil {
+			return err
+		}
+
+		return tx.UpdateFollowInbox(ctx, queries.UpdateFollowInboxParams{
+			FollowerInboxUrl: sql.NullString{
+				Valid: u.Inbox != nil,
+				String: u.Inbox.String(),
+			},
+			FollowerApID: u.ApId.String(),
+		})
 	}) 
+}
+
+func (d *dbImpl) GetActorInbox(ctx context.Context, actor *url.URL) (*url.URL, error) {
+	inbox, err := d.queries.GetInboxByActorId(ctx, actor.String())
+	if err != nil {
+		return nil, d.HandleError(err)
+	}
+	
+	iri, err := url.Parse(inbox)
+	if err != nil {
+		err = db.ErrInternal
+	}
+	return iri, err
+}
+
+func (d *dbImpl) GetCollectiveById(ctx context.Context, id int64) (c domain.Collective, err error) {
+	obj, err := d.queries.GetCollectiveByID(ctx, id)
+	if err != nil {
+		return domain.Collective{}, err
+	}
+	c = domain.Collective{
+		Type: obj.Type,
+		Name: obj.Name.String,
+		Hostname: obj.Hostname,
+		Public_key: obj.PublicKey.String,
+	}
+
+	c.Inbox, err = url.Parse(obj.Inbox.String)
+	if err != nil {
+		return
+	}
+
+	if obj.Outbox.Valid {
+		c.Outbox, err = url.Parse(obj.Outbox.String)
+		if err != nil {
+			return
+		}
+	}
+
+	if obj.Followers.Valid {
+		c.Followers, err = url.Parse(obj.Followers.String)
+		if err != nil {
+			return
+		}
+	}
+
+	if obj.Url.Valid {
+		c.Url, err = url.Parse(obj.Url.String)
+	}
+
+	return
 }

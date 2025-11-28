@@ -308,16 +308,20 @@ SELECT EXISTS(SELECT TRUE FROM ap_collection_members WHERE collection_ap_id = ? 
 -- name: GetCollectionFirstPage :many
 SELECT member_ap_id FROM ap_collection_members WHERE collection_ap_id = ? ORDER BY id DESC;
 
--- name: Follow :exec
+-- name: Follow :one
 INSERT INTO follows (
     follow_ap_id,
     follower_ap_id,
     followee_ap_id,
     follower_inbox_url
-) VALUES (?, ?, ?, ?);
+) VALUES (?, ?, ?, ?)
+RETURNING id;
 
 -- name: GetUserKeys :one
 SELECT ap_id, private_key FROM users WHERE local AND id = ?;
+
+-- name: GetPrivateKeyByID :one
+SELECT private_key FROM users WHERE local AND ap_id = ?;
 
 -- name: InsertOrUpdateUser :one
 INSERT INTO users (
@@ -356,3 +360,27 @@ SET type = ?4,
     raw_json = ?5,
     last_updated = cast(strftime('%s','now') as int),
     last_fetched = ?6;
+
+-- name: GetInboxByActorId :one
+SELECT u.inbox as inbox FROM users u WHERE u.ap_id = ?1
+UNION
+SELECT i.inbox as inbox FROM instances i WHERE i.url = ?1
+LIMIT 1;
+
+-- name: UpdateFollowInbox :exec
+UPDATE follows SET follower_inbox_url = ? WHERE follower_ap_id = ?;
+
+-- name: GetCollectiveByID :one
+SELECT
+    cache.type,
+    i.name,
+    i.hostname,
+    i.url,
+    i.public_key,
+    i.inbox,
+    i.outbox,
+    i.followers
+FROM instances i
+JOIN ap_object_cache cache ON cache.ap_id = i.url
+WHERE id = ?
+LIMIT 1;

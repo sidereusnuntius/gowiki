@@ -6,9 +6,91 @@ import (
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
+	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 	"github.com/sidereusnuntius/gowiki/internal/federation"
 )
+
+func NewAccept(id, actor, object *url.URL) (a vocab.ActivityStreamsAccept) {
+	a = streams.NewActivityStreamsAccept()
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(id)
+	a.SetJSONLDId(idProp)
+
+	actorProp := streams.NewActivityStreamsActorProperty()
+	actorProp.AppendIRI(actor)
+	a.SetActivityStreamsActor(actorProp)
+
+	objProp := streams.NewActivityStreamsObject()
+	objId := streams.NewJSONLDIdProperty()
+	objId.SetIRI(object)
+	objProp.SetJSONLDId(objId)
+
+	return
+}
+
+func GroupToActor(g domain.Collective) vocab.Type {
+	obj := streams.NewActivityStreamsGroup()
+	
+	id := streams.NewJSONLDIdProperty()
+	id.SetIRI(g.Url)
+	obj.SetJSONLDId(id)
+
+	name := streams.NewActivityStreamsPreferredUsernameProperty()
+	name.SetXMLSchemaString(g.Name)
+	obj.SetActivityStreamsPreferredUsername(name)
+
+
+	summary := streams.NewActivityStreamsSummaryProperty()
+	summary.AppendXMLSchemaString("")
+	obj.SetActivityStreamsSummary(summary)
+
+	var keyFragment, _ = url.Parse("#main-key")
+	keyProp := streams.NewW3IDSecurityV1PublicKeyProperty()
+
+	key := streams.NewW3IDSecurityV1PublicKey()
+
+	keyId := streams.NewJSONLDIdProperty()
+	keyURI := id.GetIRI().ResolveReference(keyFragment)
+	log.Debug().Str("key", keyURI.String()).Msg("at conversions")
+	keyId.SetIRI(keyURI)
+	key.SetJSONLDId(keyId)
+
+	keyPem := streams.NewW3IDSecurityV1PublicKeyPemProperty()
+	keyPem.Set(g.Public_key)
+	key.SetW3IDSecurityV1PublicKeyPem(keyPem)
+
+	owner := streams.NewW3IDSecurityV1OwnerProperty()
+	owner.SetIRI(g.Url)
+	key.SetW3IDSecurityV1Owner(owner)
+
+	keyProp.AppendW3IDSecurityV1PublicKey(key)
+
+	obj.SetW3IDSecurityV1PublicKey(keyProp)
+
+	inbox := streams.NewActivityStreamsInboxProperty()
+	inbox.SetIRI(g.Inbox)
+	obj.SetActivityStreamsInbox(inbox)
+
+	outbox := streams.NewActivityStreamsOutboxProperty()
+	outbox.SetIRI(g.Outbox)
+	obj.SetActivityStreamsOutbox(outbox)
+
+	if g.Followers != nil {
+		followers := streams.NewActivityStreamsFollowersProperty()
+		followers.SetIRI(g.Followers)
+		obj.SetActivityStreamsFollowers(followers)
+	}
+
+	if g.Url != nil {
+		url := streams.NewActivityStreamsUrlProperty()
+		url.AppendIRI(g.Url)
+		obj.SetActivityStreamsUrl(url)
+	}
+
+	return obj
+}
+
 
 func ActorToUser(a vocab.ActivityStreamsPerson) (u domain.UserFed, err error) {
 	idProp := a.GetJSONLDId()

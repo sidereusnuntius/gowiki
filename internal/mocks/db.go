@@ -162,17 +162,33 @@ func (mr *MockDBMockRecorder) FileExists(ctx, hash any) *gomock.Call {
 }
 
 // Follow mocks base method.
-func (m *MockDB) Follow(ctx context.Context, follow domain.Follow) error {
+func (m *MockDB) Follow(ctx context.Context, follow domain.Follow) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Follow", ctx, follow)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Follow indicates an expected call of Follow.
 func (mr *MockDBMockRecorder) Follow(ctx, follow any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Follow", reflect.TypeOf((*MockDB)(nil).Follow), ctx, follow)
+}
+
+// GetActorInbox mocks base method.
+func (m *MockDB) GetActorInbox(ctx context.Context, actor *url.URL) (*url.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActorInbox", ctx, actor)
+	ret0, _ := ret[0].(*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActorInbox indicates an expected call of GetActorInbox.
+func (mr *MockDBMockRecorder) GetActorInbox(ctx, actor any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActorInbox", reflect.TypeOf((*MockDB)(nil).GetActorInbox), ctx, actor)
 }
 
 // GetApObject mocks base method.
@@ -248,6 +264,21 @@ func (m *MockDB) GetCollectionPage(ctx context.Context, iri *url.URL, last int64
 func (mr *MockDBMockRecorder) GetCollectionPage(ctx, iri, last any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollectionPage", reflect.TypeOf((*MockDB)(nil).GetCollectionPage), ctx, iri, last)
+}
+
+// GetCollectiveById mocks base method.
+func (m *MockDB) GetCollectiveById(ctx context.Context, id int64) (domain.Collective, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCollectiveById", ctx, id)
+	ret0, _ := ret[0].(domain.Collective)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCollectiveById indicates an expected call of GetCollectiveById.
+func (mr *MockDBMockRecorder) GetCollectiveById(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollectiveById", reflect.TypeOf((*MockDB)(nil).GetCollectiveById), ctx, id)
 }
 
 // GetFile mocks base method.
@@ -401,6 +432,21 @@ func (m *MockDB) GetUserPrivateKey(ctx context.Context, id int64) (*url.URL, cry
 func (mr *MockDBMockRecorder) GetUserPrivateKey(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPrivateKey", reflect.TypeOf((*MockDB)(nil).GetUserPrivateKey), ctx, id)
+}
+
+// GetUserPrivateKeyByURI mocks base method.
+func (m *MockDB) GetUserPrivateKeyByURI(ctx context.Context, arg1 *url.URL) (crypto.PrivateKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserPrivateKeyByURI", ctx, arg1)
+	ret0, _ := ret[0].(crypto.PrivateKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserPrivateKeyByURI indicates an expected call of GetUserPrivateKeyByURI.
+func (mr *MockDBMockRecorder) GetUserPrivateKeyByURI(ctx, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPrivateKeyByURI", reflect.TypeOf((*MockDB)(nil).GetUserPrivateKeyByURI), ctx, arg1)
 }
 
 // InsertOrUpdateUser mocks base method.
