@@ -21,10 +21,9 @@ func NewAccept(id, actor, object *url.URL) (a vocab.ActivityStreamsAccept) {
 	actorProp.AppendIRI(actor)
 	a.SetActivityStreamsActor(actorProp)
 
-	objProp := streams.NewActivityStreamsObject()
-	objId := streams.NewJSONLDIdProperty()
-	objId.SetIRI(object)
-	objProp.SetJSONLDId(objId)
+	objProp := streams.NewActivityStreamsObjectProperty()
+	objProp.AppendIRI(object)
+	a.SetActivityStreamsObject(objProp)
 
 	return
 }

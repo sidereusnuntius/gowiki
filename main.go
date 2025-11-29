@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"encoding/gob"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -28,6 +27,7 @@ import (
 	service "github.com/sidereusnuntius/gowiki/internal/service/impl"
 	"github.com/sidereusnuntius/gowiki/internal/state"
 	"github.com/sidereusnuntius/gowiki/internal/web"
+	"github.com/sidereusnuntius/gowiki/internal/wellknown"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -74,9 +74,15 @@ func main() {
 	}
 
 	dd := db.New(config, d)
-	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	key, err := dd.GetUserPrivateKeyByURI(context.Background(), config.Url)
+	if err != nil {
+		zero.Fatal().Err(err).Send()
+		os.Exit(1)
+	}
 	
-	client, err := client.New(dd, &http.Client{}, key, []httpsig.Algorithm{httpsig.RSA_SHA256}, config.Url)
+	fragment, _ := url.Parse("#main-key")
+	keyId := config.Url.ResolveReference(fragment)
+	client, err := client.New(dd, &http.Client{}, key, []httpsig.Algorithm{httpsig.RSA_SHA256}, keyId)
 	if err != nil {
 		zero.Fatal().Err(err).Send()
 		os.Exit(1)
@@ -103,6 +109,7 @@ func main() {
 	handler := web.New(&config, service, manager)
 	router := chi.NewRouter()
 	handler.Mount(router)
+	wellknown.Mount(&state, router)
 	router.Post("/inbox", func(w http.ResponseWriter, r *http.Request) {
 		success, err := actor.PostInbox(r.Context(), w, r)
 		recover()

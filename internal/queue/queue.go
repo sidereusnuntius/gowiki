@@ -47,34 +47,32 @@ func (q *apQueueImpl) Fetch(iri *url.URL) error {
 }
 
 func (q *apQueueImpl) Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error {
-	_, err := q.db.GetActorInbox(ctx, to)
-	var inboxUnknown bool
-	if err != nil {
-		log.Error().Err(err).Msg("at delivery")
-		if !errors.Is(err, db.ErrNotFound) {
-			return err
-		}
-		inboxUnknown = true
-	}
-
 	data, err := streams.Serialize(activity)
 	if err != nil {
+		log.Error().Err(err).Msg("activity serialization error")
 		return err
 	}
 
-	var task backlite.Task = PostJob{
+	var task = PostJob{
 		To: to.String(),
 		From: from.String(),
 		Body: data,
 	}
 
-	if inboxUnknown {
-		task = FetchJob{
-			Iri: to.String(),
-			Next: task,
+	_, err = q.db.GetActorInbox(ctx, to)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			_, err = q.queues.Add(FetchJob{
+				Iri: to.String(),
+				Next: &task,
+			}).Save()
 		}
+		return err
 	}
 
 	_, err = q.queues.Add(task).Save()
+	if err != nil {
+		log.Error().Err(err).Msg("adding delivery task to queue")
+	}
 	return err
 }

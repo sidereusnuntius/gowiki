@@ -13,7 +13,7 @@ const (
 
 type FetchJob struct {
 	Iri string
-    Next backlite.Task
+    Next *PostJob
 }
 
 func (j FetchJob) Config() backlite.QueueConfig {

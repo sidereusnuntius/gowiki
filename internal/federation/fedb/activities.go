@@ -24,6 +24,7 @@ func (fd *FedDB) handleFollow(ctx context.Context, follow vocab.ActivityStreamsF
 
 	actor, err := fd.handleActorProp(follow.GetActivityStreamsActor())
 	if err != nil {
+
 		return err
 	}
 

@@ -388,6 +388,21 @@ func (mr *MockDBMockRecorder) GetUser(ctx, username, hostname any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockDB)(nil).GetUser), ctx, username, hostname)
 }
 
+// GetUserApId mocks base method.
+func (m *MockDB) GetUserApId(ctx context.Context, username string) (*url.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserApId", ctx, username)
+	ret0, _ := ret[0].(*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserApId indicates an expected call of GetUserApId.
+func (mr *MockDBMockRecorder) GetUserApId(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserApId", reflect.TypeOf((*MockDB)(nil).GetUserApId), ctx, username)
+}
+
 // GetUserByID mocks base method.
 func (m *MockDB) GetUserByID(ctx context.Context, id int64) (domain.UserFed, error) {
 	m.ctrl.T.Helper()

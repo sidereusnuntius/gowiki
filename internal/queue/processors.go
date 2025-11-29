@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -27,6 +28,7 @@ func (q *apQueueImpl) fetch() func(context.Context, FetchJob) error {
 		log.Debug().Str("iri", task.Iri).Msg("fetching IRI")
 		iri, err := url.Parse(task.Iri)
 		if err != nil {
+			log.Error().Err(err).Msg("parsing task IRI")
 			return err
 		}
 		defer func(){
@@ -38,8 +40,10 @@ func (q *apQueueImpl) fetch() func(context.Context, FetchJob) error {
 		fetchedAt := time.Now()
 		asType, err := q.client.Get(ctx, iri)
 		if err != nil {
+			log.Error().Err(err).Msg("fetch error")
 			return err
 		}
+
 	
 		switch asType.GetTypeName() {
 		case streams.ActivityStreamsPersonName:
@@ -59,6 +63,9 @@ func (q *apQueueImpl) fetch() func(context.Context, FetchJob) error {
 		}
 
 		_, err = backlite.FromContext(ctx).Add(task.Next).Save()
+		if err != nil {
+			err = fmt.Errorf("adding next task to queue: %w", err)
+		}
 		return err
 	}
 }
@@ -68,6 +75,7 @@ func (q *apQueueImpl) deliver() func(context.Context, PostJob) error {
 		to, err := url.Parse(pj.To)
 
 		if err != nil {
+			log.Error().Err(err).Msg("parsing target's URI")
 			return err
 		}
 
@@ -83,10 +91,13 @@ func (q *apQueueImpl) deliver() func(context.Context, PostJob) error {
 
 		from, err := url.Parse(pj.From)
 		if err != nil {
+			log.Error().Err(err).Msg("parsing sender's URI")
 			return err
 		}
-
-		if err = q.client.DeliverAs(ctx, pj.Body, to, from); err != nil || pj.Next == nil {
+		
+		// Move inbox resolve to client.
+		if err = q.client.DeliverAs(ctx, pj.Body, inbox, from); err != nil || pj.Next == nil {
+			log.Error().Err(err).Msg("delivery error")
 			return err
 		}
 

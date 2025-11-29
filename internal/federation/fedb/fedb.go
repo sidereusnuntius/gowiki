@@ -112,6 +112,9 @@ func (fd *FedDB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorI
 func (fd *FedDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	log.Debug().Msg("at ActorForInbox")
 	actorIRI, err = fd.DB.ActorIdByInbox(ctx, inboxIRI)
+	if err != nil {
+		log.Error().Str("inbox IRI", inboxIRI.String()).Err(err).Send()
+	}
 	return
 }
 

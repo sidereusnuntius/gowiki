@@ -351,7 +351,7 @@ func (d *dbImpl) GetUserPrivateKeyByURI(ctx context.Context, url *url.URL) (key 
 		return
 	}
 
-	key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	key, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 	return
 }
 
@@ -469,4 +469,15 @@ func (d *dbImpl) GetCollectiveById(ctx context.Context, id int64) (c domain.Coll
 	}
 
 	return
+}
+
+func (d *dbImpl) GetUserApId(ctx context.Context, username string) (*url.URL, error) {
+	log.Debug().Str("username", username).Send()
+	id, err := d.queries.GetUserApId(ctx, username)
+	if err != nil {
+		return nil, d.HandleError(err)
+	}
+
+	uri, err := url.Parse(id)
+	return uri, err
 }

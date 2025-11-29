@@ -6,6 +6,8 @@ import (
 	"crypto"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
@@ -62,13 +64,16 @@ func New(db db.DB, client *http.Client, key crypto.PrivateKey, prefs []httpsig.A
 func (c *HttpClient) Get(ctx context.Context, iri *url.URL) (obj vocab.Type, err error) {
 	res, err := c.Dereference(ctx, iri)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to do request")
 		return
 	}
 	defer res.Body.Close()
+
 	decoder := json.NewDecoder(res.Body)
 	var props map[string]any
 	err = decoder.Decode(&props)
 	if err != nil {
+		log.Error().Err(err).Msg("response body unmarshaling error")
 		return
 	}
 
@@ -84,14 +89,28 @@ func (c *HttpClient) Dereference(ctx context.Context, iri *url.URL) (*http.Respo
 
 	c.getSignerMutex.Lock()
 	defer c.getSignerMutex.Unlock()
-	req.Header.Set("Date", time.Now().Format(time.RFC3339))
+	req.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
 	req.Header.Set("Accept", "application/activity+json")
 	err = c.getSigner.SignRequest(c.key, c.pubKeyId.String(), req, nil)
 	if err != nil {
+		log.Error().Err(err).Msg("error while signing request")
 		return nil, err
 	}
 
 	res, err := c.client.Do(req)
+	if res.StatusCode >= 400 {
+		event := log.Error().Str("status", res.Status)
+		var content []byte
+		content, err = io.ReadAll(res.Body)
+		
+		if err != nil {
+			event.Err(err)
+		}
+		event.Bytes("response", content).Msg("fetch error")
+		res.Body.Close()
+		err = fmt.Errorf("%d %s: %s", res.StatusCode, res.Status, content)
+	}
+	
 	return res, err
 }
 
@@ -111,6 +130,7 @@ func (c *HttpClient) DeliverAs(ctx context.Context, obj map[string]any, to *url.
 	}
 
 	pubKeyid := from.ResolveReference(mainKey)
+	log.Info().Str("public key", pubKeyid.String()).Send()
 	transport := pub.NewHttpSigTransport(c.client, "gowiki", c, nil, signer, pubKeyid.String(), key)
 	return transport.Deliver(ctx, obj, to)
 }
@@ -125,10 +145,11 @@ func (c *HttpClient) Deliver(ctx context.Context, obj map[string]interface{}, to
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Content-Type", "application/activity+json")
 
 	c.postSignerMutex.Lock()
 	defer c.postSignerMutex.Unlock()
-	req.Header.Add("Date", time.Now().Format(time.RFC3339))
+	req.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
 	err = c.postSigner.SignRequest(c.key, c.pubKeyId.String(), req, body)
 	if err != nil {
 		return err
@@ -138,9 +159,12 @@ func (c *HttpClient) Deliver(ctx context.Context, obj map[string]interface{}, to
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode >= http.StatusBadRequest {
-		return errors.New("error: response status:" + res.Status)
+		body, _ := io.ReadAll(res.Body)
+		log.Error().Int("code", res.StatusCode).Bytes("response body", body).Msg("delivery error")
+		return fmt.Errorf("error %d: %s", res.StatusCode, res.Status)
 	}
 	return nil
 }

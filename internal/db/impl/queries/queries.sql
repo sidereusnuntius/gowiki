@@ -321,7 +321,10 @@ RETURNING id;
 SELECT ap_id, private_key FROM users WHERE local AND id = ?;
 
 -- name: GetPrivateKeyByID :one
-SELECT private_key FROM users WHERE local AND ap_id = ?;
+SELECT private_key FROM users WHERE local AND ap_id = ?1
+UNION
+SELECT private_key FROM instances WHERE private_key IS NOT NULL AND url = ?1
+LIMIT 1;
 
 -- name: InsertOrUpdateUser :one
 INSERT INTO users (
@@ -384,3 +387,8 @@ FROM instances i
 JOIN ap_object_cache cache ON cache.ap_id = i.url
 WHERE id = ?
 LIMIT 1;
+
+-- name: GetUserApId :one
+SELECT ap_id FROM users WHERE local AND username = lower(?1)
+UNION
+SELECT url AS ap_id FROM INSTANCES WHERE name = lower(?1);

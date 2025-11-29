@@ -735,7 +735,10 @@ func (q *Queries) GetLocalUserData(ctx context.Context, lower string) (GetLocalU
 }
 
 const getPrivateKeyByID = `-- name: GetPrivateKeyByID :one
-SELECT private_key FROM users WHERE local AND ap_id = ?
+SELECT private_key FROM users WHERE local AND ap_id = ?1
+UNION
+SELECT private_key FROM instances WHERE private_key IS NOT NULL AND url = ?1
+LIMIT 1
 `
 
 func (q *Queries) GetPrivateKeyByID(ctx context.Context, apID string) (string, error) {
@@ -848,6 +851,19 @@ func (q *Queries) GetRevisionsByUserId(ctx context.Context, userID int64) ([]Get
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUserApId = `-- name: GetUserApId :one
+SELECT ap_id FROM users WHERE local AND username = lower(?1)
+UNION
+SELECT url AS ap_id FROM INSTANCES WHERE name = lower(?1)
+`
+
+func (q *Queries) GetUserApId(ctx context.Context, lower string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getUserApId, lower)
+	var ap_id string
+	err := row.Scan(&ap_id)
+	return ap_id, err
 }
 
 const getUserFull = `-- name: GetUserFull :one

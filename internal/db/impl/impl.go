@@ -34,9 +34,6 @@ func (d *dbImpl) HandleError(err error) error {
 	case sql.ErrNoRows:
 		return db.ErrNotFound
 	default:
-		if err != nil {
-			log.Print(err)
-		}
 		return err
 	}
 }
