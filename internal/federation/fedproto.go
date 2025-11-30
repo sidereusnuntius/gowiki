@@ -82,7 +82,5 @@ func (f ApService) MaxInboxForwardingRecursionDepth(c context.Context) int {
 // PostInboxRequestBodyHook implements pub.FederatingProtocol.
 func (f ApService) PostInboxRequestBodyHook(c context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
 	log.Debug().Msg("at PostInboxRequestBodyHook()")
-	b, _ := streams.Serialize(activity)
-	fmt.Printf("%+v\n", b)
 	return c, nil
 }
