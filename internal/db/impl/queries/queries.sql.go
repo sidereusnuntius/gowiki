@@ -1220,20 +1220,19 @@ func (q *Queries) InsertOrUpdateUser(ctx context.Context, arg InsertOrUpdateUser
 	return id, err
 }
 
-const insertRevision = `-- name: InsertRevision :exec
+const insertRevision = `-- name: InsertRevision :one
 INSERT INTO revisions (
-    ap_id,
     article_id,
     user_id,
     summary,
     diff,
     published,
     prev
-) VALUES (?1, ?2, ?3, ?4, ?5, true, ?6)
+) VALUES (?1, ?2, ?3, ?4, true, ?5)
+RETURNING id
 `
 
 type InsertRevisionParams struct {
-	ApID      sql.NullString
 	ArticleID int64
 	UserID    int64
 	Summary   sql.NullString
@@ -1241,16 +1240,17 @@ type InsertRevisionParams struct {
 	Prev      sql.NullInt64
 }
 
-func (q *Queries) InsertRevision(ctx context.Context, arg InsertRevisionParams) error {
-	_, err := q.db.ExecContext(ctx, insertRevision,
-		arg.ApID,
+func (q *Queries) InsertRevision(ctx context.Context, arg InsertRevisionParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertRevision,
 		arg.ArticleID,
 		arg.UserID,
 		arg.Summary,
 		arg.Diff,
 		arg.Prev,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const isUserTrusted = `-- name: IsUserTrusted :one
@@ -1322,6 +1322,20 @@ type UpdateFollowInboxParams struct {
 
 func (q *Queries) UpdateFollowInbox(ctx context.Context, arg UpdateFollowInboxParams) error {
 	_, err := q.db.ExecContext(ctx, updateFollowInbox, arg.FollowerInboxUrl, arg.FollowerApID)
+	return err
+}
+
+const updateRevisionApId = `-- name: UpdateRevisionApId :exec
+UPDATE revisions SET ap_id = ? WHERE id = ?
+`
+
+type UpdateRevisionApIdParams struct {
+	ApID sql.NullString
+	ID   int64
+}
+
+func (q *Queries) UpdateRevisionApId(ctx context.Context, arg UpdateRevisionApIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateRevisionApId, arg.ApID, arg.ID)
 	return err
 }
 

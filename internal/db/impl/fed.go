@@ -337,6 +337,7 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error
 func (d *dbImpl) GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error) {
 	res, err := d.queries.GetUserKeys(ctx, id)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to fetch actor's private key")
 		err = d.HandleError(err)
 		return
 	}
@@ -347,16 +348,21 @@ func (d *dbImpl) GetUserPrivateKey(ctx context.Context, id int64) (owner *url.UR
 		return
 	}
 
-	key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	key, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to parse private key")
 		return
 	}
 
 	owner, err = url.Parse(res.ApID)
+	if err != nil {
+		log.Error().Err(err).Msg("parse error")
+	}
 	return
 }
 
 func (d *dbImpl) GetUserPrivateKeyByURI(ctx context.Context, url *url.URL) (key crypto.PrivateKey, err error) {
+	log.Debug().Str("id", url.String()).Send()
 	k, err := d.queries.GetPrivateKeyByID(ctx, url.String())
 
 	if err != nil {

@@ -88,8 +88,45 @@ o := streams.NewActivityStreamsArticle()
 
 	pub := streams.NewActivityStreamsPublishedProperty()
 	pub.Set(a.Published)
+	o.SetActivityStreamsPublished(pub)
 
+	if !a.LastUpdated.IsZero() {
+		updated := streams.NewActivityStreamsUpdatedProperty()
+		updated.Set(a.LastUpdated)
+		o.SetActivityStreamsUpdated(updated)
+	}
+	
 	return o
+}
+
+func (a *ArticleFed) UpdateAP(id, author, wiki *url.URL, summary string) (update vocab.ActivityStreamsUpdate) {
+	update = streams.NewActivityStreamsUpdate()
+	
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(id)
+	update.SetJSONLDId(idProp)
+
+	actor := streams.NewActivityStreamsActorProperty()
+	actor.AppendIRI(wiki)
+	update.SetActivityStreamsActor(actor)
+
+	att := streams.NewActivityStreamsAttributedToProperty()
+	att.AppendIRI(author)
+	update.SetActivityStreamsAttributedTo(att)
+
+	obj := streams.NewActivityStreamsObjectProperty()
+	obj.AppendActivityStreamsArticle(a.ConvertToAp())
+	update.SetActivityStreamsObject(obj)
+
+	published := streams.NewActivityStreamsPublishedProperty()
+	published.Set(a.LastUpdated)
+	update.SetActivityStreamsPublished(published)
+
+	cc := streams.NewActivityStreamsCcProperty()
+	cc.AppendIRI(wiki.JoinPath("followers"))
+	update.SetActivityStreamsCc(cc)
+
+	return
 }
 
 func (a *ArticleFed) CreateAP(id, author, wikiId *url.URL, summary string) (c vocab.ActivityStreamsCreate) {

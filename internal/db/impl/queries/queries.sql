@@ -97,16 +97,19 @@ WHERE lower(a.title) = lower(@title)
 ORDER BY r.created DESC
 LIMIT 1;
 
--- name: InsertRevision :exec
+-- name: InsertRevision :one
 INSERT INTO revisions (
-    ap_id,
     article_id,
     user_id,
     summary,
     diff,
     published,
     prev
-) VALUES (?1, ?2, ?3, ?4, ?5, true, ?6);
+) VALUES (?1, ?2, ?3, ?4, true, ?5)
+RETURNING id;
+
+-- name: UpdateRevisionApId :exec
+UPDATE revisions SET ap_id = ? WHERE id = ?;
 
 -- name: UpdateArticle :exec
 UPDATE articles

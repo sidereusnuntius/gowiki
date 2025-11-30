@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -32,53 +33,54 @@ func (d *dbImpl) GetRevisionList(ctx context.Context, title string) ([]domain.Re
 	return edits, nil
 }
 
-func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId int64, summary, newContent string) (err error) {
+func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId int64, summary, newContent string) (URI *url.URL, err error) {
 	content, err := d.queries.GetArticleContent(ctx, articleId)
 	if err != nil {
-		return d.HandleError(err)
+		return nil, d.HandleError(err)
 	}
 
-	t, err := d.db.Begin()
-	if err != nil {
-		return
-	}
-	defer func() {
-		// Handle error.
+	err = d.WithTx(func(tx *queries.Queries) error {
+
+		diffs := d.DMP.DiffMain(content, newContent, false)
+		patches := d.DMP.PatchMake(diffs)
+	
+		id, err := tx.InsertRevision(ctx, queries.InsertRevisionParams{
+			//TODO: generate apId. Perhaps use the generated id?
+			//ApID: ,
+			ArticleID: articleId,
+			UserID:    userId,
+			Summary: sql.NullString{
+				String: summary,
+				Valid:  summary != "",
+			},
+			Diff: d.DMP.PatchToText(patches),
+			Prev: sql.NullInt64{
+				Int64: prevId,
+				Valid: true,
+			},
+		})
 		if err != nil {
-			t.Rollback()
-		} else {
-			err = t.Commit()
+			return err
 		}
-	}()
-	tx := d.queries.WithTx(t)
 
-	diffs := d.DMP.DiffMain(content, newContent, false)
-	patches := d.DMP.PatchMake(diffs)
-
-	err = tx.InsertRevision(ctx, queries.InsertRevisionParams{
-		//TODO: generate apId. Perhaps use the generated id?
-		//ApID: ,
-		ArticleID: articleId,
-		UserID:    userId,
-		Summary: sql.NullString{
-			String: summary,
-			Valid:  summary != "",
-		},
-		Diff: d.DMP.PatchToText(patches),
-		Prev: sql.NullInt64{
-			Int64: prevId,
-			Valid: true,
-		},
+		URI = d.Config.Url.JoinPath("revisions", strconv.FormatInt(id, 10))
+		err = tx.UpdateRevisionApId(ctx, queries.UpdateRevisionApIdParams{
+			ApID: sql.NullString{
+				Valid: true,
+				String: URI.String(),
+			},
+			ID: id,
+		})
+		if err != nil {
+			return err
+		}
+	
+		return tx.UpdateArticle(ctx, queries.UpdateArticleParams{
+			Content: newContent,
+			ID:      articleId,
+		})
 	})
-	if err != nil {
-		return
-	}
-
-	err = tx.UpdateArticle(ctx, queries.UpdateArticleParams{
-		Content: newContent,
-		ID:      articleId,
-	})
-	return
+	return URI, err
 }
 
 // GetArticleIds returns the article's ID, ActivityPub ID and the ID of its last revision, if the article exists.
@@ -188,7 +190,6 @@ func (d *dbImpl) GetArticleById(ctx context.Context, id int64) (domain.ArticleFe
 	}
 	uri, _ := url.Parse(a.Url.String)
 
-
 	return domain.ArticleFed{
 		ApID: iri,
 		AttributedTo: attributedTo,
@@ -206,6 +207,7 @@ func (d *dbImpl) GetArticleById(ctx context.Context, id int64) (domain.ArticleFe
 			License:   "", // TODO
 			Language:  a.Language,
 			Published: time.Unix(a.Published.Int64, 0),
+			LastUpdated: time.Unix(a.LastUpdated, 0),
 		},
 	}, err
 }

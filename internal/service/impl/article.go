@@ -18,14 +18,25 @@ import (
 func (s *AppService) AlterArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error) {
 	//TODO: deal with variations in the capitalization of the article title.
 	//TODO: check if user has permission to edit the wiki and the article in question.
+	author, err := s.DB.GetUserURI(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	
 	articleId, ap, prev, err := s.DB.GetLastRevisionID(ctx, title)
-	if err == nil {
-		return ap, s.DB.UpdateArticle(ctx, prev, articleId, userId, summary, content)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			ap, err = s.CreateArticle(ctx, title, summary, content, userId)
+		}
+		return ap, err
+	}
+	uri, err := s.DB.UpdateArticle(ctx, prev, articleId, userId, summary, content)
+	if err != nil {
+		return nil, err
 	}
 
-	if errors.Is(err, db.ErrNotFound) {
-		ap, err = s.CreateArticle(ctx, title, summary, content, userId)
-	}
+	err = s.fedgateway.UpdateLocalArticle(ctx, uri, author, summary, articleId)
+
 	return ap, err
 
 }

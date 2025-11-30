@@ -121,11 +121,13 @@ func (c *HttpClient) DeliverAs(ctx context.Context, obj map[string]any, to *url.
 
 	key, err := c.db.GetUserPrivateKeyByURI(ctx, from)
 	if err != nil {
+		log.Error().Err(err).Msg("user's private key not found")
 		return err
 	}
 
 	signer, _, err := httpsig.NewSigner(prefs, httpsig.DigestSha256, postHeaders, httpsig.Signature, 3600)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to construct signer")
 		return err
 	}
 

@@ -21,6 +21,7 @@ type ApQueue interface {
 
 	// Perhaps move these to a Notifier interface?
 	CreateLocalArticle(ctx context.Context, article domain.ArticleFed, authorId *url.URL, summary string) error
+	UpdateLocalArticle(ctx context.Context, updateURI, author *url.URL, summary string, id int64) error
 }
 
 type apQueueImpl struct {

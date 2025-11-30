@@ -582,11 +582,12 @@ func (mr *MockDBMockRecorder) UpdateAp(ctx, id, rawJSON any) *gomock.Call {
 }
 
 // UpdateArticle mocks base method.
-func (m *MockDB) UpdateArticle(ctx context.Context, prevId, articleId, userId int64, summary, newContent string) error {
+func (m *MockDB) UpdateArticle(ctx context.Context, prevId, articleId, userId int64, summary, newContent string) (*url.URL, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateArticle", ctx, prevId, articleId, userId, summary, newContent)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateArticle indicates an expected call of UpdateArticle.
