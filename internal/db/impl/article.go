@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/url"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
@@ -107,11 +108,19 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 				Valid:  article.Url != nil,
 				String: apid,
 			},
+			AttributedTo: sql.NullString{
+				Valid: true,
+				String: article.AttributedTo.String(),
+			},
 			InstanceID: sql.NullInt64{},
 			Language:   article.Language,
 			MediaType:  article.MediaType,
 			Title:      article.Title,
 			Content:    article.Content,
+			Published: sql.NullInt64{
+				Valid: true,
+				Int64: article.Published.Unix(),
+			},
 		})
 		if err != nil {
 			return err
@@ -168,15 +177,26 @@ func (d *dbImpl) GetArticleById(ctx context.Context, id int64) (domain.ArticleFe
 		return domain.ArticleFed{}, d.HandleError(err)
 	}
 
+	var attributedTo *url.URL
+	if a.AttributedTo.Valid {
+		attributedTo, _ = url.Parse(a.AttributedTo.String)
+	}
+
 	iri, err := url.Parse(a.ApID)
 	if err != nil {
 		return domain.ArticleFed{}, err
 	}
-	url, _ := url.Parse(a.Url.String)
+	uri, _ := url.Parse(a.Url.String)
+
 
 	return domain.ArticleFed{
 		ApID: iri,
-		Url:  url,
+		AttributedTo: attributedTo,
+		To: []*url.URL{
+			domain.Public,
+			d.Config.Url,
+		},
+		Url:  uri,
 		ArticleCore: domain.ArticleCore{
 			Title:     a.Title,
 			Summary:   a.Summary.String,
@@ -185,6 +205,7 @@ func (d *dbImpl) GetArticleById(ctx context.Context, id int64) (domain.ArticleFe
 			MediaType: a.MediaType,
 			License:   "", // TODO
 			Language:  a.Language,
+			Published: time.Unix(a.Published.Int64, 0),
 		},
 	}, err
 }

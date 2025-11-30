@@ -54,6 +54,8 @@ func (fd *FedDB) handleFollow(ctx context.Context, follow vocab.ActivityStreamsF
 		return err
 	}
 
+
+	// TODO: Ibis and Mastodon repeat the follow activity in the accept's object property.
 	acceptId := fd.Config.Url.JoinPath("accept", strconv.Itoa(int(returnedId)))
 	accept := conversions.NewAccept(acceptId, obj, id)
 	

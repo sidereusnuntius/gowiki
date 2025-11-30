@@ -176,34 +176,40 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) er
 const createArticle = `-- name: CreateArticle :one
 INSERT INTO articles (
     ap_id,
+    attributed_to,
     url,
     instance_id,
     language,
     media_type,
     title,
-    content
-) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
+    content,
+    published
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id
 `
 
 type CreateArticleParams struct {
-	ApID       string
-	Url        sql.NullString
-	InstanceID sql.NullInt64
-	Language   string
-	MediaType  string
-	Title      string
-	Content    string
+	ApID         string
+	AttributedTo sql.NullString
+	Url          sql.NullString
+	InstanceID   sql.NullInt64
+	Language     string
+	MediaType    string
+	Title        string
+	Content      string
+	Published    sql.NullInt64
 }
 
 func (q *Queries) CreateArticle(ctx context.Context, arg CreateArticleParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, createArticle,
 		arg.ApID,
+		arg.AttributedTo,
 		arg.Url,
 		arg.InstanceID,
 		arg.Language,
 		arg.MediaType,
 		arg.Title,
 		arg.Content,
+		arg.Published,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -384,6 +390,7 @@ func (q *Queries) GetApObject(ctx context.Context, apID string) (GetApObjectRow,
 const getArticleByID = `-- name: GetArticleByID :one
 SELECT
     ap_id,
+    attributed_to,
     url,
     instance_id,
     language,
@@ -392,23 +399,26 @@ SELECT
     protected,
     summary,
     content,
-    created,
+    published,
+    inserted_at,
     last_updated
 FROM articles where id = ?
 `
 
 type GetArticleByIDRow struct {
-	ApID        string
-	Url         sql.NullString
-	InstanceID  sql.NullInt64
-	Language    string
-	MediaType   string
-	Title       string
-	Protected   bool
-	Summary     sql.NullString
-	Content     string
-	Created     int64
-	LastUpdated int64
+	ApID         string
+	AttributedTo sql.NullString
+	Url          sql.NullString
+	InstanceID   sql.NullInt64
+	Language     string
+	MediaType    string
+	Title        string
+	Protected    bool
+	Summary      sql.NullString
+	Content      string
+	Published    sql.NullInt64
+	InsertedAt   int64
+	LastUpdated  int64
 }
 
 func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDRow, error) {
@@ -416,6 +426,7 @@ func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDR
 	var i GetArticleByIDRow
 	err := row.Scan(
 		&i.ApID,
+		&i.AttributedTo,
 		&i.Url,
 		&i.InstanceID,
 		&i.Language,
@@ -424,7 +435,8 @@ func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDR
 		&i.Protected,
 		&i.Summary,
 		&i.Content,
-		&i.Created,
+		&i.Published,
+		&i.InsertedAt,
 		&i.LastUpdated,
 	)
 	return i, err
@@ -594,6 +606,33 @@ func (q *Queries) GetFile(ctx context.Context, digest string) (GetFileRow, error
 		&i.Hostname,
 	)
 	return i, err
+}
+
+const getFollowers = `-- name: GetFollowers :many
+SELECT follower_ap_id FROM follows WHERE followee_ap_id = ?
+`
+
+func (q *Queries) GetFollowers(ctx context.Context, followeeApID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getFollowers, followeeApID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var follower_ap_id string
+		if err := rows.Scan(&follower_ap_id); err != nil {
+			return nil, err
+		}
+		items = append(items, follower_ap_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getForeignUserData = `-- name: GetForeignUserData :one
@@ -980,6 +1019,17 @@ func (q *Queries) GetUserKeys(ctx context.Context, id int64) (GetUserKeysRow, er
 	var i GetUserKeysRow
 	err := row.Scan(&i.ApID, &i.PrivateKey)
 	return i, err
+}
+
+const getUserUriById = `-- name: GetUserUriById :one
+SELECT ap_id FROM users WHERE id = ? LIMIT 1
+`
+
+func (q *Queries) GetUserUriById(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRowContext(ctx, getUserUriById, id)
+	var ap_id string
+	err := row.Scan(&ap_id)
+	return ap_id, err
 }
 
 const insertApObject = `-- name: InsertApObject :exec

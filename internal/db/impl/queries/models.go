@@ -48,20 +48,22 @@ type ApprovalRequest struct {
 }
 
 type Article struct {
-	ID          int64
-	Local       bool
-	ApID        string
-	Url         sql.NullString
-	InstanceID  sql.NullInt64
-	Language    string
-	MediaType   string
-	Title       string
-	Protected   bool
-	Summary     sql.NullString
-	Content     string
-	Created     int64
-	LastUpdated int64
-	LastFetched sql.NullInt64
+	ID           int64
+	Local        bool
+	ApID         string
+	AttributedTo sql.NullString
+	Url          sql.NullString
+	InstanceID   sql.NullInt64
+	Language     string
+	MediaType    string
+	Title        string
+	Protected    bool
+	Summary      sql.NullString
+	Content      string
+	Published    sql.NullInt64
+	InsertedAt   int64
+	LastUpdated  int64
+	LastFetched  sql.NullInt64
 }
 
 type ArticleFile struct {

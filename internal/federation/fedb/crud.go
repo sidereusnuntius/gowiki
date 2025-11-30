@@ -113,7 +113,7 @@ func (fd *FedDB) routeQuery(ctx context.Context, table string, id int64) (t voca
 		if err != nil {
 			return
 		}
-		t = conversions.ArticleToObject(a)
+		t = a.ConvertToAp()
 	case "instances":
 		var c domain.Collective
 		c, err = fd.DB.GetCollectiveById(ctx, id)

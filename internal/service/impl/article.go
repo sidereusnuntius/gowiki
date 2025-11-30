@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/sidereusnuntius/gowiki/internal/db"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
@@ -42,13 +43,18 @@ func (s *AppService) GetLocalArticle(ctx context.Context, title string) (article
 
 func (s *AppService) CreateArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error) {
 	// TODO: validate title.
-	title = RemoveDuplicateSpaces(title)
-	summary = RemoveDuplicateSpaces(summary)
-
-	err := validate.Title(title)
+	user, err := s.DB.GetUserURI(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
+	title = RemoveDuplicateSpaces(title)
+	summary = RemoveDuplicateSpaces(summary)
+
+	err = validate.Title(title)
+	if err != nil {
+		return nil, err
+	}
+
 
 	apId := s.Config.Url.JoinPath("a", title)
 	article := domain.ArticleFed{
@@ -57,8 +63,14 @@ func (s *AppService) CreateArticle(ctx context.Context, title, summary, content 
 			Content:   content,
 			Language:  s.Config.Language,
 			MediaType: s.Config.MediaType,
+			Published: time.Now(),
 		},
 		ApID: apId,
+		To: []*url.URL{
+			domain.Public,
+			s.Config.Url,
+		},
+		AttributedTo: user,
 		Url:  apId,
 	}
 
@@ -68,7 +80,13 @@ func (s *AppService) CreateArticle(ctx context.Context, title, summary, content 
 		Diff:     diffs,
 		Reviewed: false,
 	}
-	return article.ApID, s.DB.CreateLocalArticle(ctx, userId, article, revision)
+
+	if err = s.DB.CreateLocalArticle(ctx, userId, article, revision); err != nil {
+		return nil, err
+	}
+
+	err = s.fedgateway.CreateLocalArticle(ctx, article, user, summary)
+	return apId, err
 }
 
 func (s *AppService) GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error) {

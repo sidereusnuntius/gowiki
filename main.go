@@ -88,14 +88,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	queue := queue.New(context.Background(), dd, client, q)
+	queue := queue.New(context.Background(), dd, client, &config, q)
 
 	state := state.State{
 		DB:     dd,
 		Config: config,
 	}
 
-	service, err := service.New(&state)
+	service, err := service.New(&state, queue)
 	if err != nil {
 		log.Fatal(err)
 	}

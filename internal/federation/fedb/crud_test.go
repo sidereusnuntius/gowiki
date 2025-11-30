@@ -57,7 +57,7 @@ func TestGet_UserSuccess(t *testing.T) {
 			iri:              u.JoinPath("a", "tests"),
 			cacheEntry:       domain.FedObj{Iri: u.JoinPath("a", "tests"), RawJSON: "", ApType: "Article", Local: true, LocalTable: "articles", LocalId: 5},
 			returnedValue:    article,
-			returnedAsObject: conversions.ArticleToObject(article),
+			returnedAsObject: article.ConvertToAp(),
 			expectedType:     streams.ActivityStreamsArticleName,
 		},
 		{

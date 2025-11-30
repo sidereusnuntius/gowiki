@@ -16,6 +16,25 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+func (d *dbImpl) GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, error) {
+	followers, err := d.queries.GetFollowers(ctx, id.String())
+	if err != nil {
+		d.HandleError(err)
+	}
+
+	followersIRIS := make([]*url.URL, 0, len(followers))
+	var u *url.URL
+	for _, f := range followers {
+		u, err = url.Parse(f)
+		if err != nil {
+			return nil, err
+		}
+		followersIRIS = append(followersIRIS, u)
+	}
+	
+	return followersIRIS, nil 
+}
+
 func (d *dbImpl) GetCollectionPage(ctx context.Context, iri *url.URL, last int64) (ids []*url.URL, err error) {
 	var members []string
 

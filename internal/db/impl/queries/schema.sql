@@ -90,6 +90,7 @@ CREATE TABLE articles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     local BOOLEAN DEFAULT TRUE NOT NULL,
     ap_id VARCHAR NOT NULL,
+    attributed_to VARCHAR(255),
     url VARCHAR,
     instance_id INTEGER,
     language VARCHAR NOT NULL,
@@ -98,7 +99,8 @@ CREATE TABLE articles (
     protected BOOLEAN DEFAULT FALSE NOT NULL,
     summary TEXT,
     content TEXT NOT NULL,
-    created INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
+    published INTEGER DEFAULT (cast(strftime('%s','now') as int)),
+    inserted_at INTEGER DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_fetched INT,
 

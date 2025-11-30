@@ -44,7 +44,6 @@ func (q *apQueueImpl) fetch() func(context.Context, FetchJob) error {
 			return err
 		}
 
-	
 		switch asType.GetTypeName() {
 		case streams.ActivityStreamsPersonName:
 			person, _ := asType.(vocab.ActivityStreamsPerson)

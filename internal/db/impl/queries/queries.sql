@@ -64,13 +64,15 @@ SELECT trusted FROM users where id = ?1 LIMIT 1;
 -- name: CreateArticle :one
 INSERT INTO articles (
     ap_id,
+    attributed_to,
     url,
     instance_id,
     language,
     media_type,
     title,
-    content
-) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id;
+    content,
+    published
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id;
 
 -- name: EditArticle :one
 INSERT INTO revisions (
@@ -276,6 +278,7 @@ WHERE ap_id = ?;
 -- name: GetArticleByID :one
 SELECT
     ap_id,
+    attributed_to,
     url,
     instance_id,
     language,
@@ -284,7 +287,8 @@ SELECT
     protected,
     summary,
     content,
-    created,
+    published,
+    inserted_at,
     last_updated
 FROM articles where id = ?;
 
@@ -392,3 +396,9 @@ LIMIT 1;
 SELECT ap_id FROM users WHERE local AND username = lower(?1)
 UNION
 SELECT url AS ap_id FROM INSTANCES WHERE name = lower(?1);
+
+-- name: GetFollowers :many
+SELECT follower_ap_id FROM follows WHERE followee_ap_id = ?;
+
+-- name: GetUserUriById :one
+SELECT ap_id FROM users WHERE id = ? LIMIT 1;

@@ -9,6 +9,16 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+func (d *dbImpl) GetUserURI(ctx context.Context, id int64) (*url.URL, error) {
+	uriStr, err := d.queries.GetUserUriById(ctx, id)
+	if err != nil {
+		return nil, d.HandleError(err)
+	}
+
+	uri, err := url.Parse(uriStr)
+	return uri, err
+}
+
 func (d *dbImpl) UserExists(ctx context.Context, id *url.URL) (exists bool, err error) {
 	exists, err = d.queries.UserExists(ctx, id.String())
 	if err != nil {

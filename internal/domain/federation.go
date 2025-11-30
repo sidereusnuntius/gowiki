@@ -2,6 +2,8 @@ package domain
 
 import "net/url"
 
+var Public, _ = url.Parse("https://www.w3.org/ns/activitystreams#Public")
+
 // FedObj is an internal type used to represent arbitrary Activitystreams objects.
 type FedObj struct {
 	// Iri is the object's unique identifier.

@@ -296,6 +296,21 @@ func (mr *MockDBMockRecorder) GetFile(ctx, hash any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFile", reflect.TypeOf((*MockDB)(nil).GetFile), ctx, hash)
 }
 
+// GetFollowers mocks base method.
+func (m *MockDB) GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFollowers", ctx, id)
+	ret0, _ := ret[0].([]*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFollowers indicates an expected call of GetFollowers.
+func (mr *MockDBMockRecorder) GetFollowers(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFollowers", reflect.TypeOf((*MockDB)(nil).GetFollowers), ctx, id)
+}
+
 // GetInstanceIdOrCreate mocks base method.
 func (m *MockDB) GetInstanceIdOrCreate(ctx context.Context, hostname string) (int64, error) {
 	m.ctrl.T.Helper()
@@ -462,6 +477,21 @@ func (m *MockDB) GetUserPrivateKeyByURI(ctx context.Context, arg1 *url.URL) (cry
 func (mr *MockDBMockRecorder) GetUserPrivateKeyByURI(ctx, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPrivateKeyByURI", reflect.TypeOf((*MockDB)(nil).GetUserPrivateKeyByURI), ctx, arg1)
+}
+
+// GetUserURI mocks base method.
+func (m *MockDB) GetUserURI(ctx context.Context, id int64) (*url.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserURI", ctx, id)
+	ret0, _ := ret[0].(*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserURI indicates an expected call of GetUserURI.
+func (mr *MockDBMockRecorder) GetUserURI(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserURI", reflect.TypeOf((*MockDB)(nil).GetUserURI), ctx, id)
 }
 
 // InsertOrUpdateUser mocks base method.

@@ -10,26 +10,33 @@ import (
 	"github.com/mikestefanello/backlite"
 	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/client"
+	"github.com/sidereusnuntius/gowiki/internal/config"
 	"github.com/sidereusnuntius/gowiki/internal/db"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 type ApQueue interface {
 	Fetch(iri *url.URL) error
 	Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error
+
+	// Perhaps move these to a Notifier interface?
+	CreateLocalArticle(ctx context.Context, article domain.ArticleFed, authorId *url.URL, summary string) error
 }
 
 type apQueueImpl struct {
+	client *client.HttpClient
 	db db.DB
 	queues *backlite.Client
-	client *client.HttpClient
+	cfg *config.Configuration
 }
 
-func New(ctx context.Context, db db.DB, client *client.HttpClient, blClient *backlite.Client) ApQueue {
+func New(ctx context.Context, db db.DB, client *client.HttpClient, cfg *config.Configuration, blClient *backlite.Client) ApQueue {
 	
 	q := &apQueueImpl{
 		db: db,
 		queues: blClient,
 		client: client,
+		cfg: cfg,
 	}
 	q.register()
 	q.queues.Start(ctx)
