@@ -16,6 +16,25 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+func (d *dbImpl) GetCollectionMemberIRIS(ctx context.Context, collectionIRI *url.URL) ([]*url.URL, error) {
+	result, err := d.queries.CollectionMembersIRIs(ctx, collectionIRI.String())
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			return []*url.URL{}, nil
+		}
+		return nil, d.HandleError(err)
+	}
+
+	uris := make([]*url.URL, len(result))
+	for i, u := range result {
+		uris[i], err = url.Parse(u)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return uris, nil
+}
+
 func (d *dbImpl) AddOutbox(ctx context.Context, raw, apType string, id, outbox *url.URL) error {
 	return d.WithTx(func(tx *queries.Queries) error {
 		idStr := id.String()
@@ -341,19 +360,33 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error
 	if follow.FollowerInbox != nil {
 		inbox = follow.FollowerInbox.String()
 	}
-	id, err := d.queries.Follow(ctx, queries.FollowParams{
-		FollowApID:   follow.IRI.String(),
-		FollowerApID: follow.Follower.String(),
-		FolloweeApID: follow.Followee.String(),
-		FollowerInboxUrl: sql.NullString{
-			Valid:  follow.FollowerInbox != nil,
-			String: inbox,
-		},
-	})
 
-	if err != nil {
-		err = d.HandleError(err)
-	}
+	var id int64
+	err := d.WithTx(func(tx *queries.Queries) error {
+		var err error
+		id, err = tx.Follow(ctx, queries.FollowParams{
+			FollowApID:   follow.IRI.String(),
+			FollowerApID: follow.Follower.String(),
+			FolloweeApID: follow.Followee.String(),
+			FollowerInboxUrl: sql.NullString{
+				Valid:  follow.FollowerInbox != nil,
+				String: inbox,
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		if follow.Followee.Hostname() == d.Config.Url.Hostname() {
+			_, err = tx.AddToCollection(ctx, queries.AddToCollectionParams{
+				CollectionApID: follow.Followee.JoinPath("followers").String(),
+    			MemberApID: follow.IRI.String(),
+			})
+		}
+
+		return err
+	})
+	
 	return id, err
 }
 

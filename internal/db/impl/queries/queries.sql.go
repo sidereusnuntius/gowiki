@@ -149,6 +149,33 @@ func (q *Queries) CollectionContains(ctx context.Context, arg CollectionContains
 	return column_1, err
 }
 
+const collectionMembersIRIs = `-- name: CollectionMembersIRIs :many
+SELECT member_ap_id FROM ap_collection_members WHERE collection_ap_id = ?
+`
+
+func (q *Queries) CollectionMembersIRIs(ctx context.Context, collectionApID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, collectionMembersIRIs, collectionApID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var member_ap_id string
+		if err := rows.Scan(&member_ap_id); err != nil {
+			return nil, err
+		}
+		items = append(items, member_ap_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createAccount = `-- name: CreateAccount :exec
 INSERT INTO 
     accounts (password, admin, email, user_id)

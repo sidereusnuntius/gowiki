@@ -97,7 +97,20 @@ func EnsureInstance(DB *sql.DB, cfg *config.Configuration) error {
 		return err
 	}
 
-	res, err := DB.Exec(`INSERT INTO instances(
+	tx, err := DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer func(){
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	res, err := tx.Exec(`INSERT INTO instances(
 				name,
 				hostname,
 				url,
@@ -118,8 +131,23 @@ func EnsureInstance(DB *sql.DB, cfg *config.Configuration) error {
 		return err
 	}
 
-	_, err = DB.Exec(`
+	_, err = tx.Exec(`
 INSERT INTO ap_object_cache (ap_id, local_table, local_id, type)
 VALUES (?, ?, ?, ?)`, cfg.Url.String(), "instances", id, "Group")
+	if err != nil {
+		return err
+	}
+
+	for _, c := range []string{"followers", "outbox", "inbox"} {
+		uri := cfg.Url.JoinPath(c)
+		_, err = tx.Exec(`
+INSERT INTO ap_object_cache (ap_id, type)
+VALUES (?, ?)`, uri.String(), "OrderedCollection")
+		if err != nil {
+			break
+		}
+	}
+
+
 	return err
 }

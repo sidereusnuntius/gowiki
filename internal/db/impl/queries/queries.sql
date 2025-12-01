@@ -405,3 +405,6 @@ SELECT follower_ap_id FROM follows WHERE followee_ap_id = ?;
 
 -- name: GetUserUriById :one
 SELECT ap_id FROM users WHERE id = ? LIMIT 1;
+
+-- name: CollectionMembersIRIs :many
+SELECT member_ap_id FROM ap_collection_members WHERE collection_ap_id = ?;

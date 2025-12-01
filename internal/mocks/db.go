@@ -265,6 +265,21 @@ func (mr *MockDBMockRecorder) GetAuthDataByUsername(ctx, username any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthDataByUsername", reflect.TypeOf((*MockDB)(nil).GetAuthDataByUsername), ctx, username)
 }
 
+// GetCollectionMemberIRIS mocks base method.
+func (m *MockDB) GetCollectionMemberIRIS(ctx context.Context, collectionIRI *url.URL) ([]*url.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCollectionMemberIRIS", ctx, collectionIRI)
+	ret0, _ := ret[0].([]*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCollectionMemberIRIS indicates an expected call of GetCollectionMemberIRIS.
+func (mr *MockDBMockRecorder) GetCollectionMemberIRIS(ctx, collectionIRI any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollectionMemberIRIS", reflect.TypeOf((*MockDB)(nil).GetCollectionMemberIRIS), ctx, collectionIRI)
+}
+
 // GetCollectionPage mocks base method.
 func (m *MockDB) GetCollectionPage(ctx context.Context, iri *url.URL, last int64) ([]*url.URL, error) {
 	m.ctrl.T.Helper()

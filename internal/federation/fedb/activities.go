@@ -58,11 +58,7 @@ func (fd *FedDB) handleFollow(ctx context.Context, follow vocab.ActivityStreamsF
 	acceptId := fd.Config.Url.JoinPath("accept", strconv.Itoa(int(returnedId)))
 	accept := conversions.NewAccept(acceptId, obj, id)
 
-	if err = fd.Queue.Deliver(ctx, accept, actor, obj); err != nil {
-		return err
-	}
-
-	return fd.Create(ctx, accept)
+	return fd.Queue.Deliver(ctx, accept, actor, obj)
 }
 
 func (fd *FedDB) handleId(prop vocab.JSONLDIdProperty) (iri *url.URL, err error) {

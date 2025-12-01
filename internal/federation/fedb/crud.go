@@ -22,7 +22,9 @@ func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err er
 	}
 	log.Debug().Any("returned", obj).Msg("at Get:")
 
-	if obj.RawJSON == "" {
+	if obj.ApType == streams.ActivityStreamsOrderedCollectionName {
+		value, err = fd.handleCollection(ctx, id)
+	} else if obj.RawJSON == "" {
 		value, err = fd.routeQuery(ctx, obj.LocalTable, obj.LocalId)
 	} else {
 		var temp map[string]any
@@ -124,5 +126,29 @@ func (fd *FedDB) routeQuery(ctx context.Context, table string, id int64) (t voca
 		t = conversions.GroupToActor(c)
 	}
 
+	return
+}
+
+func (fd *FedDB) handleCollection(ctx context.Context, id *url.URL) (t vocab.ActivityStreamsOrderedCollection, err error) {
+	items, err := fd.DB.GetCollectionMemberIRIS(ctx, id)
+	if err != nil {
+		return
+	}
+
+	t = streams.NewActivityStreamsOrderedCollection()
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(id)
+	t.SetJSONLDId(idProp)
+
+	l := streams.NewActivityStreamsTotalItemsProperty()
+	l.Set(len(items))
+	t.SetActivityStreamsTotalItems(l)
+
+	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
+	for _, i := range items {
+		itemsProp.AppendIRI(i)
+	}
+
+	t.SetActivityStreamsOrderedItems(itemsProp)
 	return
 }
