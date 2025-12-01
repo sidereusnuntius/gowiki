@@ -16,6 +16,29 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+func (d *dbImpl) AddOutbox(ctx context.Context, raw, apType string, id, outbox *url.URL) error {
+	return d.WithTx(func(tx *queries.Queries) error {
+		idStr := id.String()
+		err := tx.InsertApObject(ctx, queries.InsertApObjectParams{
+			ApID: idStr,
+			Type: apType,
+			RawJson: sql.NullString{
+				Valid: raw != "",
+				String: raw,
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.AddToCollection(ctx, queries.AddToCollectionParams{
+			CollectionApID: outbox.String(),
+    		MemberApID: idStr,
+		})
+		return err
+	})
+}
+
 func (d *dbImpl) GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, error) {
 	followers, err := d.queries.GetFollowers(ctx, id.String())
 	if err != nil {

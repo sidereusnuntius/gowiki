@@ -74,6 +74,20 @@ func (mr *MockDBMockRecorder) ActorIdByOutbox(ctx, iri any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActorIdByOutbox", reflect.TypeOf((*MockDB)(nil).ActorIdByOutbox), ctx, iri)
 }
 
+// AddOutbox mocks base method.
+func (m *MockDB) AddOutbox(ctx context.Context, raw, apType string, id, outbox *url.URL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddOutbox", ctx, raw, apType, id, outbox)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddOutbox indicates an expected call of AddOutbox.
+func (mr *MockDBMockRecorder) AddOutbox(ctx, raw, apType, id, outbox any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddOutbox", reflect.TypeOf((*MockDB)(nil).AddOutbox), ctx, raw, apType, id, outbox)
+}
+
 // CollectionContains mocks base method.
 func (m *MockDB) CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error) {
 	m.ctrl.T.Helper()

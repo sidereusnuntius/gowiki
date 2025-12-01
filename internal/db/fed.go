@@ -15,6 +15,7 @@ type Fed interface {
 	ActorIdByOutbox(ctx context.Context, iri *url.URL) (*url.URL, error)
 	OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (*url.URL, error)
 
+	AddOutbox(ctx context.Context, raw, apType string, id, outbox *url.URL) error
 	GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, error)
 	GetUserApId(ctx context.Context, username string) (*url.URL, error)
 	GetUserFed(ctx context.Context, id *url.URL) (user domain.UserFed, err error)

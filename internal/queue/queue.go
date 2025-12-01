@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/url"
 
@@ -54,20 +55,54 @@ func (q *apQueueImpl) Fetch(iri *url.URL) error {
 	return err
 }
 
-func (q *apQueueImpl) Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error {
+func (q *apQueueImpl) serializeAndPersist(ctx context.Context, activity vocab.Type, sender *url.URL) (map[string]any, error) {
 	data, err := streams.Serialize(activity)
 	if err != nil {
 		log.Error().Err(err).Msg("activity serialization error")
+		return nil, err
+	}
+
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	err = q.db.AddOutbox(ctx, string(bytes), activity.GetTypeName(), activity.GetJSONLDId().GetIRI(), sender.JoinPath("outbox"))
+	return data, err
+}
+
+func (q *apQueueImpl) BatchDeliver(ctx context.Context, activity vocab.Type, receivers []*url.URL, from *url.URL) error {
+	data, err := q.serializeAndPersist(ctx, activity, from)
+	if err != nil {
 		return err
 	}
 
+	for _, to := range receivers {
+		if err = q.rawDeliver(ctx, data, to, from); err != nil {
+			log.Error().Err(err).Msg("delivery task enqueue")
+		}
+	}
+
+	return nil
+}
+
+func (q *apQueueImpl) Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error {
+	data, err := q.serializeAndPersist(ctx, activity, from)
+	if err != nil {
+		return err
+	}
+
+	return q.rawDeliver(ctx, data, to, from)
+}
+
+func (q *apQueueImpl) rawDeliver(ctx context.Context, activity map[string]any, to *url.URL, from *url.URL) error {
 	var task = PostJob{
 		To: to.String(),
 		From: from.String(),
-		Body: data,
+		Body: activity,
 	}
 
-	_, err = q.db.GetActorInbox(ctx, to)
+	_, err := q.db.GetActorInbox(ctx, to)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			_, err = q.queues.Add(FetchJob{
