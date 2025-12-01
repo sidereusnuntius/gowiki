@@ -107,11 +107,11 @@ func (a *ArticleFed) UpdateAP(id, author, wiki *url.URL, summary string) (update
 	update.SetJSONLDId(idProp)
 
 	actor := streams.NewActivityStreamsActorProperty()
-	actor.AppendIRI(wiki)
+	actor.AppendIRI(author)
 	update.SetActivityStreamsActor(actor)
 
 	att := streams.NewActivityStreamsAttributedToProperty()
-	att.AppendIRI(author)
+	att.AppendIRI(wiki)
 	update.SetActivityStreamsAttributedTo(att)
 
 	obj := streams.NewActivityStreamsObjectProperty()

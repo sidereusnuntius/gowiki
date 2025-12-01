@@ -67,7 +67,7 @@ func (q *apQueueImpl) serializeAndPersist(ctx context.Context, activity vocab.Ty
 		return nil, err
 	}
 
-	err = q.db.AddOutbox(ctx, string(bytes), activity.GetTypeName(), activity.GetJSONLDId().GetIRI(), sender.JoinPath("outbox"))
+	err = q.db.AddOutbox(ctx, activity.GetTypeName(), bytes, activity.GetJSONLDId().GetIRI(), sender.JoinPath("outbox"))
 	return data, err
 }
 

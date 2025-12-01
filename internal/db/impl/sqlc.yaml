@@ -20,5 +20,9 @@ sql:
           go_type: "string"
         - column: "files.digest"
           go_type: "string"
+        - column: "ap_object_cache.raw_json"
+          go_type:
+            type: "byte"
+            slice: true
 # Perhaps it would be good to add a wrapper to the DB object, allowing us to implement business logic
 # such as hashing the user's password and generating their public and private keys.

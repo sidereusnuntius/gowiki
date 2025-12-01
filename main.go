@@ -103,16 +103,23 @@ func main() {
 	fd := fedb.New(state.DB, queue, config)
 	fh := pub.NewActivityStreamsHandler(&fd, Clock{})
 
-	ap := federation.ApService{}
+	ap := federation.ApService{
+		DB: dd,
+	}
 	actor := pub.NewFederatingActor(&ap, &ap, &fd, Clock{})
 
 	handler := web.New(&config, service, manager)
 	router := chi.NewRouter()
 	handler.Mount(router)
 	wellknown.Mount(&state, router)
-	router.Post("/inbox", func(w http.ResponseWriter, r *http.Request) {
+
+	apMux := chi.NewMux()
+
+	apMux.Post("/inbox", func(w http.ResponseWriter, r *http.Request) {
 		success, err := actor.PostInbox(r.Context(), w, r)
-		recover()
+		if r := recover(); r != nil {
+			zero.Error().Any("return", r).Msg("panic!")
+		}
 		e := zero.Debug().Bool("success", success)
 		if err != nil {
 			e.Err(err)
@@ -120,18 +127,46 @@ func main() {
 		e.Msg("attempted to post to inbox.")
 	})
 
+	apMux.Get("/outbox", func(w http.ResponseWriter, r *http.Request) {
+		r.URL = config.Url.ResolveReference(r.URL)
+
+		if r.URL.Query().Get("last") == "" {
+			if err = ap.GetCollection(r.Context(), w, r); err != nil {
+				http.Error(w, "", http.StatusInternalServerError)
+				zero.Error().Err(err).Msg("trying to get outbox")
+			}
+			return
+		}
+		success, err := actor.GetOutbox(r.Context(), w, r)
+		if r := recover(); r != nil {
+			zero.Error().Any("return", r).Msg("panic!")
+		}
+		e := zero.Debug().Bool("success", success)
+		if err != nil {
+			e.Err(err)
+		}
+		e.Msg("attempted to get outbox.")
+	})
+
+	apMux.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		isAp, err := fh(r.Context(), w, r)
+		if err != nil {
+			zero.Error().Err(err).Send()
+			http.Error(w, "", http.StatusInternalServerError)
+		}
+		
+		if !isAp {
+			zero.Error().Msg("not AP request")
+		}
+	})
+
 	contentRouter := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accept := r.Header.Get("Accept")
-		if strings.Contains(accept, "application/ld+json") || strings.Contains(accept, "application/activity+json") {
+		content := r.Header.Get("Content-Type")
+		// Change this. Please.
+		if strings.Contains(accept, "activity") || strings.Contains(content, "activity") || strings.Contains(accept, "ld") || strings.Contains(content, "ld") {
 			zero.Log().Str("url", r.URL.String()).Send()
-			isAp, err := fh(r.Context(), w, r)
-			if err != nil {
-				zero.Error().Err(err).Send()
-				http.Error(w, "", http.StatusInternalServerError)
-			}
-			if !isAp {
-				http.Error(w, "could not process request", http.StatusInternalServerError)
-			}
+			apMux.ServeHTTP(w, r)
 		} else {
 			router.ServeHTTP(w, r)
 		}

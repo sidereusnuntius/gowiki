@@ -2,14 +2,17 @@ package federation
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"code.superseriousbusiness.org/activity/pub"
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/rs/zerolog/log"
+	"github.com/sidereusnuntius/gowiki/internal/db"
 )
 
 var (
@@ -19,6 +22,41 @@ var (
 )
 
 type ApService struct {
+	DB db.DB
+}
+
+func (f ApService) GetCollection(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	iri := r.URL
+	size, start, err := f.DB.GetCollectionStart(ctx, iri)
+	if err != nil {
+		return err
+	}
+
+	collection := streams.NewActivityStreamsOrderedCollection()
+	id := streams.NewJSONLDIdProperty()
+	id.SetIRI(iri)
+	collection.SetJSONLDId(id)
+
+	total := streams.NewActivityStreamsTotalItemsProperty()
+	total.Set(int(size))
+	collection.SetActivityStreamsTotalItems(total)
+
+	query, err := url.Parse("?last=" + strconv.FormatInt(start, 10))
+	if err != nil {
+		return err
+	}
+
+	first := streams.NewActivityStreamsFirstProperty()
+	first.SetIRI(iri.ResolveReference(query))
+	collection.SetActivityStreamsFirst(first)
+
+	props, err := streams.Serialize(collection)
+	if err != nil {
+		return err
+	}
+	encoder := json.NewEncoder(w)
+	w.Header().Add("Content-Type", "application/activity+json")
+	return encoder.Encode(props)
 }
 
 // AuthenticatePostInbox implements pub.FederatingProtocol.

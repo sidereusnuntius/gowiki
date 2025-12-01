@@ -10,7 +10,7 @@ type FedObj struct {
 	Iri *url.URL
 	// RawJSON is the object's JSON-LD representation, which may be empty, for instance, when storing a collection
 	// in the database.
-	RawJSON    string
+	RawJSON    []byte
 	ApType     string
 	Local      bool
 	LocalTable string

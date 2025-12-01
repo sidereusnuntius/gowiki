@@ -28,11 +28,12 @@ type ApCollectionMember struct {
 }
 
 type ApObjectCache struct {
+	ID          int64
 	ApID        string
 	LocalTable  sql.NullString
 	LocalID     sql.NullInt64
 	Type        string
-	RawJson     sql.NullString
+	RawJson     []byte
 	InsertedAt  int64
 	LastUpdated sql.NullInt64
 	LastFetched sql.NullInt64

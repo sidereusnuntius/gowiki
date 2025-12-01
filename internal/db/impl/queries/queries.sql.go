@@ -394,7 +394,7 @@ type GetApObjectRow struct {
 	LocalTable  sql.NullString
 	LocalID     sql.NullInt64
 	Type        string
-	RawJson     sql.NullString
+	RawJson     []byte
 	LastUpdated sql.NullInt64
 	LastFetched sql.NullInt64
 }
@@ -504,6 +504,58 @@ func (q *Queries) GetArticleIDS(ctx context.Context, title string) (GetArticleID
 	return i, err
 }
 
+const getCollectionActivitiesPage = `-- name: GetCollectionActivitiesPage :many
+SELECT
+    cache.ap_id,
+    cache.raw_json
+FROM
+    ap_collection_members col
+JOIN
+    ap_object_cache cache
+ON cache.ap_id = col.member_ap_id
+WHERE col.collection_ap_id = ?1 AND (
+    cache.id < ?2
+    OR
+    ?2 IS NULL
+)
+ORDER BY cache.id DESC
+LIMIT ?3
+`
+
+type GetCollectionActivitiesPageParams struct {
+	CollectionID string
+	LastID       sql.NullInt64
+	PageSize     int64
+}
+
+type GetCollectionActivitiesPageRow struct {
+	ApID    string
+	RawJson []byte
+}
+
+func (q *Queries) GetCollectionActivitiesPage(ctx context.Context, arg GetCollectionActivitiesPageParams) ([]GetCollectionActivitiesPageRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCollectionActivitiesPage, arg.CollectionID, arg.LastID, arg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCollectionActivitiesPageRow
+	for rows.Next() {
+		var i GetCollectionActivitiesPageRow
+		if err := rows.Scan(&i.ApID, &i.RawJson); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCollectionFirstPage = `-- name: GetCollectionFirstPage :many
 SELECT member_ap_id FROM ap_collection_members WHERE collection_ap_id = ? ORDER BY id DESC
 `
@@ -531,6 +583,32 @@ func (q *Queries) GetCollectionFirstPage(ctx context.Context, collectionApID str
 	return items, nil
 }
 
+const getCollectionStart = `-- name: GetCollectionStart :one
+SELECT
+    CAST(MAX(cache.id) AS BIGINT) AS start,
+    CAST(COUNT(cache.id) AS BIGINT) AS size
+FROM
+    ap_collection_members col
+JOIN
+    ap_object_cache cache
+ON cache.ap_id = col.member_ap_id
+WHERE
+    col.collection_ap_id = ?1
+ORDER BY cache.id DESC
+`
+
+type GetCollectionStartRow struct {
+	Start int64
+	Size  int64
+}
+
+func (q *Queries) GetCollectionStart(ctx context.Context, collectionID string) (GetCollectionStartRow, error) {
+	row := q.db.QueryRowContext(ctx, getCollectionStart, collectionID)
+	var i GetCollectionStartRow
+	err := row.Scan(&i.Start, &i.Size)
+	return i, err
+}
+
 const getCollectiveByID = `-- name: GetCollectiveByID :one
 SELECT
     cache.type,
@@ -543,7 +621,7 @@ SELECT
     i.followers
 FROM instances i
 JOIN ap_object_cache cache ON cache.ap_id = i.url
-WHERE id = ?
+WHERE i.id = ?
 LIMIT 1
 `
 
@@ -1069,7 +1147,7 @@ type InsertApObjectParams struct {
 	LocalTable  sql.NullString
 	LocalID     sql.NullInt64
 	Type        string
-	RawJson     sql.NullString
+	RawJson     []byte
 	LastUpdated sql.NullInt64
 	LastFetched sql.NullInt64
 }
@@ -1170,7 +1248,7 @@ type InsertOrUpdateApObjectParams struct {
 	LocalTable  sql.NullString
 	LocalID     sql.NullInt64
 	Type        string
-	RawJson     sql.NullString
+	RawJson     []byte
 	LastFetched sql.NullInt64
 }
 
@@ -1311,7 +1389,7 @@ WHERE ap_id = ?
 `
 
 type UpdateApParams struct {
-	RawJson sql.NullString
+	RawJson []byte
 	ApID    string
 }
 

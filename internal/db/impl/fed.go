@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"database/sql"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"net/url"
@@ -16,10 +17,57 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+const PageSize = 20
+
+func (d *dbImpl) GetCollectionStart(ctx context.Context, collectionIRI *url.URL) (size, start int64, err error) {
+	result, err := d.queries.GetCollectionStart(ctx, collectionIRI.String())
+	if err != nil {
+		err = d.HandleError(err)
+		return
+	}
+	return result.Size, result.Start+1, nil
+}
+
+func (d *dbImpl) GetCollectionActivities(ctx context.Context, collectionIRI *url.URL, last int64) (activities []map[string]any, err error) {
+	// Maybe verify first if the collection exists?
+	results, err := d.queries.GetCollectionActivitiesPage(ctx, queries.GetCollectionActivitiesPageParams{
+		CollectionID: collectionIRI.String(),
+		LastID: sql.NullInt64{
+			Valid: last != 0,
+			Int64: last,
+		},
+		PageSize: PageSize,
+	})
+	
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			activities = make([]map[string]any, 0)
+			err = nil
+			return
+		}
+		log.Error().Err(err).Str("collection IRI", collectionIRI.String()).Msg("error querying collection's activities")
+		err = d.HandleError(err)
+		return
+	}
+
+	activities = make([]map[string]any, len(results))
+	for i, r := range results {
+		err = json.Unmarshal(r.RawJson, &activities[i])
+		if err != nil {
+			log.Error().Err(err).
+				Str("activity IRI", r.ApID).
+				Bytes("raw JSON", r.RawJson).
+				Msg("error unmarshaling activity into intermediate map")
+			return
+		}
+	}
+	return activities, nil
+}
+
 func (d *dbImpl) GetCollectionMemberIRIS(ctx context.Context, collectionIRI *url.URL) ([]*url.URL, error) {
 	result, err := d.queries.CollectionMembersIRIs(ctx, collectionIRI.String())
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return []*url.URL{}, nil
 		}
 		return nil, d.HandleError(err)
@@ -35,16 +83,13 @@ func (d *dbImpl) GetCollectionMemberIRIS(ctx context.Context, collectionIRI *url
 	return uris, nil
 }
 
-func (d *dbImpl) AddOutbox(ctx context.Context, raw, apType string, id, outbox *url.URL) error {
+func (d *dbImpl) AddOutbox(ctx context.Context, apType string, raw []byte, id, outbox *url.URL) error {
 	return d.WithTx(func(tx *queries.Queries) error {
 		idStr := id.String()
 		err := tx.InsertApObject(ctx, queries.InsertApObjectParams{
 			ApID: idStr,
 			Type: apType,
-			RawJson: sql.NullString{
-				Valid:  raw != "",
-				String: raw,
-			},
+			RawJson: raw,
 		})
 		if err != nil {
 			return err
@@ -120,12 +165,9 @@ func (d *dbImpl) DeleteAp(ctx context.Context, id *url.URL) error {
 	return d.HandleError(err)
 }
 
-func (d *dbImpl) UpdateAp(ctx context.Context, id *url.URL, rawJSON string) error {
+func (d *dbImpl) UpdateAp(ctx context.Context, id *url.URL, rawJSON []byte) error {
 	err := d.queries.UpdateAp(ctx, queries.UpdateApParams{
-		RawJson: sql.NullString{
-			Valid:  true,
-			String: rawJSON,
-		},
+		RawJson: rawJSON,
 		ApID: id.String(),
 	})
 	return d.HandleError(err)
@@ -268,7 +310,7 @@ func (d *dbImpl) GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, 
 
 	return domain.FedObj{
 		Iri:        iri,
-		RawJSON:    obj.RawJson.String,
+		RawJSON:    obj.RawJson,
 		ApType:     obj.Type,
 		Local:      !obj.LastFetched.Valid,
 		LocalTable: obj.LocalTable.String,
@@ -288,10 +330,7 @@ func (d *dbImpl) CreateApObject(ctx context.Context, obj domain.FedObj, fetched 
 			Int64: obj.LocalId,
 		},
 		Type: obj.ApType,
-		RawJson: sql.NullString{
-			Valid:  obj.RawJSON != "",
-			String: obj.RawJSON,
-		},
+		RawJson: obj.RawJSON,
 		LastFetched: sql.NullInt64{
 			Valid: !obj.Local,
 			Int64: fetched,
@@ -481,7 +520,7 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 				Int64: id,
 			},
 			Type:    "Person",
-			RawJson: sql.NullString{},
+			RawJson: nil,
 			LastFetched: sql.NullInt64{
 				Valid: true,
 				Int64: fetched.Unix(),

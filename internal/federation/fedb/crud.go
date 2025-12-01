@@ -24,7 +24,7 @@ func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err er
 
 	if obj.ApType == streams.ActivityStreamsOrderedCollectionName {
 		value, err = fd.handleCollection(ctx, id)
-	} else if obj.RawJSON == "" {
+	} else if obj.RawJSON == nil {
 		value, err = fd.routeQuery(ctx, obj.LocalTable, obj.LocalId)
 	} else {
 		var temp map[string]any
@@ -67,7 +67,7 @@ func (fd *FedDB) Create(ctx context.Context, asType vocab.Type) (err error) {
 	}
 	return fd.DB.CreateApObject(ctx, domain.FedObj{
 		Iri:     asType.GetJSONLDId().GetIRI(),
-		RawJSON: string(rawJSON),
+		RawJSON: rawJSON,
 		ApType:  asType.GetTypeName(),
 	}, 0)
 }
@@ -93,7 +93,7 @@ func (fd *FedDB) Update(ctx context.Context, asType vocab.Type) error {
 		return fmt.Errorf("Update(): serialization error: %w", err)
 	}
 
-	return fd.DB.UpdateAp(ctx, iri, string(bytes))
+	return fd.DB.UpdateAp(ctx, iri, bytes)
 }
 
 func (fd *FedDB) Delete(ctx context.Context, id *url.URL) error {

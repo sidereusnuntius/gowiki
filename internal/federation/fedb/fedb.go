@@ -24,7 +24,34 @@ type FedDB struct {
 
 // GetOutbox implements pub.Database.
 func (fd *FedDB) GetOutbox(c context.Context, outboxIRI *url.URL) (outbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
-	panic("unimplemented")
+	log.Debug().Msg("at GetOutbox")
+	activities, err := fd.DB.GetCollectionActivities(c, outboxIRI, 0)
+	if err != nil {
+		log.Error().Err(err).Send()
+		return
+	}
+
+	outbox = streams.NewActivityStreamsOrderedCollectionPage()
+	id := streams.NewJSONLDIdProperty()
+	id.SetIRI(outboxIRI)
+	outbox.SetJSONLDId(id)
+
+	size := streams.NewActivityStreamsTotalItemsProperty()
+	size.Set(len(activities))
+	outbox.SetActivityStreamsTotalItems(size)
+
+	items := streams.NewActivityStreamsOrderedItemsProperty()
+	for _, a := range activities {
+		var t vocab.Type
+		t, err = streams.ToType(c, a)
+		if err != nil {
+			log.Error().Err(err).Send()
+			return
+		}
+		items.AppendType(t)
+	}
+	outbox.SetActivityStreamsOrderedItems(items)
+	return
 }
 
 // InboxesForIRI implements pub.Database.

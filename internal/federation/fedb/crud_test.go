@@ -46,7 +46,7 @@ func TestGet_UserSuccess(t *testing.T) {
 		{
 			name:             "UserSuccess",
 			iri:              u.JoinPath("u", "sarah"),
-			cacheEntry:       domain.FedObj{Iri: u.JoinPath("u", "sarah"), RawJSON: "", ApType: "Person", Local: true, LocalTable: "users", LocalId: 1},
+			cacheEntry:       domain.FedObj{Iri: u.JoinPath("u", "sarah"), RawJSON: nil, ApType: "Person", Local: true, LocalTable: "users", LocalId: 1},
 			returnedValue:    sarah,
 			returnedAsObject: conversions.UserToActor(sarah),
 			expectErr:        false,
@@ -55,7 +55,7 @@ func TestGet_UserSuccess(t *testing.T) {
 		{
 			name:             "ArticleSuccess",
 			iri:              u.JoinPath("a", "tests"),
-			cacheEntry:       domain.FedObj{Iri: u.JoinPath("a", "tests"), RawJSON: "", ApType: "Article", Local: true, LocalTable: "articles", LocalId: 5},
+			cacheEntry:       domain.FedObj{Iri: u.JoinPath("a", "tests"), RawJSON: nil, ApType: "Article", Local: true, LocalTable: "articles", LocalId: 5},
 			returnedValue:    article,
 			returnedAsObject: article.ConvertToAp(),
 			expectedType:     streams.ActivityStreamsArticleName,
@@ -119,7 +119,7 @@ func TestGet_UserSuccess(t *testing.T) {
 	//	Return(user, nil)
 }
 
-func makeNote(iri *url.URL) (string, vocab.Type) {
+func makeNote(iri *url.URL) ([]byte, vocab.Type) {
 	note := streams.NewActivityStreamsNote()
 	id := streams.NewJSONLDIdProperty()
 	id.SetIRI(iri)
@@ -131,7 +131,7 @@ func makeNote(iri *url.URL) (string, vocab.Type) {
 
 	n2, _ := streams.Serialize(note)
 	b, _ := json.Marshal(n2)
-	return string(b), note
+	return b, note
 }
 
 func makeArticle(title, summary, content string) domain.ArticleFed {

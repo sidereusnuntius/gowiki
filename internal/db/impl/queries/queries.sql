@@ -392,7 +392,7 @@ SELECT
     i.followers
 FROM instances i
 JOIN ap_object_cache cache ON cache.ap_id = i.url
-WHERE id = ?
+WHERE i.id = ?
 LIMIT 1;
 
 -- name: GetUserApId :one
@@ -408,3 +408,33 @@ SELECT ap_id FROM users WHERE id = ? LIMIT 1;
 
 -- name: CollectionMembersIRIs :many
 SELECT member_ap_id FROM ap_collection_members WHERE collection_ap_id = ?;
+
+-- name: GetCollectionActivitiesPage :many
+SELECT
+    cache.ap_id,
+    cache.raw_json
+FROM
+    ap_collection_members col
+JOIN
+    ap_object_cache cache
+ON cache.ap_id = col.member_ap_id
+WHERE col.collection_ap_id = @collection_id AND (
+    cache.id < sqlc.narg('last_id')
+    OR
+    sqlc.narg('last_id') IS NULL
+)
+ORDER BY cache.id DESC
+LIMIT @page_size;
+
+-- name: GetCollectionStart :one
+SELECT
+    CAST(MAX(cache.id) AS BIGINT) AS start,
+    CAST(COUNT(cache.id) AS BIGINT) AS size
+FROM
+    ap_collection_members col
+JOIN
+    ap_object_cache cache
+ON cache.ap_id = col.member_ap_id
+WHERE
+    col.collection_ap_id = @collection_id
+ORDER BY cache.id DESC;

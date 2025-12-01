@@ -164,7 +164,8 @@ CREATE TABLE article_files (
 );
 
 CREATE TABLE ap_object_cache (
-    ap_id VARCHAR(255) PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ap_id VARCHAR(255) NOT NULL,
 
     local_table VARCHAR(32),
     local_id INTEGER,
@@ -178,6 +179,7 @@ CREATE TABLE ap_object_cache (
     -- last_fetched is null.
     last_fetched INTEGER,
 
+    UNIQUE (ap_id),
     UNIQUE (local_table, local_id)
 );
 
