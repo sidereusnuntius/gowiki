@@ -17,7 +17,7 @@ import (
 
 type FedDB struct {
 	DB     db.DB
-	Queue queue.ApQueue
+	Queue  queue.ApQueue
 	Config config.Configuration
 	locks  *mutexes.MutexMap
 }
@@ -43,7 +43,7 @@ func New(DB db.DB, queue queue.ApQueue, config config.Configuration) FedDB {
 		DB:     DB,
 		Config: config,
 		locks:  &locks,
-		Queue: queue,
+		Queue:  queue,
 	}
 }
 

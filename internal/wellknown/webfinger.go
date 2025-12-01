@@ -14,14 +14,14 @@ import (
 )
 
 type WebfingerLink struct {
-	Rel string `json:"rel"`
+	Rel  string `json:"rel"`
 	Type string `json:"type"`
 	Href string `json:"href"`
 }
 
 type WebfingerResponse struct {
-	Subject string `json:"subject"`
-	Links []WebfingerLink `json:"links"`
+	Subject string          `json:"subject"`
+	Links   []WebfingerLink `json:"links"`
 }
 
 func Mount(state *state.State, r chi.Router) {
@@ -52,7 +52,7 @@ func WebfingerEndpoint(state *state.State) http.HandlerFunc {
 			},
 		}
 		encoder := json.NewEncoder(w)
-		
+
 		if err = encoder.Encode(res); err != nil {
 			log.Error().Err(err).Msg("unable to marshal webfinger response")
 			http.Error(w, "", http.StatusInternalServerError)

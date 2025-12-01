@@ -9,23 +9,23 @@ import (
 )
 
 type ArticleCore struct {
-	Title     string
-	Summary   string
-	Content   string
-	Protected bool
-	MediaType string
-	License   string
-	Language  string
+	Title       string
+	Summary     string
+	Content     string
+	Protected   bool
+	MediaType   string
+	License     string
+	Language    string
 	LastUpdated time.Time
-	Published time.Time
+	Published   time.Time
 }
 
 type ArticleFed struct {
 	ArticleCore
 	AttributedTo *url.URL
-	ApID *url.URL
-	Url  *url.URL
-	To []*url.URL
+	ApID         *url.URL
+	Url          *url.URL
+	To           []*url.URL
 }
 
 type Revision struct {
@@ -41,7 +41,7 @@ type Revision struct {
 //InstanceID sql.NullInt64
 
 func (a *ArticleFed) ConvertToAp() vocab.ActivityStreamsArticle {
-o := streams.NewActivityStreamsArticle()
+	o := streams.NewActivityStreamsArticle()
 	id := streams.NewJSONLDIdProperty()
 	id.SetIRI(a.ApID)
 	o.SetJSONLDId(id)
@@ -95,13 +95,13 @@ o := streams.NewActivityStreamsArticle()
 		updated.Set(a.LastUpdated)
 		o.SetActivityStreamsUpdated(updated)
 	}
-	
+
 	return o
 }
 
 func (a *ArticleFed) UpdateAP(id, author, wiki *url.URL, summary string) (update vocab.ActivityStreamsUpdate) {
 	update = streams.NewActivityStreamsUpdate()
-	
+
 	idProp := streams.NewJSONLDIdProperty()
 	idProp.SetIRI(id)
 	update.SetJSONLDId(idProp)
@@ -131,7 +131,7 @@ func (a *ArticleFed) UpdateAP(id, author, wiki *url.URL, summary string) (update
 
 func (a *ArticleFed) CreateAP(id, author, wikiId *url.URL, summary string) (c vocab.ActivityStreamsCreate) {
 	c = streams.NewActivityStreamsCreate()
-	
+
 	idProp := streams.NewJSONLDIdProperty()
 	idProp.SetIRI(id)
 	c.SetJSONLDId(idProp)

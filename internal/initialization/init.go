@@ -17,16 +17,16 @@ import (
 )
 
 func InitQueue(cfg *config.Configuration) (client *backlite.Client, err error) {
-	db, err := sql.Open("sqlite3", cfg.QueueDbPath + "?_journal=WAL")
+	db, err := sql.Open("sqlite3", cfg.QueueDbPath+"?_journal=WAL")
 	if err != nil {
 		return
 	}
 
 	client, err = backlite.NewClient(backlite.ClientConfig{
-		DB: db,
-		Logger: slog.Default(),
-		NumWorkers: 6 ,
-		ReleaseAfter: 10 * time.Minute,
+		DB:              db,
+		Logger:          slog.Default(),
+		NumWorkers:      6,
+		ReleaseAfter:    10 * time.Minute,
 		CleanupInterval: time.Hour,
 	})
 	if err != nil {

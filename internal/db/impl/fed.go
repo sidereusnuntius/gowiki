@@ -23,7 +23,7 @@ func (d *dbImpl) AddOutbox(ctx context.Context, raw, apType string, id, outbox *
 			ApID: idStr,
 			Type: apType,
 			RawJson: sql.NullString{
-				Valid: raw != "",
+				Valid:  raw != "",
 				String: raw,
 			},
 		})
@@ -33,7 +33,7 @@ func (d *dbImpl) AddOutbox(ctx context.Context, raw, apType string, id, outbox *
 
 		_, err = tx.AddToCollection(ctx, queries.AddToCollectionParams{
 			CollectionApID: outbox.String(),
-    		MemberApID: idStr,
+			MemberApID:     idStr,
 		})
 		return err
 	})
@@ -54,8 +54,8 @@ func (d *dbImpl) GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, err
 		}
 		followersIRIS = append(followersIRIS, u)
 	}
-	
-	return followersIRIS, nil 
+
+	return followersIRIS, nil
 }
 
 func (d *dbImpl) GetCollectionPage(ctx context.Context, iri *url.URL, last int64) (ids []*url.URL, err error) {
@@ -225,7 +225,7 @@ func (d *dbImpl) GetInstanceIdOrCreate(ctx context.Context, hostname string) (id
 		return d.queries.InsertApObject(ctx, queries.InsertApObjectParams{
 			ApID: apId.String(),
 			LocalTable: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: "instances",
 			},
 			LocalID: sql.NullInt64{
@@ -342,11 +342,11 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error
 		inbox = follow.FollowerInbox.String()
 	}
 	id, err := d.queries.Follow(ctx, queries.FollowParams{
-		FollowApID: follow.IRI.String(),
+		FollowApID:   follow.IRI.String(),
 		FollowerApID: follow.Follower.String(),
 		FolloweeApID: follow.Followee.String(),
 		FollowerInboxUrl: sql.NullString{
-			Valid: follow.FollowerInbox != nil,
+			Valid:  follow.FollowerInbox != nil,
 			String: inbox,
 		},
 	})
@@ -408,23 +408,23 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 		id, err := tx.InsertOrUpdateUser(ctx, queries.InsertOrUpdateUserParams{
 			ApID: u.ApId.String(),
 			Url: sql.NullString{
-				Valid: u.URL != nil,
+				Valid:  u.URL != nil,
 				String: u.URL.String(),
 			},
 			Username: sql.NullString{
-				Valid: u.Username != "",
+				Valid:  u.Username != "",
 				String: u.Username,
 			},
 			Name: sql.NullString{
-				Valid: u.Name != "",
+				Valid:  u.Name != "",
 				String: u.Name,
 			},
 			Summary: sql.NullString{
-				Valid: u.Summary != "",
+				Valid:  u.Summary != "",
 				String: u.Summary,
 			},
-			Inbox: u.Inbox.String(),
-			Outbox: u.Outbox.String(),
+			Inbox:     u.Inbox.String(),
+			Outbox:    u.Outbox.String(),
 			Followers: u.Followers.String(),
 			PublicKey: u.PublicKey,
 			LastFetched: sql.NullInt64{
@@ -437,17 +437,17 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 			return err
 		}
 
-		err =  tx.InsertOrUpdateApObject(ctx, queries.InsertOrUpdateApObjectParams{
+		err = tx.InsertOrUpdateApObject(ctx, queries.InsertOrUpdateApObjectParams{
 			ApID: u.ApId.String(),
 			LocalTable: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: "users",
 			},
 			LocalID: sql.NullInt64{
 				Valid: true,
 				Int64: id,
 			},
-			Type: "Person",
+			Type:    "Person",
 			RawJson: sql.NullString{},
 			LastFetched: sql.NullInt64{
 				Valid: true,
@@ -460,12 +460,12 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 
 		return tx.UpdateFollowInbox(ctx, queries.UpdateFollowInboxParams{
 			FollowerInboxUrl: sql.NullString{
-				Valid: u.Inbox != nil,
+				Valid:  u.Inbox != nil,
 				String: u.Inbox.String(),
 			},
 			FollowerApID: u.ApId.String(),
 		})
-	}) 
+	})
 }
 
 func (d *dbImpl) GetActorInbox(ctx context.Context, actor *url.URL) (*url.URL, error) {
@@ -473,7 +473,7 @@ func (d *dbImpl) GetActorInbox(ctx context.Context, actor *url.URL) (*url.URL, e
 	if err != nil {
 		return nil, d.HandleError(err)
 	}
-	
+
 	iri, err := url.Parse(inbox)
 	if err != nil {
 		err = db.ErrInternal
@@ -487,9 +487,9 @@ func (d *dbImpl) GetCollectiveById(ctx context.Context, id int64) (c domain.Coll
 		return domain.Collective{}, err
 	}
 	c = domain.Collective{
-		Type: obj.Type,
-		Name: obj.Name.String,
-		Hostname: obj.Hostname,
+		Type:       obj.Type,
+		Name:       obj.Name.String,
+		Hostname:   obj.Hostname,
 		Public_key: obj.PublicKey.String,
 	}
 

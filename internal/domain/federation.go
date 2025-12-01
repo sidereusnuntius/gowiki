@@ -18,9 +18,9 @@ type FedObj struct {
 }
 
 type Follow struct {
-	IRI *url.URL
-	Follower *url.URL
-	Followee *url.URL
+	IRI           *url.URL
+	Follower      *url.URL
+	Followee      *url.URL
 	FollowerInbox *url.URL
-	Raw string
+	Raw           string
 }

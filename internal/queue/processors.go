@@ -31,12 +31,12 @@ func (q *apQueueImpl) fetch() func(context.Context, FetchJob) error {
 			log.Error().Err(err).Msg("parsing task IRI")
 			return err
 		}
-		defer func(){
+		defer func() {
 			if err != nil {
 				log.Error().Err(err).Msg("fetch failed")
 			}
 		}()
-	
+
 		fetchedAt := time.Now()
 		asType, err := q.client.Get(ctx, iri)
 		if err != nil {
@@ -93,7 +93,7 @@ func (q *apQueueImpl) deliver() func(context.Context, PostJob) error {
 			log.Error().Err(err).Msg("parsing sender's URI")
 			return err
 		}
-		
+
 		// Move inbox resolve to client.
 		if err = q.client.DeliverAs(ctx, pj.Body, inbox, from); err != nil || pj.Next == nil {
 			log.Error().Err(err).Msg("delivery error")

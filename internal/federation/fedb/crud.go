@@ -39,8 +39,8 @@ func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err er
 
 func (fd *FedDB) Create(ctx context.Context, asType vocab.Type) (err error) {
 	log.Info().Msg("at Create(): creating AS object")
-	
-	switch asType.GetTypeName(){
+
+	switch asType.GetTypeName() {
 	case streams.ActivityStreamsFollowName:
 		follow, ok := asType.(vocab.ActivityStreamsFollow)
 		if !ok {
@@ -51,7 +51,7 @@ func (fd *FedDB) Create(ctx context.Context, asType vocab.Type) (err error) {
 			return
 		}
 	}
-	
+
 	b, _ := streams.Serialize(asType)
 	fmt.Printf("%v\n", b)
 	props, err := streams.Serialize(asType)

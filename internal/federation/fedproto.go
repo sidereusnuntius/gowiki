@@ -13,12 +13,12 @@ import (
 )
 
 var (
-	ErrMissingProperty = errors.New("missing property")
+	ErrMissingProperty        = errors.New("missing property")
 	ErrUnprocessablePropValue = errors.New("unprocessable")
-	ErrNotFoundIRI = errors.New("unknown IRI")
+	ErrNotFoundIRI            = errors.New("unknown IRI")
 )
 
-type ApService struct {	
+type ApService struct {
 }
 
 // AuthenticatePostInbox implements pub.FederatingProtocol.

@@ -22,7 +22,7 @@ func (q *apQueueImpl) UpdateLocalArticle(ctx context.Context, updateURI, author 
 		}
 		return err
 	}
-	
+
 	update := article.UpdateAP(updateURI, author, q.cfg.Url, summary)
 	return q.BatchDeliver(ctx, update, followers, author)
 }

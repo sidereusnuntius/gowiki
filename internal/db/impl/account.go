@@ -34,7 +34,7 @@ func (d *dbImpl) IsUserTrusted(ctx context.Context, id int64) (bool, error) {
 
 func (d *dbImpl) GetAuthDataByUsername(ctx context.Context, username string) (domain.Account, error) {
 	u, err := d.queries.AuthUserByUsername(ctx, sql.NullString{
-		Valid: true,
+		Valid:  true,
 		String: username,
 	})
 	if err != nil {
@@ -70,14 +70,14 @@ func (d *dbImpl) InsertUser(ctx context.Context, user domain.UserFedInternal, ac
 	// TODO: validate and process the invitation, if needed.
 	return d.WithTx(func(tx *queries.Queries) error {
 		id, err := tx.CreateLocalUser(ctx, queries.CreateLocalUserParams{
-			Trusted:    user.Trusted,
-			ApID:       user.ApId.String(),
-			Username:   sql.NullString{
-				Valid: user.Username != "",
+			Trusted: user.Trusted,
+			ApID:    user.ApId.String(),
+			Username: sql.NullString{
+				Valid:  user.Username != "",
 				String: user.Username,
 			},
-			Name:       sql.NullString{
-				Valid: user.Name != "",
+			Name: sql.NullString{
+				Valid:  user.Name != "",
 				String: user.Name,
 			},
 			Inbox:      user.Inbox.String(),

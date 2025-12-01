@@ -30,7 +30,7 @@ func NewAccept(id, actor, object *url.URL) (a vocab.ActivityStreamsAccept) {
 
 func GroupToActor(g domain.Collective) vocab.Type {
 	obj := streams.NewActivityStreamsGroup()
-	
+
 	id := streams.NewJSONLDIdProperty()
 	id.SetIRI(g.Url)
 	obj.SetJSONLDId(id)
@@ -38,7 +38,6 @@ func GroupToActor(g domain.Collective) vocab.Type {
 	name := streams.NewActivityStreamsPreferredUsernameProperty()
 	name.SetXMLSchemaString(g.Name)
 	obj.SetActivityStreamsPreferredUsername(name)
-
 
 	summary := streams.NewActivityStreamsSummaryProperty()
 	summary.AppendXMLSchemaString("")
@@ -90,7 +89,6 @@ func GroupToActor(g domain.Collective) vocab.Type {
 	return obj
 }
 
-
 func ActorToUser(a vocab.ActivityStreamsPerson) (u domain.UserFed, err error) {
 	idProp := a.GetJSONLDId()
 	if idProp == nil {
@@ -131,24 +129,24 @@ func ActorToUser(a vocab.ActivityStreamsPerson) (u domain.UserFed, err error) {
 		u.Outbox = outbox.GetIRI()
 	}
 
-    if followers := a.GetActivityStreamsFollowers(); followers != nil && followers.IsIRI() {
+	if followers := a.GetActivityStreamsFollowers(); followers != nil && followers.IsIRI() {
 		u.Followers = followers.GetIRI()
 	}
 
-    if key := a.GetW3IDSecurityV1PublicKey(); key != nil && key.Len() != 0 {
+	if key := a.GetW3IDSecurityV1PublicKey(); key != nil && key.Len() != 0 {
 		k := key.Begin().Get()
 		keyPem := k.GetW3IDSecurityV1PublicKeyPem()
 		u.PublicKey = keyPem.Get()
 	}
-    
+
 	if created := a.GetActivityStreamsPublished(); created != nil {
 		// Perhaps use it?
 	}
-    
+
 	if updated := a.GetActivityStreamsUpdated(); updated != nil {
 
 	}
-	
+
 	return
 }
 

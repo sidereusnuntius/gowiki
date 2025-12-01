@@ -44,21 +44,20 @@ func (fd *FedDB) handleFollow(ctx context.Context, follow vocab.ActivityStreamsF
 
 	fmt.Printf("Actor: %s\nObject: %s\n", actor, obj)
 	returnedId, err := fd.DB.Follow(ctx, domain.Follow{
-		IRI: id,
-		Follower: actor,
-		Followee: obj,
+		IRI:           id,
+		Follower:      actor,
+		Followee:      obj,
 		FollowerInbox: nil,
-		Raw: string(rawJSON),
+		Raw:           string(rawJSON),
 	})
 	if err != nil {
 		return err
 	}
 
-
 	// TODO: Ibis and Mastodon repeat the follow activity in the accept's object property.
 	acceptId := fd.Config.Url.JoinPath("accept", strconv.Itoa(int(returnedId)))
 	accept := conversions.NewAccept(acceptId, obj, id)
-	
+
 	if err = fd.Queue.Deliver(ctx, accept, actor, obj); err != nil {
 		return err
 	}
@@ -70,7 +69,7 @@ func (fd *FedDB) handleId(prop vocab.JSONLDIdProperty) (iri *url.URL, err error)
 	if prop == nil {
 		return nil, fmt.Errorf("%w: id", federation.ErrMissingProperty)
 	}
-	
+
 	iri = prop.GetIRI()
 	if iri == nil {
 		err = fmt.Errorf("%w: id", federation.ErrMissingProperty)
@@ -78,11 +77,11 @@ func (fd *FedDB) handleId(prop vocab.JSONLDIdProperty) (iri *url.URL, err error)
 	return
 }
 
-func (fd *FedDB) handleActorProp(prop vocab.ActivityStreamsActorProperty) (*url.URL, error){
+func (fd *FedDB) handleActorProp(prop vocab.ActivityStreamsActorProperty) (*url.URL, error) {
 	if prop == nil || prop.Len() == 0 {
 		return nil, fmt.Errorf("%w: actor", federation.ErrMissingProperty)
 	}
-	
+
 	actor := prop.At(0)
 
 	// Ensure both the sending instance and the actor are stored in the database.

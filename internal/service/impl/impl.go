@@ -17,9 +17,9 @@ const (
 
 type AppService struct {
 	fileServiceImpl
-	Config config.Configuration
-	DB     db.DB
-	DMP    *diffmatchpatch.DiffMatchPatch
+	Config     config.Configuration
+	DB         db.DB
+	DMP        *diffmatchpatch.DiffMatchPatch
 	fedgateway queue.ApQueue
 }
 
@@ -31,6 +31,6 @@ func New(state *state.State, queue queue.ApQueue) (service.Service, error) {
 		Config:          state.Config,
 		DB:              state.DB,
 		DMP:             dmp,
-		fedgateway: queue,
+		fedgateway:      queue,
 	}, err
 }

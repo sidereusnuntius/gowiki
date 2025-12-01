@@ -48,7 +48,7 @@ type Configuration struct {
 	Debug bool `mapstructure:"debug"`
 	// DbUrl is the path to the database file. Perhaps change this?
 	DbUrl            string `mapstructure:"db_path"`
-	QueueDbPath string `mapstructure:"queue_db_path"`
+	QueueDbPath      string `mapstructure:"queue_db_path"`
 	MigrationsFolder string `mapstructure:"migrations"`
 	// Name of the wiki.
 	Name  string `mapstructure:"wiki_name"`

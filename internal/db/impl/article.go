@@ -43,7 +43,7 @@ func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId in
 
 		diffs := d.DMP.DiffMain(content, newContent, false)
 		patches := d.DMP.PatchMake(diffs)
-	
+
 		id, err := tx.InsertRevision(ctx, queries.InsertRevisionParams{
 			//TODO: generate apId. Perhaps use the generated id?
 			//ApID: ,
@@ -66,7 +66,7 @@ func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId in
 		URI = d.Config.Url.JoinPath("revisions", strconv.FormatInt(id, 10))
 		err = tx.UpdateRevisionApId(ctx, queries.UpdateRevisionApIdParams{
 			ApID: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: URI.String(),
 			},
 			ID: id,
@@ -74,7 +74,7 @@ func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId in
 		if err != nil {
 			return err
 		}
-	
+
 		return tx.UpdateArticle(ctx, queries.UpdateArticleParams{
 			Content: newContent,
 			ID:      articleId,
@@ -111,7 +111,7 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 				String: apid,
 			},
 			AttributedTo: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: article.AttributedTo.String(),
 			},
 			InstanceID: sql.NullInt64{},
@@ -191,22 +191,22 @@ func (d *dbImpl) GetArticleById(ctx context.Context, id int64) (domain.ArticleFe
 	uri, _ := url.Parse(a.Url.String)
 
 	return domain.ArticleFed{
-		ApID: iri,
+		ApID:         iri,
 		AttributedTo: attributedTo,
 		To: []*url.URL{
 			domain.Public,
 			d.Config.Url,
 		},
-		Url:  uri,
+		Url: uri,
 		ArticleCore: domain.ArticleCore{
-			Title:     a.Title,
-			Summary:   a.Summary.String,
-			Content:   a.Content,
-			Protected: a.Protected,
-			MediaType: a.MediaType,
-			License:   "", // TODO
-			Language:  a.Language,
-			Published: time.Unix(a.Published.Int64, 0),
+			Title:       a.Title,
+			Summary:     a.Summary.String,
+			Content:     a.Content,
+			Protected:   a.Protected,
+			MediaType:   a.MediaType,
+			License:     "", // TODO
+			Language:    a.Language,
+			Published:   time.Unix(a.Published.Int64, 0),
 			LastUpdated: time.Unix(a.LastUpdated, 0),
 		},
 	}, err

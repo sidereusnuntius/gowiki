@@ -79,7 +79,7 @@ func main() {
 		zero.Fatal().Err(err).Send()
 		os.Exit(1)
 	}
-	
+
 	fragment, _ := url.Parse("#main-key")
 	keyId := config.Url.ResolveReference(fragment)
 	client, err := client.New(dd, &http.Client{}, key, []httpsig.Algorithm{httpsig.RSA_SHA256}, keyId)

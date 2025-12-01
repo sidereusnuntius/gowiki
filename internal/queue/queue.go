@@ -27,18 +27,18 @@ type ApQueue interface {
 
 type apQueueImpl struct {
 	client *client.HttpClient
-	db db.DB
+	db     db.DB
 	queues *backlite.Client
-	cfg *config.Configuration
+	cfg    *config.Configuration
 }
 
 func New(ctx context.Context, db db.DB, client *client.HttpClient, cfg *config.Configuration, blClient *backlite.Client) ApQueue {
-	
+
 	q := &apQueueImpl{
-		db: db,
+		db:     db,
 		queues: blClient,
 		client: client,
-		cfg: cfg,
+		cfg:    cfg,
 	}
 	q.register()
 	q.queues.Start(ctx)
@@ -97,7 +97,7 @@ func (q *apQueueImpl) Deliver(ctx context.Context, activity vocab.Type, to *url.
 
 func (q *apQueueImpl) rawDeliver(ctx context.Context, activity map[string]any, to *url.URL, from *url.URL) error {
 	var task = PostJob{
-		To: to.String(),
+		To:   to.String(),
 		From: from.String(),
 		Body: activity,
 	}
@@ -106,7 +106,7 @@ func (q *apQueueImpl) rawDeliver(ctx context.Context, activity map[string]any, t
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			_, err = q.queues.Add(FetchJob{
-				Iri: to.String(),
+				Iri:  to.String(),
 				Next: &task,
 			}).Save()
 		}

@@ -30,13 +30,13 @@ var mainKey, _ = url.Parse("#main-key")
 // When it is needed to dereference or deliver objects on behalf of a particular actor, the client
 // can create a new Transport for the given actor.
 type HttpClient struct {
-	db db.DB
-	client *http.Client
-	key crypto.PrivateKey
-	pubKeyId *url.URL
-	getSigner httpsig.Signer
-	getSignerMutex sync.Mutex
-	postSigner httpsig.Signer
+	db              db.DB
+	client          *http.Client
+	key             crypto.PrivateKey
+	pubKeyId        *url.URL
+	getSigner       httpsig.Signer
+	getSignerMutex  sync.Mutex
+	postSigner      httpsig.Signer
 	postSignerMutex sync.Mutex
 }
 
@@ -52,11 +52,11 @@ func New(db db.DB, client *http.Client, key crypto.PrivateKey, prefs []httpsig.A
 	}
 
 	return &HttpClient{
-		db: db,
-		client: client,
-		key: key,
-		pubKeyId: keyId,
-		getSigner: getSigner,
+		db:         db,
+		client:     client,
+		key:        key,
+		pubKeyId:   keyId,
+		getSigner:  getSigner,
 		postSigner: postSigner,
 	}, nil
 }
@@ -102,7 +102,7 @@ func (c *HttpClient) Dereference(ctx context.Context, iri *url.URL) (*http.Respo
 		event := log.Error().Str("status", res.Status)
 		var content []byte
 		content, err = io.ReadAll(res.Body)
-		
+
 		if err != nil {
 			event.Err(err)
 		}
@@ -110,7 +110,7 @@ func (c *HttpClient) Dereference(ctx context.Context, iri *url.URL) (*http.Respo
 		res.Body.Close()
 		err = fmt.Errorf("%d %s: %s", res.StatusCode, res.Status, content)
 	}
-	
+
 	return res, err
 }
 
@@ -180,7 +180,7 @@ func (c *HttpClient) NewTransport(ctx context.Context, prefs []httpsig.Algorithm
 	if err != nil {
 		return
 	}
-	
+
 	getSigner, chosenAlgo, err := httpsig.NewSigner(prefs, httpsig.DigestSha256, getHeaders, httpsig.Signature, 3600)
 	if err != nil {
 		return

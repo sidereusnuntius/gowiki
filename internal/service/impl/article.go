@@ -22,7 +22,7 @@ func (s *AppService) AlterArticle(ctx context.Context, title, summary, content s
 	if err != nil {
 		return nil, err
 	}
-	
+
 	articleId, ap, prev, err := s.DB.GetLastRevisionID(ctx, title)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
@@ -66,7 +66,6 @@ func (s *AppService) CreateArticle(ctx context.Context, title, summary, content 
 		return nil, err
 	}
 
-
 	apId := s.Config.Url.JoinPath("a", title)
 	article := domain.ArticleFed{
 		ArticleCore: domain.ArticleCore{
@@ -82,7 +81,7 @@ func (s *AppService) CreateArticle(ctx context.Context, title, summary, content 
 			s.Config.Url,
 		},
 		AttributedTo: user,
-		Url:  apId,
+		Url:          apId,
 	}
 
 	diffs := s.FindDiff("", content)
