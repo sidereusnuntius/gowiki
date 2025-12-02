@@ -28,7 +28,7 @@ type ApQueue interface {
 type apQueueImpl struct {
 	client *client.HttpClient
 	db     db.DB
-	queues *backlite.Client
+	queue *backlite.Client
 	cfg    *config.Configuration
 }
 
@@ -36,22 +36,25 @@ func New(ctx context.Context, db db.DB, client *client.HttpClient, cfg *config.C
 
 	q := &apQueueImpl{
 		db:     db,
-		queues: blClient,
+		queue: blClient,
 		client: client,
 		cfg:    cfg,
 	}
-	q.register()
-	q.queues.Start(ctx)
+	queue := backlite.NewQueue(q.processTask())
+	q.queue.Register(queue)
+	q.queue.Start(ctx)
 	log.Info().Msg("started task queue")
 	return q
 }
 
 func (q *apQueueImpl) Fetch(iri *url.URL) error {
 	log.Debug().Str("iri", iri.String()).Msg("enqueing fetch task")
-	task := FetchJob{
-		Iri: iri.String(),
+	task := Task{
+		Type: Fetch,
+		To: iri.String(),
 	}
-	_, err := q.queues.Add(task).Save()
+
+	_, err := q.queue.Add(task).Save()
 	return err
 }
 
@@ -96,24 +99,26 @@ func (q *apQueueImpl) Deliver(ctx context.Context, activity vocab.Type, to *url.
 }
 
 func (q *apQueueImpl) rawDeliver(ctx context.Context, activity map[string]any, to *url.URL, from *url.URL) error {
-	var task = PostJob{
+	var task = Task{
+		Type: Deliver,
 		To:   to.String(),
 		From: from.String(),
-		Body: activity,
+		Payload: activity,
 	}
 
 	_, err := q.db.GetActorInbox(ctx, to)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
-			_, err = q.queues.Add(FetchJob{
-				Iri:  to.String(),
+			_, err = q.queue.Add(Task{
+				Type: Fetch,
+				To:  to.String(),
 				Next: &task,
 			}).Save()
 		}
 		return err
 	}
 
-	_, err = q.queues.Add(task).Save()
+	_, err = q.queue.Add(task).Save()
 	if err != nil {
 		log.Error().Err(err).Msg("adding delivery task to queue")
 	}
