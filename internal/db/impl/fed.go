@@ -25,7 +25,7 @@ func (d *dbImpl) GetCollectionStart(ctx context.Context, collectionIRI *url.URL)
 		err = d.HandleError(err)
 		return
 	}
-	return result.Size, result.Start+1, nil
+	return result.Size, result.Start + 1, nil
 }
 
 func (d *dbImpl) GetCollectionActivities(ctx context.Context, collectionIRI *url.URL, last int64) (activities []map[string]any, err error) {
@@ -38,7 +38,7 @@ func (d *dbImpl) GetCollectionActivities(ctx context.Context, collectionIRI *url
 		},
 		PageSize: PageSize,
 	})
-	
+
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			activities = make([]map[string]any, 0)
@@ -87,8 +87,8 @@ func (d *dbImpl) AddOutbox(ctx context.Context, apType string, raw []byte, id, o
 	return d.WithTx(func(tx *queries.Queries) error {
 		idStr := id.String()
 		err := tx.InsertApObject(ctx, queries.InsertApObjectParams{
-			ApID: idStr,
-			Type: apType,
+			ApID:    idStr,
+			Type:    apType,
 			RawJson: raw,
 		})
 		if err != nil {
@@ -168,7 +168,7 @@ func (d *dbImpl) DeleteAp(ctx context.Context, id *url.URL) error {
 func (d *dbImpl) UpdateAp(ctx context.Context, id *url.URL, rawJSON []byte) error {
 	err := d.queries.UpdateAp(ctx, queries.UpdateApParams{
 		RawJson: rawJSON,
-		ApID: id.String(),
+		ApID:    id.String(),
 	})
 	return d.HandleError(err)
 }
@@ -329,7 +329,7 @@ func (d *dbImpl) CreateApObject(ctx context.Context, obj domain.FedObj, fetched 
 			Valid: obj.LocalTable != "" && obj.LocalId != 0,
 			Int64: obj.LocalId,
 		},
-		Type: obj.ApType,
+		Type:    obj.ApType,
 		RawJson: obj.RawJSON,
 		LastFetched: sql.NullInt64{
 			Valid: !obj.Local,
@@ -419,13 +419,13 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error
 		if follow.Followee.Hostname() == d.Config.Url.Hostname() {
 			_, err = tx.AddToCollection(ctx, queries.AddToCollectionParams{
 				CollectionApID: follow.Followee.JoinPath("followers").String(),
-    			MemberApID: follow.IRI.String(),
+				MemberApID:     follow.IRI.String(),
 			})
 		}
 
 		return err
 	})
-	
+
 	return id, err
 }
 

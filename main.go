@@ -154,7 +154,7 @@ func main() {
 			zero.Error().Err(err).Send()
 			http.Error(w, "", http.StatusInternalServerError)
 		}
-		
+
 		if !isAp {
 			zero.Error().Msg("not AP request")
 		}

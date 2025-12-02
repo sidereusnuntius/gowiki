@@ -1,4 +1,4 @@
-package queue
+package gateway
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
-func (q *apQueueImpl) processTask() func(context.Context, Task) error {
+func (q *FedGatewayImpl) processTask() func(context.Context, Task) error {
 	return func(ctx context.Context, task Task) error {
 		var to, from *url.URL
 		to, err := url.Parse(task.To)
@@ -46,7 +46,7 @@ func (q *apQueueImpl) processTask() func(context.Context, Task) error {
 	}
 }
 
-func (q *apQueueImpl) fetch(ctx context.Context, iri *url.URL) error {
+func (q *FedGatewayImpl) fetch(ctx context.Context, iri *url.URL) error {
 	log.Debug().Str("iri", iri.String()).Msg("fetching IRI")
 
 	fetchedAt := time.Now()
@@ -70,7 +70,7 @@ func (q *apQueueImpl) fetch(ctx context.Context, iri *url.URL) error {
 	}
 }
 
-func (q *apQueueImpl) deliver(ctx context.Context, to, from *url.URL, payload map[string]any) error {
+func (q *FedGatewayImpl) deliver(ctx context.Context, to, from *url.URL, payload map[string]any) error {
 	inbox, err := q.db.GetActorInbox(ctx, to)
 	if err != nil {
 		return fmt.Errorf("%w: actor's inbox not found (actor = %s)", err, to)

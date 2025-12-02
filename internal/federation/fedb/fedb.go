@@ -12,14 +12,14 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/config"
 	"github.com/sidereusnuntius/gowiki/internal/db"
-	"github.com/sidereusnuntius/gowiki/internal/queue"
+	"github.com/sidereusnuntius/gowiki/internal/gateway"
 )
 
 type FedDB struct {
-	DB     db.DB
-	Queue  queue.ApQueue
-	Config config.Configuration
-	locks  *mutexes.MutexMap
+	DB      db.DB
+	Gateway gateway.FedGateway
+	Config  config.Configuration
+	locks   *mutexes.MutexMap
 }
 
 // GetOutbox implements pub.Database.
@@ -64,13 +64,13 @@ func (fd *FedDB) SetOutbox(c context.Context, outbox vocab.ActivityStreamsOrdere
 	panic("unimplemented")
 }
 
-func New(DB db.DB, queue queue.ApQueue, config config.Configuration) FedDB {
+func New(DB db.DB, gateway gateway.FedGateway, config config.Configuration) FedDB {
 	locks := mutexes.MutexMap{}
 	return FedDB{
-		DB:     DB,
-		Config: config,
-		locks:  &locks,
-		Queue:  queue,
+		DB:      DB,
+		Config:  config,
+		locks:   &locks,
+		Gateway: gateway,
 	}
 }
 

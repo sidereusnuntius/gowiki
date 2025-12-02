@@ -102,7 +102,7 @@ func EnsureInstance(DB *sql.DB, cfg *config.Configuration) error {
 		return err
 	}
 
-	defer func(){
+	defer func() {
 		if err != nil {
 			tx.Rollback()
 		} else {
@@ -147,7 +147,6 @@ VALUES (?, ?)`, uri.String(), "OrderedCollection")
 			break
 		}
 	}
-
 
 	return err
 }

@@ -1,4 +1,4 @@
-package queue
+package gateway
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
-type ApQueue interface {
+type FedGateway interface {
 	Fetch(iri *url.URL) error
 	Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error
 
@@ -25,18 +25,18 @@ type ApQueue interface {
 	UpdateLocalArticle(ctx context.Context, updateURI, author *url.URL, summary string, id int64) error
 }
 
-type apQueueImpl struct {
+type FedGatewayImpl struct {
 	client *client.HttpClient
 	db     db.DB
-	queue *backlite.Client
+	queue  *backlite.Client
 	cfg    *config.Configuration
 }
 
-func New(ctx context.Context, db db.DB, client *client.HttpClient, cfg *config.Configuration, blClient *backlite.Client) ApQueue {
+func New(ctx context.Context, db db.DB, client *client.HttpClient, cfg *config.Configuration, blClient *backlite.Client) FedGateway {
 
-	q := &apQueueImpl{
+	q := &FedGatewayImpl{
 		db:     db,
-		queue: blClient,
+		queue:  blClient,
 		client: client,
 		cfg:    cfg,
 	}
@@ -47,18 +47,18 @@ func New(ctx context.Context, db db.DB, client *client.HttpClient, cfg *config.C
 	return q
 }
 
-func (q *apQueueImpl) Fetch(iri *url.URL) error {
+func (q *FedGatewayImpl) Fetch(iri *url.URL) error {
 	log.Debug().Str("iri", iri.String()).Msg("enqueing fetch task")
 	task := Task{
 		Type: Fetch,
-		To: iri.String(),
+		To:   iri.String(),
 	}
 
 	_, err := q.queue.Add(task).Save()
 	return err
 }
 
-func (q *apQueueImpl) serializeAndPersist(ctx context.Context, activity vocab.Type, sender *url.URL) (map[string]any, error) {
+func (q *FedGatewayImpl) serializeAndPersist(ctx context.Context, activity vocab.Type, sender *url.URL) (map[string]any, error) {
 	data, err := streams.Serialize(activity)
 	if err != nil {
 		log.Error().Err(err).Msg("activity serialization error")
@@ -74,7 +74,7 @@ func (q *apQueueImpl) serializeAndPersist(ctx context.Context, activity vocab.Ty
 	return data, err
 }
 
-func (q *apQueueImpl) BatchDeliver(ctx context.Context, activity vocab.Type, receivers []*url.URL, from *url.URL) error {
+func (q *FedGatewayImpl) BatchDeliver(ctx context.Context, activity vocab.Type, receivers []*url.URL, from *url.URL) error {
 	data, err := q.serializeAndPersist(ctx, activity, from)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (q *apQueueImpl) BatchDeliver(ctx context.Context, activity vocab.Type, rec
 	return nil
 }
 
-func (q *apQueueImpl) Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error {
+func (q *FedGatewayImpl) Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error {
 	data, err := q.serializeAndPersist(ctx, activity, from)
 	if err != nil {
 		return err
@@ -98,11 +98,11 @@ func (q *apQueueImpl) Deliver(ctx context.Context, activity vocab.Type, to *url.
 	return q.rawDeliver(ctx, data, to, from)
 }
 
-func (q *apQueueImpl) rawDeliver(ctx context.Context, activity map[string]any, to *url.URL, from *url.URL) error {
+func (q *FedGatewayImpl) rawDeliver(ctx context.Context, activity map[string]any, to *url.URL, from *url.URL) error {
 	var task = Task{
-		Type: Deliver,
-		To:   to.String(),
-		From: from.String(),
+		Type:    Deliver,
+		To:      to.String(),
+		From:    from.String(),
 		Payload: activity,
 	}
 
@@ -111,7 +111,7 @@ func (q *apQueueImpl) rawDeliver(ctx context.Context, activity map[string]any, t
 		if errors.Is(err, db.ErrNotFound) {
 			_, err = q.queue.Add(Task{
 				Type: Fetch,
-				To:  to.String(),
+				To:   to.String(),
 				Next: &task,
 			}).Save()
 		}

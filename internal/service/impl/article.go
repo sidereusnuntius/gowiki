@@ -35,7 +35,7 @@ func (s *AppService) AlterArticle(ctx context.Context, title, summary, content s
 		return nil, err
 	}
 
-	err = s.fedgateway.UpdateLocalArticle(ctx, uri, author, summary, articleId)
+	err = s.gateway.UpdateLocalArticle(ctx, uri, author, summary, articleId)
 
 	return ap, err
 
@@ -95,7 +95,7 @@ func (s *AppService) CreateArticle(ctx context.Context, title, summary, content 
 		return nil, err
 	}
 
-	err = s.fedgateway.CreateLocalArticle(ctx, article, user, summary)
+	err = s.gateway.CreateLocalArticle(ctx, article, user, summary)
 	return apId, err
 }
 

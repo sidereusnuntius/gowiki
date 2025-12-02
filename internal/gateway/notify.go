@@ -1,4 +1,4 @@
-package queue
+package gateway
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
-func (q *apQueueImpl) UpdateLocalArticle(ctx context.Context, updateURI, author *url.URL, summary string, articleId int64) error {
+func (q *FedGatewayImpl) UpdateLocalArticle(ctx context.Context, updateURI, author *url.URL, summary string, articleId int64) error {
 	article, err := q.db.GetArticleById(ctx, articleId)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (q *apQueueImpl) UpdateLocalArticle(ctx context.Context, updateURI, author 
 	return q.BatchDeliver(ctx, update, followers, author)
 }
 
-func (q *apQueueImpl) CreateLocalArticle(ctx context.Context, article domain.ArticleFed, authorId *url.URL, summary string) error {
+func (q *FedGatewayImpl) CreateLocalArticle(ctx context.Context, article domain.ArticleFed, authorId *url.URL, summary string) error {
 	id := article.ApID.JoinPath("create")
 	create := article.CreateAP(id, authorId, q.cfg.Url, summary)
 

@@ -4,7 +4,7 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/sidereusnuntius/gowiki/internal/config"
 	"github.com/sidereusnuntius/gowiki/internal/db"
-	"github.com/sidereusnuntius/gowiki/internal/queue"
+	"github.com/sidereusnuntius/gowiki/internal/gateway"
 	"github.com/sidereusnuntius/gowiki/internal/service"
 	"github.com/sidereusnuntius/gowiki/internal/state"
 	"github.com/sidereusnuntius/gowiki/internal/storage/filestore"
@@ -17,13 +17,13 @@ const (
 
 type AppService struct {
 	fileServiceImpl
-	Config     config.Configuration
-	DB         db.DB
-	DMP        *diffmatchpatch.DiffMatchPatch
-	fedgateway queue.ApQueue
+	Config  config.Configuration
+	DB      db.DB
+	DMP     *diffmatchpatch.DiffMatchPatch
+	gateway gateway.FedGateway
 }
 
-func New(state *state.State, queue queue.ApQueue) (service.Service, error) {
+func New(state *state.State, gateway gateway.FedGateway) (service.Service, error) {
 	dmp := diffmatchpatch.New()
 	store, err := filestore.New(state.Config.FsRoot)
 	return &AppService{
@@ -31,6 +31,6 @@ func New(state *state.State, queue queue.ApQueue) (service.Service, error) {
 		Config:          state.Config,
 		DB:              state.DB,
 		DMP:             dmp,
-		fedgateway:      queue,
+		gateway:         gateway,
 	}, err
 }

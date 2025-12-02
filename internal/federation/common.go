@@ -31,7 +31,7 @@ func (f *ApService) GetOutbox(c context.Context, r *http.Request) (vocab.Activit
 	if err == nil {
 		last = t
 	}
-	
+
 	query := uri.RawQuery
 	uri.RawQuery = ""
 	results, err := f.DB.GetCollectionActivities(c, uri, last)
