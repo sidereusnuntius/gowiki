@@ -454,6 +454,10 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 				Valid:  u.Name != "",
 				String: u.Name,
 			},
+			Host: sql.NullString{
+				Valid: true,
+				String: u.ApId.Host,
+			},
 			Summary: sql.NullString{
 				Valid:  u.Summary != "",
 				String: u.Summary,

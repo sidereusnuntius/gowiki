@@ -338,6 +338,7 @@ INSERT INTO users (
     url,
     username,
     name,
+    host,
     summary,
     inbox,
     outbox,
@@ -346,7 +347,7 @@ INSERT INTO users (
     trusted,
     last_updated,
     last_fetched
-) VALUES (false, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, false, (cast(strftime('%s','now') as int)), ?10)
+) VALUES (false, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, false, (cast(strftime('%s','now') as int)), ?11)
 ON CONFLICT (ap_id) DO UPDATE
 SET url = ?2,
     username = ?3,

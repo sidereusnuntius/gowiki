@@ -19,7 +19,7 @@ func (d *dbImpl) GetUser(ctx context.Context, username, hostname string) (user d
 			ID:       u.ID,
 			Username: u.Username.String,
 			Name:     u.Name.String,
-			Domain:   "",
+			Host:   "",
 			Summary:  u.Summary.String,
 			URL:      uri,
 		}
@@ -35,7 +35,7 @@ func (d *dbImpl) GetUser(ctx context.Context, username, hostname string) (user d
 			ID:       u.ID,
 			Username: u.Username.String,
 			Name:     u.Name.String,
-			Domain:   u.Host.String,
+			Host:   u.Host.String,
 			Summary:  u.Summary.String,
 			URL:      uri,
 		}

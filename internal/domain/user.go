@@ -29,7 +29,7 @@ type UserCore struct {
 	ID       int64
 	Username string
 	Name     string
-	Domain   string
+	Host   string
 	Summary  string
 	URL      *url.URL
 }

@@ -6,8 +6,8 @@ import (
 
 templ Profile(p domain.Profile) {
     <h2 class="handle">{ p.Name }
-    if p.Domain != "" {
-        \@{ p.Domain }
+    if p.Host != "" {
+        \@{ p.Host }
     }
     </h2>
     <p>

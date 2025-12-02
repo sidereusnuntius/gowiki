@@ -105,7 +105,7 @@ func ActorToUser(a vocab.ActivityStreamsPerson) (u domain.UserFed, err error) {
 		u.Username = username.GetXMLSchemaString()
 	}
 
-	u.Domain = id.Host
+	u.Host = id.Host
 	if summary := a.GetActivityStreamsSummary(); summary != nil && summary.Len() != 0 {
 		u.Summary = summary.Begin().GetXMLSchemaString()
 	}

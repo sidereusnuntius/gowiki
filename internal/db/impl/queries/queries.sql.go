@@ -1269,6 +1269,7 @@ INSERT INTO users (
     url,
     username,
     name,
+    host,
     summary,
     inbox,
     outbox,
@@ -1277,7 +1278,7 @@ INSERT INTO users (
     trusted,
     last_updated,
     last_fetched
-) VALUES (false, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, false, (cast(strftime('%s','now') as int)), ?10)
+) VALUES (false, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, false, (cast(strftime('%s','now') as int)), ?11)
 ON CONFLICT (ap_id) DO UPDATE
 SET url = ?2,
     username = ?3,
@@ -1297,6 +1298,7 @@ type InsertOrUpdateUserParams struct {
 	Url         sql.NullString
 	Username    sql.NullString
 	Name        sql.NullString
+	Host        sql.NullString
 	Summary     sql.NullString
 	Inbox       string
 	Outbox      string
@@ -1311,6 +1313,7 @@ func (q *Queries) InsertOrUpdateUser(ctx context.Context, arg InsertOrUpdateUser
 		arg.Url,
 		arg.Username,
 		arg.Name,
+		arg.Host,
 		arg.Summary,
 		arg.Inbox,
 		arg.Outbox,

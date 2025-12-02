@@ -155,7 +155,7 @@ func makeUser(id int64, name string) domain.UserFed {
 			ID:       id,
 			Username: name,
 			Name:     name,
-			Domain:   host,
+			Host:   host,
 			Summary:  "A test user",
 			URL:      apId,
 		},

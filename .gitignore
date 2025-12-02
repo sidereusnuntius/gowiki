@@ -1,1 +1,4 @@
 templates/*_templ.go
+*-wal
+*-shm
+files/
