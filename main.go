@@ -23,7 +23,7 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/federation"
 	"github.com/sidereusnuntius/gowiki/internal/federation/fedb"
 	"github.com/sidereusnuntius/gowiki/internal/initialization"
-	"github.com/sidereusnuntius/gowiki/internal/queue"
+	"github.com/sidereusnuntius/gowiki/internal/gateway"
 	service "github.com/sidereusnuntius/gowiki/internal/service/impl"
 	"github.com/sidereusnuntius/gowiki/internal/state"
 	"github.com/sidereusnuntius/gowiki/internal/web"
@@ -88,7 +88,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	queue := queue.New(context.Background(), dd, client, &config, q)
+	queue := gateway.New(context.Background(), dd, client, &config, q)
 
 	state := state.State{
 		DB:     dd,

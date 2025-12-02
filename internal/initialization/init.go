@@ -77,7 +77,7 @@ func OpenDB(connString string) (*sql.DB, error) {
 }
 
 func EnsureInstance(DB *sql.DB, cfg *config.Configuration) error {
-	row := DB.QueryRow("SELECT EXISTS(SELECT TRUE FROM instances WHERE url = ?)", cfg.Url.String())
+	row := DB.QueryRow("SELECT EXISTS(SELECT TRUE FROM collectives WHERE url = ?)", cfg.Url.String())
 	var exists bool
 	err := row.Scan(&exists)
 	if err != nil {
@@ -110,9 +110,9 @@ func EnsureInstance(DB *sql.DB, cfg *config.Configuration) error {
 		}
 	}()
 
-	res, err := tx.Exec(`INSERT INTO instances(
+	res, err := tx.Exec(`INSERT INTO collectives(
 				name,
-				hostname,
+				host,
 				url,
 				public_key,
 				private_key,
@@ -133,7 +133,7 @@ func EnsureInstance(DB *sql.DB, cfg *config.Configuration) error {
 
 	_, err = tx.Exec(`
 INSERT INTO ap_object_cache (ap_id, local_table, local_id, type)
-VALUES (?, ?, ?, ?)`, cfg.Url.String(), "instances", id, "Group")
+VALUES (?, ?, ?, ?)`, cfg.Url.String(), "collectives", id, "Group")
 	if err != nil {
 		return err
 	}

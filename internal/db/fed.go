@@ -19,7 +19,7 @@ type Fed interface {
 	GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, error)
 	GetUserApId(ctx context.Context, username string) (*url.URL, error)
 	GetUserFed(ctx context.Context, id *url.URL) (user domain.UserFed, err error)
-	GetInstanceIdOrCreate(ctx context.Context, hostname string) (id int64, err error)
+
 	GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, error)
 	CreateApObject(ctx context.Context, obj domain.FedObj, fetched int64) error
 	GetCollectiveById(ctx context.Context, id int64) (c domain.Collective, err error)

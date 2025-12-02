@@ -66,7 +66,7 @@ INSERT INTO articles (
     ap_id,
     attributed_to,
     url,
-    instance_id,
+    host,
     language,
     media_type,
     title,
@@ -151,13 +151,12 @@ SELECT
     u.id,
     u.username,
     u.name,
-    i.hostname,
+    u.host,
     u.url,
     u.local,
     u.summary
 FROM users u
-JOIN instances i ON u.instance_id = i.id
-WHERE u.username = lower(?) AND NOT u.local AND i.hostname = ?;
+WHERE u.username = lower(?) AND NOT u.local AND u.host = ?;
 
 -- name: GetRevisionsByUserId :many
 SELECT
@@ -209,21 +208,21 @@ SELECT COUNT(id) == 1 FROM users WHERE ap_id = ?;
 -- name: ActorIdByOutbox :one
 SELECT ap_id from users u where u.outbox = ?1
 UNION
-SELECT url as ap_id FROM instances i WHERE i.outbox = ?1;
+SELECT url as ap_id FROM collectives i WHERE i.outbox = ?1;
 
 -- name: ActorIdByInbox :one
 SELECT ap_id FROM users u WHERE u.inbox = ?1
 UNION
-SELECT url AS ap_id FROM instances i WHERE i.inbox = ?1;
+SELECT url AS ap_id FROM collectives i WHERE i.inbox = ?1;
 
 -- name: OutboxForInbox :one
 SELECT outbox from users where inbox = ?;
 
 -- name: GetInstanceId :one
-SELECT id from instances where hostname = ?;
+SELECT id from collectives where host = ?;
 
 -- name: InsertInstance :one
-INSERT INTO instances (hostname, public_key, inbox) VALUES (?, ?, ?) RETURNING id;
+INSERT INTO collectives (host, public_key, inbox) VALUES (?, ?, ?) RETURNING id;
 
 -- name: InsertFile :one
 INSERT INTO files (
@@ -259,11 +258,10 @@ SELECT
     f.local,
     f.url,
     f.created,
-    u.username,
-    i.hostname
+    f.host,
+    u.username
 FROM files f
 LEFT JOIN users u ON u.id = f.uploaded_by
-LEFT JOIN instances i ON u.instance_id = i.id
 WHERE f.digest = ?;
 
 -- name: InsertApObject :exec
@@ -283,7 +281,7 @@ SELECT
     ap_id,
     attributed_to,
     url,
-    instance_id,
+    host,
     language,
     media_type,
     title,
@@ -330,7 +328,7 @@ SELECT ap_id, private_key FROM users WHERE local AND id = ?;
 -- name: GetPrivateKeyByID :one
 SELECT private_key FROM users WHERE local AND ap_id = ?1
 UNION
-SELECT private_key FROM instances WHERE private_key IS NOT NULL AND url = ?1
+SELECT private_key FROM collectives WHERE private_key IS NOT NULL AND url = ?1
 LIMIT 1;
 
 -- name: InsertOrUpdateUser :one
@@ -374,7 +372,7 @@ SET type = ?4,
 -- name: GetInboxByActorId :one
 SELECT u.inbox as inbox FROM users u WHERE u.ap_id = ?1
 UNION
-SELECT i.inbox as inbox FROM instances i WHERE i.url = ?1
+SELECT i.inbox as inbox FROM collectives i WHERE i.url = ?1
 LIMIT 1;
 
 -- name: UpdateFollowInbox :exec
@@ -384,13 +382,13 @@ UPDATE follows SET follower_inbox_url = ? WHERE follower_ap_id = ?;
 SELECT
     cache.type,
     i.name,
-    i.hostname,
+    i.host,
     i.url,
     i.public_key,
     i.inbox,
     i.outbox,
     i.followers
-FROM instances i
+FROM collectives i
 JOIN ap_object_cache cache ON cache.ap_id = i.url
 WHERE i.id = ?
 LIMIT 1;
@@ -398,7 +396,7 @@ LIMIT 1;
 -- name: GetUserApId :one
 SELECT ap_id FROM users WHERE local AND username = lower(?1)
 UNION
-SELECT url AS ap_id FROM INSTANCES WHERE name = lower(?1);
+SELECT url AS ap_id FROM collectives WHERE name = lower(?1);
 
 -- name: GetFollowers :many
 SELECT follower_ap_id FROM follows WHERE followee_ap_id = ?;

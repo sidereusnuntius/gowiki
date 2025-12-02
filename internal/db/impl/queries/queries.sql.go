@@ -13,7 +13,7 @@ import (
 const actorIdByInbox = `-- name: ActorIdByInbox :one
 SELECT ap_id FROM users u WHERE u.inbox = ?1
 UNION
-SELECT url AS ap_id FROM instances i WHERE i.inbox = ?1
+SELECT url AS ap_id FROM collectives i WHERE i.inbox = ?1
 `
 
 func (q *Queries) ActorIdByInbox(ctx context.Context, inbox string) (string, error) {
@@ -26,7 +26,7 @@ func (q *Queries) ActorIdByInbox(ctx context.Context, inbox string) (string, err
 const actorIdByOutbox = `-- name: ActorIdByOutbox :one
 SELECT ap_id from users u where u.outbox = ?1
 UNION
-SELECT url as ap_id FROM instances i WHERE i.outbox = ?1
+SELECT url as ap_id FROM collectives i WHERE i.outbox = ?1
 `
 
 func (q *Queries) ActorIdByOutbox(ctx context.Context, outbox string) (string, error) {
@@ -205,7 +205,7 @@ INSERT INTO articles (
     ap_id,
     attributed_to,
     url,
-    instance_id,
+    host,
     language,
     media_type,
     title,
@@ -218,7 +218,7 @@ type CreateArticleParams struct {
 	ApID         string
 	AttributedTo sql.NullString
 	Url          sql.NullString
-	InstanceID   sql.NullInt64
+	Host         sql.NullString
 	Language     string
 	MediaType    string
 	Title        string
@@ -231,7 +231,7 @@ func (q *Queries) CreateArticle(ctx context.Context, arg CreateArticleParams) (i
 		arg.ApID,
 		arg.AttributedTo,
 		arg.Url,
-		arg.InstanceID,
+		arg.Host,
 		arg.Language,
 		arg.MediaType,
 		arg.Title,
@@ -419,7 +419,7 @@ SELECT
     ap_id,
     attributed_to,
     url,
-    instance_id,
+    host,
     language,
     media_type,
     title,
@@ -436,7 +436,7 @@ type GetArticleByIDRow struct {
 	ApID         string
 	AttributedTo sql.NullString
 	Url          sql.NullString
-	InstanceID   sql.NullInt64
+	Host         sql.NullString
 	Language     string
 	MediaType    string
 	Title        string
@@ -455,7 +455,7 @@ func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDR
 		&i.ApID,
 		&i.AttributedTo,
 		&i.Url,
-		&i.InstanceID,
+		&i.Host,
 		&i.Language,
 		&i.MediaType,
 		&i.Title,
@@ -613,13 +613,13 @@ const getCollectiveByID = `-- name: GetCollectiveByID :one
 SELECT
     cache.type,
     i.name,
-    i.hostname,
+    i.host,
     i.url,
     i.public_key,
     i.inbox,
     i.outbox,
     i.followers
-FROM instances i
+FROM collectives i
 JOIN ap_object_cache cache ON cache.ap_id = i.url
 WHERE i.id = ?
 LIMIT 1
@@ -628,7 +628,7 @@ LIMIT 1
 type GetCollectiveByIDRow struct {
 	Type      string
 	Name      sql.NullString
-	Hostname  string
+	Host      string
 	Url       sql.NullString
 	PublicKey sql.NullString
 	Inbox     sql.NullString
@@ -642,7 +642,7 @@ func (q *Queries) GetCollectiveByID(ctx context.Context, id int64) (GetCollectiv
 	err := row.Scan(
 		&i.Type,
 		&i.Name,
-		&i.Hostname,
+		&i.Host,
 		&i.Url,
 		&i.PublicKey,
 		&i.Inbox,
@@ -666,11 +666,10 @@ SELECT
     f.local,
     f.url,
     f.created,
-    u.username,
-    i.hostname
+    f.host,
+    u.username
 FROM files f
 LEFT JOIN users u ON u.id = f.uploaded_by
-LEFT JOIN instances i ON u.instance_id = i.id
 WHERE f.digest = ?
 `
 
@@ -687,8 +686,8 @@ type GetFileRow struct {
 	Local     bool
 	Url       string
 	Created   int64
+	Host      sql.NullString
 	Username  sql.NullString
-	Hostname  sql.NullString
 }
 
 func (q *Queries) GetFile(ctx context.Context, digest string) (GetFileRow, error) {
@@ -707,8 +706,8 @@ func (q *Queries) GetFile(ctx context.Context, digest string) (GetFileRow, error
 		&i.Local,
 		&i.Url,
 		&i.Created,
+		&i.Host,
 		&i.Username,
-		&i.Hostname,
 	)
 	return i, err
 }
@@ -745,38 +744,37 @@ SELECT
     u.id,
     u.username,
     u.name,
-    i.hostname,
+    u.host,
     u.url,
     u.local,
     u.summary
 FROM users u
-JOIN instances i ON u.instance_id = i.id
-WHERE u.username = lower(?) AND NOT u.local AND i.hostname = ?
+WHERE u.username = lower(?) AND NOT u.local AND u.host = ?
 `
 
 type GetForeignUserDataParams struct {
-	LOWER    string
-	Hostname string
+	LOWER string
+	Host  sql.NullString
 }
 
 type GetForeignUserDataRow struct {
 	ID       int64
 	Username sql.NullString
 	Name     sql.NullString
-	Hostname string
+	Host     sql.NullString
 	Url      sql.NullString
 	Local    bool
 	Summary  sql.NullString
 }
 
 func (q *Queries) GetForeignUserData(ctx context.Context, arg GetForeignUserDataParams) (GetForeignUserDataRow, error) {
-	row := q.db.QueryRowContext(ctx, getForeignUserData, arg.LOWER, arg.Hostname)
+	row := q.db.QueryRowContext(ctx, getForeignUserData, arg.LOWER, arg.Host)
 	var i GetForeignUserDataRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.Name,
-		&i.Hostname,
+		&i.Host,
 		&i.Url,
 		&i.Local,
 		&i.Summary,
@@ -787,7 +785,7 @@ func (q *Queries) GetForeignUserData(ctx context.Context, arg GetForeignUserData
 const getInboxByActorId = `-- name: GetInboxByActorId :one
 SELECT u.inbox as inbox FROM users u WHERE u.ap_id = ?1
 UNION
-SELECT i.inbox as inbox FROM instances i WHERE i.url = ?1
+SELECT i.inbox as inbox FROM collectives i WHERE i.url = ?1
 LIMIT 1
 `
 
@@ -799,11 +797,11 @@ func (q *Queries) GetInboxByActorId(ctx context.Context, apID string) (string, e
 }
 
 const getInstanceId = `-- name: GetInstanceId :one
-SELECT id from instances where hostname = ?
+SELECT id from collectives where host = ?
 `
 
-func (q *Queries) GetInstanceId(ctx context.Context, hostname string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getInstanceId, hostname)
+func (q *Queries) GetInstanceId(ctx context.Context, host string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getInstanceId, host)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -881,7 +879,7 @@ func (q *Queries) GetLocalUserData(ctx context.Context, lower string) (GetLocalU
 const getPrivateKeyByID = `-- name: GetPrivateKeyByID :one
 SELECT private_key FROM users WHERE local AND ap_id = ?1
 UNION
-SELECT private_key FROM instances WHERE private_key IS NOT NULL AND url = ?1
+SELECT private_key FROM collectives WHERE private_key IS NOT NULL AND url = ?1
 LIMIT 1
 `
 
@@ -1000,7 +998,7 @@ func (q *Queries) GetRevisionsByUserId(ctx context.Context, userID int64) ([]Get
 const getUserApId = `-- name: GetUserApId :one
 SELECT ap_id FROM users WHERE local AND username = lower(?1)
 UNION
-SELECT url AS ap_id FROM INSTANCES WHERE name = lower(?1)
+SELECT url AS ap_id FROM collectives WHERE name = lower(?1)
 `
 
 func (q *Queries) GetUserApId(ctx context.Context, lower string) (string, error) {
@@ -1217,17 +1215,17 @@ func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) (int64, 
 }
 
 const insertInstance = `-- name: InsertInstance :one
-INSERT INTO instances (hostname, public_key, inbox) VALUES (?, ?, ?) RETURNING id
+INSERT INTO collectives (host, public_key, inbox) VALUES (?, ?, ?) RETURNING id
 `
 
 type InsertInstanceParams struct {
-	Hostname  string
+	Host      string
 	PublicKey sql.NullString
 	Inbox     sql.NullString
 }
 
 func (q *Queries) InsertInstance(ctx context.Context, arg InsertInstanceParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertInstance, arg.Hostname, arg.PublicKey, arg.Inbox)
+	row := q.db.QueryRowContext(ctx, insertInstance, arg.Host, arg.PublicKey, arg.Inbox)
 	var id int64
 	err := row.Scan(&id)
 	return id, err

@@ -263,43 +263,6 @@ func (d *dbImpl) GetUserFed(ctx context.Context, id *url.URL) (user domain.UserF
 	return
 }
 
-func (d *dbImpl) GetInstanceIdOrCreate(ctx context.Context, hostname string) (id int64, err error) {
-	id, err = d.queries.GetInstanceId(ctx, hostname)
-
-	if err == nil || err != sql.ErrNoRows {
-		err = d.HandleError(err)
-		return
-	}
-
-	err = d.WithTx(func(tx *queries.Queries) error {
-		id, err = d.queries.InsertInstance(ctx, queries.InsertInstanceParams{
-			Hostname:  hostname,
-			PublicKey: sql.NullString{},
-			Inbox:     sql.NullString{},
-		})
-		if err != nil {
-			return err
-		}
-
-		apId, _ := url.Parse("https://" + hostname)
-
-		return d.queries.InsertApObject(ctx, queries.InsertApObjectParams{
-			ApID: apId.String(),
-			LocalTable: sql.NullString{
-				Valid:  true,
-				String: "instances",
-			},
-			LocalID: sql.NullInt64{
-				Valid: true,
-				Int64: id,
-			},
-			Type: "Group",
-		})
-	})
-
-	return
-}
-
 func (d *dbImpl) GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, error) {
 	log.Debug().Str("iri", iri.String()).Msg("querying ap cache table")
 	obj, err := d.queries.GetApObject(ctx, iri.String())
@@ -561,7 +524,7 @@ func (d *dbImpl) GetCollectiveById(ctx context.Context, id int64) (c domain.Coll
 	c = domain.Collective{
 		Type:       obj.Type,
 		Name:       obj.Name.String,
-		Hostname:   obj.Hostname,
+		Hostname:   obj.Host,
 		Public_key: obj.PublicKey.String,
 	}
 

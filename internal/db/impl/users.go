@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"database/sql"
 	"net/url"
 
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
@@ -26,7 +27,7 @@ func (d *dbImpl) GetUser(ctx context.Context, username, hostname string) (user d
 		var u queries.GetForeignUserDataRow
 		u, err = d.queries.GetForeignUserData(
 			ctx,
-			queries.GetForeignUserDataParams{LOWER: username, Hostname: hostname},
+			queries.GetForeignUserDataParams{LOWER: username, Host: sql.NullString{ Valid: true, String: hostname}},
 		)
 
 		uri, _ := url.Parse(u.Url.String)
@@ -34,7 +35,7 @@ func (d *dbImpl) GetUser(ctx context.Context, username, hostname string) (user d
 			ID:       u.ID,
 			Username: u.Username.String,
 			Name:     u.Name.String,
-			Domain:   u.Hostname,
+			Domain:   u.Host.String,
 			Summary:  u.Summary.String,
 			URL:      uri,
 		}

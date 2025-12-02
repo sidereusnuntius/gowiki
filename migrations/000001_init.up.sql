@@ -14,8 +14,8 @@ CREATE TABLE users (
     ap_id VARCHAR(255) NOT NULL,
     url VARCHAR(255),
     username VARCHAR(64),
+    host VARCHAR(255),
     name VARCHAR(255),
-    instance_id INTEGER,
     summary TEXT,
     inbox TEXT,
     outbox VARCHAR(255),
@@ -29,8 +29,7 @@ CREATE TABLE users (
     last_updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_fetched INT,
 
-    FOREIGN KEY (instance_id) REFERENCES instances (id),
-    UNIQUE (username, instance_id),
+    UNIQUE (username, host),
     UNIQUE (ap_id),
     UNIQUE (inbox),
     UNIQUE (outbox)

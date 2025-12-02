@@ -3,10 +3,11 @@ CREATE TABLE articles (
     local BOOLEAN DEFAULT TRUE NOT NULL,
     ap_id VARCHAR NOT NULL,
     url VARCHAR,
-    instance_id INTEGER,
     language VARCHAR NOT NULL,
     media_type VARCHAR NOT NULL,
     title VARCHAR(255) NOT NULL,
+    host VARCHAR(255),
+    type VARCHAR(32) NOT NULL,
     protected BOOLEAN DEFAULT FALSE NOT NULL,
     summary TEXT,
     content TEXT NOT NULL,
@@ -14,9 +15,7 @@ CREATE TABLE articles (
     last_updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_fetched INT,
 
-    UNIQUE (title, instance_id),
-    UNIQUE (ap_id),
-    FOREIGN KEY (instance_id) REFERENCES instances (id)
+    UNIQUE (ap_id)
 );
 
 CREATE TABLE revisions (

@@ -52,12 +52,14 @@ type Article struct {
 	ID           int64
 	Local        bool
 	ApID         string
+	Author       sql.NullString
 	AttributedTo sql.NullString
 	Url          sql.NullString
-	InstanceID   sql.NullInt64
 	Language     string
 	MediaType    string
 	Title        string
+	Host         sql.NullString
+	Type         string
 	Protected    bool
 	Summary      sql.NullString
 	Content      string
@@ -72,12 +74,28 @@ type ArticleFile struct {
 	FileID    int64
 }
 
+type Collective struct {
+	ID         int64
+	Name       sql.NullString
+	Host       string
+	Url        sql.NullString
+	PublicKey  sql.NullString
+	PrivateKey sql.NullString
+	Inbox      sql.NullString
+	Outbox     sql.NullString
+	Followers  sql.NullString
+	Blocked    bool
+	Created    int64
+	Updated    int64
+}
+
 type File struct {
 	ID         int64
 	Digest     string
 	Path       sql.NullString
 	ApID       string
 	Name       sql.NullString
+	Host       sql.NullString
 	Filename   sql.NullString
 	Type       string
 	MimeType   string
@@ -96,21 +114,6 @@ type Follow struct {
 	FollowerInboxUrl sql.NullString
 	Approved         bool
 	CreatedAt        sql.NullInt64
-}
-
-type Instance struct {
-	ID         int64
-	Name       sql.NullString
-	Hostname   string
-	Url        sql.NullString
-	PublicKey  sql.NullString
-	PrivateKey sql.NullString
-	Inbox      sql.NullString
-	Outbox     sql.NullString
-	Followers  sql.NullString
-	Blocked    bool
-	Created    int64
-	Updated    int64
 }
 
 type Invitation struct {
@@ -146,6 +149,7 @@ type User struct {
 	Url         sql.NullString
 	Username    sql.NullString
 	Name        sql.NullString
+	Host        sql.NullString
 	InstanceID  sql.NullInt64
 	Summary     sql.NullString
 	Inbox       string

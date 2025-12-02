@@ -1,7 +1,9 @@
-CREATE TABLE instances (
+-- A table to hold the data of collective actors -- groups, organizations etc. In our context,
+-- it represents the wiki actors.
+CREATE TABLE collectives (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(64),
-    hostname VARCHAR(255) UNIQUE NOT NULL,
+    host VARCHAR(255) UNIQUE NOT NULL,
     url VARCHAR(255) UNIQUE,
     public_key TEXT,
     private_key TEXT,
@@ -22,6 +24,7 @@ CREATE TABLE users (
     url VARCHAR(255),
     username VARCHAR(64),
     name VARCHAR(255),
+    host VARCHAR(255),
     instance_id INTEGER,
     summary TEXT,
     inbox TEXT,
@@ -36,7 +39,7 @@ CREATE TABLE users (
     last_updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_fetched INT,
 
-    FOREIGN KEY (instance_id) REFERENCES instances (id),
+    FOREIGN KEY (instance_id) REFERENCES collectives (id),
     UNIQUE (username, instance_id),
     UNIQUE (ap_id),
     UNIQUE (inbox),
@@ -90,12 +93,14 @@ CREATE TABLE articles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     local BOOLEAN DEFAULT TRUE NOT NULL,
     ap_id VARCHAR NOT NULL,
+    author VARCHAR(255),
     attributed_to VARCHAR(255),
     url VARCHAR,
-    instance_id INTEGER,
     language VARCHAR NOT NULL,
     media_type VARCHAR NOT NULL,
     title VARCHAR(255) NOT NULL,
+    host VARCHAR(255),
+    type VARCHAR(32) NOT NULL,
     protected BOOLEAN DEFAULT FALSE NOT NULL,
     summary TEXT,
     content TEXT NOT NULL,
@@ -104,9 +109,7 @@ CREATE TABLE articles (
     last_updated INT DEFAULT (cast(strftime('%s','now') as int)) NOT NULL,
     last_fetched INT,
 
-    UNIQUE (ap_id),
-    UNIQUE (title, instance_id),
-    FOREIGN KEY (instance_id) REFERENCES instances (id)
+    UNIQUE (ap_id)
 );
 
 CREATE TABLE revisions (
@@ -140,6 +143,7 @@ CREATE TABLE files (
     path VARCHAR(255),
     ap_id VARCHAR(255) NOT NULL,
     name VARCHAR(255),
+    host VARCHAR(255),
     filename VARCHAR(255),
     type VARCHAR(32) NOT NULL DEFAULT 'Document',
     mime_type VARCHAR(128) NOT NULL,

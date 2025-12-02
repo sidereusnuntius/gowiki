@@ -114,7 +114,8 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 				Valid:  true,
 				String: article.AttributedTo.String(),
 			},
-			InstanceID: sql.NullInt64{},
+			// For local articles, host is null.
+			Host: sql.NullString{},
 			Language:   article.Language,
 			MediaType:  article.MediaType,
 			Title:      article.Title,
