@@ -53,7 +53,12 @@ type UserFedInternal struct {
 
 type Profile struct {
 	UserCore
+	Articles []ArticlePreview
 	Edits []Revision
+}
+
+type ArticlePreview struct {
+	Title string
 }
 
 type UserInternal struct {

@@ -13,6 +13,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func (s *AppService) IsAdmin(ctx context.Context, accountId int64) (bool, error) {
+	isAdmin, err := s.DB.IsAdmin(ctx, accountId)
+	return isAdmin, err
+}
+
 // AuthenticateUser confirms the user's identity and, if their credentials are correct, returns data to be put
 // in the login session, such as the user's name and id. user is either the user's Id or their
 func (s *AppService) AuthenticateUser(ctx context.Context, user, password string) (u domain.Account, authenticated bool, err error) {

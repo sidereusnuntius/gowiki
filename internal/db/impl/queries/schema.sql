@@ -5,6 +5,7 @@ CREATE TABLE collectives (
     name VARCHAR(64),
     host VARCHAR(255) UNIQUE NOT NULL,
     url VARCHAR(255) UNIQUE,
+    summary TEXT,
     public_key TEXT,
     private_key TEXT,
     inbox VARCHAR(255) UNIQUE,

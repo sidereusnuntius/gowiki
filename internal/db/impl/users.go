@@ -3,73 +3,70 @@ package impl
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/url"
 
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
-func (d *dbImpl) GetUser(ctx context.Context, username, hostname string) (user domain.UserCore, err error) {
-	if hostname == "" {
-		var u queries.GetLocalUserDataRow
-		u, err = d.queries.GetLocalUserData(ctx, username)
-		uri, _ := url.Parse(u.Url.String)
 
-		user = domain.UserCore{
-			ID:       u.ID,
-			Username: u.Username.String,
-			Name:     u.Name.String,
-			Host:   "",
-			Summary:  u.Summary.String,
-			URL:      uri,
-		}
-	} else {
-		var u queries.GetForeignUserDataRow
-		u, err = d.queries.GetForeignUserData(
-			ctx,
-			queries.GetForeignUserDataParams{LOWER: username, Host: sql.NullString{ Valid: true, String: hostname}},
-		)
 
-		uri, _ := url.Parse(u.Url.String)
-		user = domain.UserCore{
-			ID:       u.ID,
-			Username: u.Username.String,
-			Name:     u.Name.String,
-			Host:   u.Host.String,
-			Summary:  u.Summary.String,
-			URL:      uri,
-		}
-	}
-
-	if err != nil {
-		err = d.HandleError(err)
-	}
-
-	return
-}
-
-func (d *dbImpl) GetProfile(ctx context.Context, username, hostname string) (p domain.Profile, err error) {
-	u, err := d.GetUser(ctx, username, hostname)
+func (d *dbImpl) GetProfile(ctx context.Context, name string, host sql.NullString) (p domain.Profile, err error) {
+	userRow, err := d.queries.GetActorData(ctx, queries.GetActorDataParams{
+		LOWER: name,
+		Host: host,
+	})
 	if err != nil {
 		return
+	}
+
+	var userURL *url.URL
+	if userRow.Url.Valid {
+		if userURL, err = url.Parse(userRow.Url.String); err != nil {
+			return domain.Profile{}, err
+		}
+	}
+
+	u := domain.UserCore{
+		Username: userRow.Name.String,
+		Host: userRow.Host.String,
+		Summary: userRow.Summary.String,
+		URL: userURL,
+	}
+	
+	articleRows, err := d.queries.GetArticlesByActorId(ctx, sql.NullString{
+		Valid: true,
+		String: userRow.ApID,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows){
+		return domain.Profile{}, d.HandleError(err)
+	}
+
+	articles := make([]domain.ArticlePreview, len(articleRows))
+	for i, r := range articleRows {
+		articles[i] = domain.ArticlePreview{
+			Title: r.Title,
+		}
 	}
 
 	r, err := d.queries.GetRevisionsByUserId(ctx, sql.NullInt64{
 		Valid: true,
 		Int64: u.ID,
 	})
-	edits := make([]domain.Revision, 0, len(r))
-	for _, r := range r {
-		edits = append(edits, domain.Revision{
+	edits := make([]domain.Revision, len(r))
+	for i, r := range r {
+		edits[i] = domain.Revision{
 			ID:       r.ID,
 			Title:    r.Title,
 			Reviewed: r.Reviewed,
 			Summary:  r.Summary.String,
 			Created:  r.Created,
-		})
+		}
 	}
 	p = domain.Profile{
 		UserCore: u,
+		Articles: articles,
 		Edits:    edits,
 	}
 

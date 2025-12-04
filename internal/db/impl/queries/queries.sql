@@ -161,15 +161,33 @@ JOIN revisions r ON r.article_id = a.id
 JOIN users u ON r.user_id = u.id
 ORDER BY r.created DESC;
 
--- name: GetLocalUserData :one
+-- name: GetActorData :one
 SELECT
     id,
-    username,
-    name,
+    username as name,
+    host,
+    ap_id,
     url,
-    summary
-FROM users
-WHERE local AND username = lower(?);
+    summary,
+    'user' AS type
+FROM users u WHERE u.username = lower(?1) AND u.host = ?2
+UNION
+SELECT
+    id,
+    name,
+    host,
+    url as ap_id,
+    url,
+    summary,
+    'group' AS type
+FROM collectives c WHERE c.name = lower(?1) AND c.host = ?2;
+
+-- name: GetArticlesByActorId :many
+SELECT
+    title,
+    published
+FROM articles
+WHERE attributed_to = ?;
 
 -- name: GetForeignUserData :one
 SELECT
@@ -465,3 +483,6 @@ ORDER BY cache.id DESC;
 
 -- name: GetUserId :one
 SELECT id FROM users where ap_id = ? LIMIT 1;
+
+-- name: IsAdmin :one
+SELECT admin FROM accounts a WHERE a.id = ?; 

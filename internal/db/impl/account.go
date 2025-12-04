@@ -3,11 +3,20 @@ package impl
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/url"
 
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
+
+func (d *dbImpl) IsAdmin(ctx context.Context, accountId int64) (bool, error) {
+	isAdmin, err := d.queries.IsAdmin(ctx, accountId)
+	if err != nil {
+		err = fmt.Errorf("can't verify admin status for id=%d: %w", accountId, d.HandleError(err))
+	}
+	return isAdmin, err
+}
 
 func (d *dbImpl) GetUserURI(ctx context.Context, id int64) (*url.URL, error) {
 	uriStr, err := d.queries.GetUserUriById(ctx, id)

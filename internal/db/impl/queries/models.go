@@ -79,6 +79,7 @@ type Collective struct {
 	Name       sql.NullString
 	Host       string
 	Url        sql.NullString
+	Summary    sql.NullString
 	PublicKey  sql.NullString
 	PrivateKey sql.NullString
 	Inbox      sql.NullString

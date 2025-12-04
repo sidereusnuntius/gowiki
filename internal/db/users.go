@@ -2,11 +2,11 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 type Users interface {
-	GetUser(ctx context.Context, username, hostname string) (user domain.UserCore, err error)
-	GetProfile(ctx context.Context, username, hostname string) (p domain.Profile, err error)
+	GetProfile(ctx context.Context, name string, host sql.NullString) (p domain.Profile, err error)
 }

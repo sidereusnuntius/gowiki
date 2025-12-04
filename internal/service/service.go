@@ -28,6 +28,7 @@ type Service interface {
 	AlterArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error)
 	GetArticle(ctx context.Context, title, author, host string) (article domain.ArticleFed, err error)
 	CreateArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error)
-	GetUserProfile(ctx context.Context, username, domain string) (p domain.Profile, err error)
+	GetProfile(ctx context.Context, name, host string) (p domain.Profile, err error)
 	GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error)
+	IsAdmin(ctx context.Context, accountId int64) (bool, error)
 }

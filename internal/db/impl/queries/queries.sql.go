@@ -405,6 +405,58 @@ func (q *Queries) Follow(ctx context.Context, arg FollowParams) (int64, error) {
 	return id, err
 }
 
+const getActorData = `-- name: GetActorData :one
+SELECT
+    id,
+    username as name,
+    host,
+    ap_id,
+    url,
+    summary,
+    'user' AS type
+FROM users u WHERE u.username = lower(?1) AND u.host = ?2
+UNION
+SELECT
+    id,
+    name,
+    host,
+    url as ap_id,
+    url,
+    summary,
+    'group' AS type
+FROM collectives c WHERE c.name = lower(?1) AND c.host = ?2
+`
+
+type GetActorDataParams struct {
+	LOWER string
+	Host  sql.NullString
+}
+
+type GetActorDataRow struct {
+	ID      int64
+	Name    sql.NullString
+	Host    sql.NullString
+	ApID    string
+	Url     sql.NullString
+	Summary sql.NullString
+	Type    string
+}
+
+func (q *Queries) GetActorData(ctx context.Context, arg GetActorDataParams) (GetActorDataRow, error) {
+	row := q.db.QueryRowContext(ctx, getActorData, arg.LOWER, arg.Host)
+	var i GetActorDataRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Host,
+		&i.ApID,
+		&i.Url,
+		&i.Summary,
+		&i.Type,
+	)
+	return i, err
+}
+
 const getApObject = `-- name: GetApObject :one
 SELECT ap_id, local_table, local_id, type, raw_json, last_updated, last_fetched
 FROM ap_object_cache
@@ -587,6 +639,42 @@ func (q *Queries) GetArticleIDS(ctx context.Context, title string) (GetArticleID
 	var i GetArticleIDSRow
 	err := row.Scan(&i.ApID, &i.ArticleID, &i.RevID)
 	return i, err
+}
+
+const getArticlesByActorId = `-- name: GetArticlesByActorId :many
+SELECT
+    title,
+    published
+FROM articles
+WHERE attributed_to = ?
+`
+
+type GetArticlesByActorIdRow struct {
+	Title     string
+	Published sql.NullInt64
+}
+
+func (q *Queries) GetArticlesByActorId(ctx context.Context, attributedTo sql.NullString) ([]GetArticlesByActorIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getArticlesByActorId, attributedTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetArticlesByActorIdRow
+	for rows.Next() {
+		var i GetArticlesByActorIdRow
+		if err := rows.Scan(&i.Title, &i.Published); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getAuthor = `-- name: GetAuthor :one
@@ -910,38 +998,6 @@ func (q *Queries) GetInstanceId(ctx context.Context, host string) (int64, error)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
-}
-
-const getLocalUserData = `-- name: GetLocalUserData :one
-SELECT
-    id,
-    username,
-    name,
-    url,
-    summary
-FROM users
-WHERE local AND username = lower(?)
-`
-
-type GetLocalUserDataRow struct {
-	ID       int64
-	Username sql.NullString
-	Name     sql.NullString
-	Url      sql.NullString
-	Summary  sql.NullString
-}
-
-func (q *Queries) GetLocalUserData(ctx context.Context, lower string) (GetLocalUserDataRow, error) {
-	row := q.db.QueryRowContext(ctx, getLocalUserData, lower)
-	var i GetLocalUserDataRow
-	err := row.Scan(
-		&i.ID,
-		&i.Username,
-		&i.Name,
-		&i.Url,
-		&i.Summary,
-	)
-	return i, err
 }
 
 const getPrivateKeyByID = `-- name: GetPrivateKeyByID :one
@@ -1439,6 +1495,17 @@ func (q *Queries) InsertRevision(ctx context.Context, arg InsertRevisionParams) 
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const isAdmin = `-- name: IsAdmin :one
+SELECT admin FROM accounts a WHERE a.id = ?
+`
+
+func (q *Queries) IsAdmin(ctx context.Context, id int64) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isAdmin, id)
+	var admin bool
+	err := row.Scan(&admin)
+	return admin, err
 }
 
 const isUserTrusted = `-- name: IsUserTrusted :one

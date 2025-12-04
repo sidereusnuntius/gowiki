@@ -2,15 +2,19 @@ package core
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
-func (s *AppService) GetUserProfile(ctx context.Context, username, domain string) (p domain.Profile, err error) {
-	username = strings.TrimSpace(username)
-	domain = strings.TrimSpace(domain)
+func (s *AppService) GetProfile(ctx context.Context, name, host string) (p domain.Profile, err error) {
+	name = strings.TrimSpace(name)
+	host = strings.TrimSpace(host)
 
-	p, err = s.DB.GetProfile(ctx, username, domain)
+	p, err = s.DB.GetProfile(ctx, name, sql.NullString{
+		Valid: host != "",
+		String: host,
+	})
 	return
 }

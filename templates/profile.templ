@@ -1,13 +1,12 @@
 package templates
 
-import (
-    "github.com/sidereusnuntius/gowiki/internal/domain"
-)
+import "github.com/sidereusnuntius/gowiki/internal/domain"
 
 templ Profile(p domain.Profile) {
-    <h2 class="handle">{ p.Name }
+    <h2 class="handle">
+    { p.Username }
     if p.Host != "" {
-        \@{ p.Host }
+    { "@" }{ p.Host }
     }
     </h2>
     <p>
@@ -18,10 +17,24 @@ templ Profile(p domain.Profile) {
     }
     </p>
 
+    if p.Articles != nil || len(p.Articles) > 0 {
+        <h2>Articles</h2>
+        <ul>
+            {{ var at string }}
+            if p.Host != "" {
+                {{ at = "@" + p.Name + "@" + p.Host }}
+            }
+            for _, a := range p.Articles {
+                <li><a href={ "/a/" + a.Title + at }>{ a.Title }</a></li>
+            }
+        </ul>
+    }
+
     if p.Edits == nil || len(p.Edits) == 0 {
         <p>This user has not done any contribution yet.</p>
     } else {
         <ul>
+            <h2>Revisions</h2>
             for _, e := range p.Edits {
                 @Revision(e.Title, e.Summary, "", "", e.ID, e.Created)
             }

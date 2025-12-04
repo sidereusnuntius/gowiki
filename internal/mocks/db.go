@@ -405,18 +405,18 @@ func (mr *MockDBMockRecorder) GetLastRevisionID(ctx, title any) *gomock.Call {
 }
 
 // GetProfile mocks base method.
-func (m *MockDB) GetProfile(ctx context.Context, username, hostname string) (domain.Profile, error) {
+func (m *MockDB) GetProfile(ctx context.Context, name string, host sql.NullString) (domain.Profile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetProfile", ctx, username, hostname)
+	ret := m.ctrl.Call(m, "GetProfile", ctx, name, host)
 	ret0, _ := ret[0].(domain.Profile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetProfile indicates an expected call of GetProfile.
-func (mr *MockDBMockRecorder) GetProfile(ctx, username, hostname any) *gomock.Call {
+func (mr *MockDBMockRecorder) GetProfile(ctx, name, host any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockDB)(nil).GetProfile), ctx, username, hostname)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockDB)(nil).GetProfile), ctx, name, host)
 }
 
 // GetRevisionList mocks base method.
@@ -432,21 +432,6 @@ func (m *MockDB) GetRevisionList(ctx context.Context, title string) ([]domain.Re
 func (mr *MockDBMockRecorder) GetRevisionList(ctx, title any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRevisionList", reflect.TypeOf((*MockDB)(nil).GetRevisionList), ctx, title)
-}
-
-// GetUser mocks base method.
-func (m *MockDB) GetUser(ctx context.Context, username, hostname string) (domain.UserCore, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", ctx, username, hostname)
-	ret0, _ := ret[0].(domain.UserCore)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUser indicates an expected call of GetUser.
-func (mr *MockDBMockRecorder) GetUser(ctx, username, hostname any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockDB)(nil).GetUser), ctx, username, hostname)
 }
 
 // GetUserApId mocks base method.
@@ -566,6 +551,21 @@ func (m *MockDB) InsertUser(ctx context.Context, user domain.UserFedInternal, ac
 func (mr *MockDBMockRecorder) InsertUser(ctx, user, account, reason, invitation any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertUser", reflect.TypeOf((*MockDB)(nil).InsertUser), ctx, user, account, reason, invitation)
+}
+
+// IsAdmin mocks base method.
+func (m *MockDB) IsAdmin(ctx context.Context, accountId int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsAdmin", ctx, accountId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsAdmin indicates an expected call of IsAdmin.
+func (mr *MockDBMockRecorder) IsAdmin(ctx, accountId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAdmin", reflect.TypeOf((*MockDB)(nil).IsAdmin), ctx, accountId)
 }
 
 // IsUserTrusted mocks base method.

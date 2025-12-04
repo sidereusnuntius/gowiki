@@ -26,8 +26,8 @@ func (h *Handler) Mount(r chi.Router) {
 	// 	ServeHTTP(w, r)
 	// })
 
-	r.Get("/@{username}", Profile(h))
-	r.Get("/@{username}@{domain}", Profile(h))
+	r.Get("/@{name}", Profile(h))
+	r.Get("/@{name}@{host}", Profile(h))
 
 	r.Route("/a/{title}", func(r chi.Router) {
 		r.Post("/", PostArticle(h))
