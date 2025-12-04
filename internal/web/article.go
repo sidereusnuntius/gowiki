@@ -53,13 +53,16 @@ func ArticleHistory(handler *Handler) http.HandlerFunc {
 func (h *Handler) editArticle(ctx context.Context, w http.ResponseWriter, r *http.Request, title, author, host string) error {
 	u, ok := GetSession(ctx) // Validate ok
 	if !ok {
-
+		return errors.New("unauthenticated")
 	}
 
 	var newarticle bool
 	article, err := h.service.GetArticle(ctx, title, author, host)
 	if err != nil {
-		return err
+		if !errors.Is(err, db.ErrNotFound) {
+			return err
+		}
+		newarticle = true
 	}
 
 	err = r.ParseMultipartForm(MaxMemory)
@@ -96,7 +99,7 @@ func (h *Handler) editArticle(ctx context.Context, w http.ResponseWriter, r *htt
 		Authenticated: ok,
 		Username:      u.Username,
 		ProfilePath:   "TODO",
-		PageTitle:     "Editing " + article.Title,
+		PageTitle:     "Editing " + title,
 		Place:         templates.Edit,
 		Path:          r.URL,
 		Hrefs:         hrefs,
@@ -107,21 +110,7 @@ func (h *Handler) editArticle(ctx context.Context, w http.ResponseWriter, r *htt
 
 // EditArticle renders the article editing screen, showing a textarea populated with the article's text and
 // a summary of the edit.
-func EditLocalArticle(handler *Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO: should I verify whether the user is logged in, or should I just assume that? I think I can't, since I need to use the user's username on the template.
-		// TODO: verify whether article exists.
-		// TODO: a revision can be based on a revision that is not the latest.
-		ctx := r.Context()
-		title := chi.URLParam(r, "title")
-		if err := handler.editArticle(ctx, w, r, title, handler.Config.Name, ""); err != nil {
-			log.Error().Err(err).Send()
-			http.Error(w, "", http.StatusInternalServerError)
-		}
-	}
-}
-
-func EditRemoteArticle(handler *Handler) http.HandlerFunc {
+func EditArticle(handler *Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO: should I verify whether the user is logged in, or should I just assume that? I think I can't, since I need to use the user's username on the template.
 		// TODO: verify whether article exists.
@@ -130,6 +119,15 @@ func EditRemoteArticle(handler *Handler) http.HandlerFunc {
 		title := chi.URLParam(r, "title")
 		author := chi.URLParam(r, "author")
 		host := chi.URLParam(r, "host")
+		
+		if author == "" {
+			author = handler.Config.Name
+		}
+		
+		if host == "" {
+			host = handler.Config.Domain
+		}
+
 		if err := handler.editArticle(ctx, w, r, title, author, host); err != nil {
 			log.Error().Err(err).Send()
 			http.Error(w, "", http.StatusInternalServerError)
@@ -140,7 +138,7 @@ func EditRemoteArticle(handler *Handler) http.HandlerFunc {
 func (h *Handler) getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request, title, author, host string) error {
 	u, ok := GetSession(ctx)
 	article, err := h.service.GetArticle(ctx, title, author, host)
-
+	
 	// TODO: deal with the case in which the article has not been created, which should redirect to the editor.
 	if err != nil {
 		// TODO: render template
@@ -160,6 +158,7 @@ func (h *Handler) getArticle(ctx context.Context, w http.ResponseWriter, r *http
 		}
 	}
 
+	local := host == h.Config.Domain
 	// Sanitize content!
 	return templates.Layout(templates.PageData{
 		Authenticated: ok,
@@ -174,7 +173,7 @@ func (h *Handler) getArticle(ctx context.Context, w http.ResponseWriter, r *http
 			templates.History: r.URL.JoinPath("history").String(),
 		},
 		IsArticle: true,
-		Child: templates.Article(article),
+		Child: templates.Article(local, article),
 		Article: templates.ArticleData{
 			Title:    article.Title,
 			Domain:   "", //TODO
@@ -186,24 +185,22 @@ func (h *Handler) getArticle(ctx context.Context, w http.ResponseWriter, r *http
 	}).Render(ctx, w)
 }
 
-func GetLocalArticle(handler *Handler) http.HandlerFunc {
+func GetArticle(handler *Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		title := chi.URLParam(r, "title")
-		if err := handler.getArticle(r.Context(), w, r, title, handler.Config.Name, ""); err != nil {
-			http.Error(w, "", http.StatusInternalServerError)
-		}
-	}
-}
-
-func GetRemoteArticle(handler *Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
 		title := chi.URLParam(r, "title")
 		author := chi.URLParam(r, "author")
 		host := chi.URLParam(r, "host")
+
+		if author == "" {
+			author = handler.Config.Name
+		}
+
+		if host == "" {
+			host = handler.Config.Domain
+		}
+
 		log.Debug().Str("title", title).Str("author", author).Str("host", host).Send()
-		if err := handler.getArticle(ctx, w, r, title, author, host); err != nil {
-			log.Error().Err(err).Msg("failed to display remote article")
+		if err := handler.getArticle(r.Context(), w, r, title, author, host); err != nil {
 			http.Error(w, "", http.StatusInternalServerError)
 		}
 	}

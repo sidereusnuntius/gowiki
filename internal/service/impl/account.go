@@ -90,6 +90,7 @@ func (s *AppService) populateUser(username, name, summary string) (user domain.U
 			UserCore: domain.UserCore{
 				Username: username,
 				Name:     name,
+				Host: s.Config.Domain,
 			},
 			ApId:      apId,
 			Inbox:     apId.JoinPath("/inbox"),

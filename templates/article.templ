@@ -2,8 +2,9 @@ package templates
 
 import "github.com/sidereusnuntius/gowiki/internal/domain"
 
-templ Article(article domain.ArticleFed) {
-    if article.Host != "" {
+templ Article(local bool, article domain.ArticleFed) {
+    
+    if !local {
         {{ at := "@" + article.Author + "@" + article.Host }}
         <a href={"/" + at }>{ at }</a>
     }

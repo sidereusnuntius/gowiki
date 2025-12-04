@@ -270,6 +270,7 @@ INSERT INTO users (
     ap_id,
     username,
     name,
+    host,
     trusted,
     summary,
     inbox,
@@ -278,13 +279,14 @@ INSERT INTO users (
     public_key,
     private_key
     )
-VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING id
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING id
 `
 
 type CreateLocalUserParams struct {
 	ApID       string
 	Username   sql.NullString
 	Name       sql.NullString
+	Host       sql.NullString
 	Trusted    bool
 	Summary    sql.NullString
 	Inbox      string
@@ -299,6 +301,7 @@ func (q *Queries) CreateLocalUser(ctx context.Context, arg CreateLocalUserParams
 		arg.ApID,
 		arg.Username,
 		arg.Name,
+		arg.Host,
 		arg.Trusted,
 		arg.Summary,
 		arg.Inbox,

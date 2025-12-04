@@ -219,7 +219,7 @@ func insertArticleTx(tx *queries.Queries, ctx context.Context, local bool, artic
 		MediaType: article.MediaType,
 		Title: article.Title,
 		Host: sql.NullString{
-			Valid: !local,
+			Valid: true,
 			String: article.Host,
 		},
 		Type: raw.ApType,

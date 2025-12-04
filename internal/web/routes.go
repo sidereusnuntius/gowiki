@@ -31,15 +31,15 @@ func (h *Handler) Mount(r chi.Router) {
 
 	r.Route("/a/{title}", func(r chi.Router) {
 		r.Post("/", PostArticle(h))
-		r.Get("/", GetLocalArticle(h))
-		r.Handle("/edit", authenticated(EditLocalArticle(h)))
+		r.Get("/", GetArticle(h))
+		r.Handle("/edit", authenticated(EditArticle(h)))
 		r.Get("/history", ArticleHistory(h))
 	})
 
 	r.Route("/a/{title}@{author}@{host}", func(r chi.Router) {
 		r.Post("/", PostArticle(h))
-		r.Get("/", GetRemoteArticle(h))
-		r.Handle("/edit", authenticated(EditRemoteArticle(h)))
+		r.Get("/", GetArticle(h))
+		r.Handle("/edit", authenticated(EditArticle(h)))
 		r.Get("/history", ArticleHistory(h))
 	})
 

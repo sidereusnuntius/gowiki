@@ -11,9 +11,12 @@ import (
 func (s *AppService) GetProfile(ctx context.Context, name, host string) (p domain.Profile, err error) {
 	name = strings.TrimSpace(name)
 	host = strings.TrimSpace(host)
+	if host == "" {
+		host = s.Config.Domain
+	}
 
 	p, err = s.DB.GetProfile(ctx, name, sql.NullString{
-		Valid: host != "",
+		Valid: true,
 		String: host,
 	})
 	return
