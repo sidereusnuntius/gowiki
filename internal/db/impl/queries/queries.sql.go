@@ -202,41 +202,63 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) er
 
 const createArticle = `-- name: CreateArticle :one
 INSERT INTO articles (
+    local,
     ap_id,
+    author,
     attributed_to,
     url,
-    host,
     language,
     media_type,
     title,
+    host,
+    type,
+    protected,
+    summary,
     content,
-    published
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id
+    published,
+    last_updated,
+    last_fetched
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id
 `
 
 type CreateArticleParams struct {
+	Local        bool
 	ApID         string
+	Author       sql.NullString
 	AttributedTo sql.NullString
 	Url          sql.NullString
-	Host         sql.NullString
 	Language     string
 	MediaType    string
 	Title        string
+	Host         sql.NullString
+	Type         string
+	Protected    bool
+	Summary      sql.NullString
 	Content      string
 	Published    sql.NullInt64
+	LastUpdated  int64
+	LastFetched  sql.NullInt64
 }
 
 func (q *Queries) CreateArticle(ctx context.Context, arg CreateArticleParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, createArticle,
+		arg.Local,
 		arg.ApID,
+		arg.Author,
 		arg.AttributedTo,
 		arg.Url,
-		arg.Host,
 		arg.Language,
 		arg.MediaType,
 		arg.Title,
+		arg.Host,
+		arg.Type,
+		arg.Protected,
+		arg.Summary,
 		arg.Content,
 		arg.Published,
+		arg.LastUpdated,
+		arg.LastFetched,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -317,7 +339,7 @@ INSERT INTO revisions (
 type EditArticleParams struct {
 	ApID      sql.NullString
 	ArticleID int64
-	UserID    int64
+	UserID    sql.NullInt64
 	Summary   sql.NullString
 	Diff      string
 	Reviewed  bool
@@ -966,7 +988,7 @@ type GetRevisionsByUserIdRow struct {
 	Created  int64
 }
 
-func (q *Queries) GetRevisionsByUserId(ctx context.Context, userID int64) ([]GetRevisionsByUserIdRow, error) {
+func (q *Queries) GetRevisionsByUserId(ctx context.Context, userID sql.NullInt64) ([]GetRevisionsByUserIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getRevisionsByUserId, userID)
 	if err != nil {
 		return nil, err
@@ -1106,6 +1128,17 @@ func (q *Queries) GetUserFullByID(ctx context.Context, id int64) (GetUserFullByI
 		&i.LastUpdated,
 	)
 	return i, err
+}
+
+const getUserId = `-- name: GetUserId :one
+SELECT id FROM users where ap_id = ? LIMIT 1
+`
+
+func (q *Queries) GetUserId(ctx context.Context, apID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getUserId, apID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getUserKeys = `-- name: GetUserKeys :one
@@ -1328,19 +1361,21 @@ func (q *Queries) InsertOrUpdateUser(ctx context.Context, arg InsertOrUpdateUser
 
 const insertRevision = `-- name: InsertRevision :one
 INSERT INTO revisions (
+    ap_id,
     article_id,
     user_id,
     summary,
     diff,
     published,
     prev
-) VALUES (?1, ?2, ?3, ?4, true, ?5)
+) VALUES (?1, ?2, ?3, ?4, ?5, true, ?6)
 RETURNING id
 `
 
 type InsertRevisionParams struct {
+	ApID      sql.NullString
 	ArticleID int64
-	UserID    int64
+	UserID    sql.NullInt64
 	Summary   sql.NullString
 	Diff      string
 	Prev      sql.NullInt64
@@ -1348,6 +1383,7 @@ type InsertRevisionParams struct {
 
 func (q *Queries) InsertRevision(ctx context.Context, arg InsertRevisionParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertRevision,
+		arg.ApID,
 		arg.ArticleID,
 		arg.UserID,
 		arg.Summary,

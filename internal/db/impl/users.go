@@ -54,7 +54,10 @@ func (d *dbImpl) GetProfile(ctx context.Context, username, hostname string) (p d
 		return
 	}
 
-	r, err := d.queries.GetRevisionsByUserId(ctx, u.ID)
+	r, err := d.queries.GetRevisionsByUserId(ctx, sql.NullInt64{
+		Valid: true,
+		Int64: u.ID,
+	})
 	edits := make([]domain.Revision, 0, len(r))
 	for _, r := range r {
 		edits = append(edits, domain.Revision{

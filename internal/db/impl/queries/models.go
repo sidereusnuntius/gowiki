@@ -129,7 +129,7 @@ type Revision struct {
 	ID         int64
 	ApID       sql.NullString
 	ArticleID  int64
-	UserID     int64
+	UserID     sql.NullInt64
 	Summary    sql.NullString
 	Diff       string
 	Reviewed   bool

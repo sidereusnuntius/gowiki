@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -18,6 +19,38 @@ import (
 )
 
 const PageSize = 20
+
+func (d *dbImpl) PersistRemoteArticle(ctx context.Context, article domain.ArticleFed, articleRaw domain.FedObj) error {
+	author := article.AttributedTo.String()
+	userId, err := d.queries.GetUserId(ctx, author)
+	if err != nil {
+		return fmt.Errorf("could not query internal id for IRI %s: %w", author, d.HandleError(err))
+	}
+	return d.WithTx(func(tx *queries.Queries) error {
+		fetched := time.Now().Unix()
+		id, err := insertArticleTx(tx, ctx, false, article, articleRaw, fetched)
+		if err != nil {
+			return err
+		}
+
+		diff := d.getDiff("", article.Content)
+		_, err = d.insertRevision(
+			ctx,
+			tx,
+			id,
+			sql.NullInt64{
+				Valid: true,
+				Int64: userId,
+			},
+			sql.NullInt64{},
+			//TODO: get summary
+			sql.NullString{},
+			diff,
+			nil,
+		)
+		return err
+	})
+}
 
 func (d *dbImpl) GetCollectionStart(ctx context.Context, collectionIRI *url.URL) (size, start int64, err error) {
 	result, err := d.queries.GetCollectionStart(ctx, collectionIRI.String())
@@ -384,11 +417,26 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error
 				CollectionApID: follow.Followee.JoinPath("followers").String(),
 				MemberApID:     follow.IRI.String(),
 			})
+			if err != nil {
+				return err
+			}
 		}
 
-		return err
+		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
+			ApID: follow.IRI.String(),
+			LocalTable: sql.NullString{
+				Valid: true,
+				String: "follows",
+			},
+			LocalID: sql.NullInt64{
+				Valid: true,
+				Int64: id,
+			},
+			Type: "Follow",
+			RawJson: follow.Raw,
+		})
 	})
-
+	
 	return id, err
 }
 

@@ -3,7 +3,6 @@ package fedb
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 
@@ -40,36 +39,11 @@ func (fd *FedDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err er
 }
 
 func (fd *FedDB) Create(ctx context.Context, asType vocab.Type) (err error) {
-	log.Info().Msg("at Create(): creating AS object")
-
-	switch asType.GetTypeName() {
-	case streams.ActivityStreamsFollowName:
-		follow, ok := asType.(vocab.ActivityStreamsFollow)
-		if !ok {
-			return errors.New("failed conversion")
-		}
-		log.Info().Msg("at Create(): converted successfully")
-		if err = fd.handleFollow(ctx, follow); err != nil {
-			return
-		}
-	}
-
-	b, _ := streams.Serialize(asType)
-	fmt.Printf("%v\n", b)
-	props, err := streams.Serialize(asType)
+	err = fd.Gateway.ProcessObject(ctx, asType)
 	if err != nil {
-		return
+		err = fmt.Errorf("creation error: %w", err)
 	}
-
-	rawJSON, err := json.Marshal(props)
-	if err != nil {
-		return
-	}
-	return fd.DB.CreateApObject(ctx, domain.FedObj{
-		Iri:     asType.GetJSONLDId().GetIRI(),
-		RawJSON: rawJSON,
-		ApType:  asType.GetTypeName(),
-	}, 0)
+	return
 }
 
 func (fd *FedDB) Update(ctx context.Context, asType vocab.Type) error {

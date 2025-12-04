@@ -1,6 +1,7 @@
 package conversions
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -10,6 +11,29 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 	"github.com/sidereusnuntius/gowiki/internal/federation"
 )
+
+func SerializeActivity(activity vocab.Type) (domain.FedObj, error) {
+	b, err := streams.Serialize(activity)
+	if err != nil {
+		return domain.FedObj{}, err
+	}
+
+	serial, err := json.Marshal(b)
+	if err != nil {
+		return domain.FedObj{}, err
+	}
+	idProp := activity.GetJSONLDId()
+	if idProp == nil {
+		return domain.FedObj{}, fmt.Errorf("%w: id", federation.ErrMissingProperty)
+	}
+
+	return domain.FedObj{
+		Iri: idProp.Get(),
+		RawJSON: serial,
+		ApType: activity.GetTypeName(),
+		Local: false,
+	}, nil
+}
 
 func NewAccept(id, actor, object *url.URL) (a vocab.ActivityStreamsAccept) {
 	a = streams.NewActivityStreamsAccept()

@@ -20,6 +20,8 @@ type FedGateway interface {
 	Fetch(iri *url.URL) error
 	Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error
 
+	ProcessObject(ctx context.Context, asType vocab.Type) error
+	
 	// Perhaps move these to a Notifier interface?
 	CreateLocalArticle(ctx context.Context, article domain.ArticleFed, authorId *url.URL, summary string) error
 	UpdateLocalArticle(ctx context.Context, updateURI, author *url.URL, summary string, id int64) error

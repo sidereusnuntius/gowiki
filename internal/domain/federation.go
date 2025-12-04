@@ -22,5 +22,5 @@ type Follow struct {
 	Follower      *url.URL
 	Followee      *url.URL
 	FollowerInbox *url.URL
-	Raw           string
+	Raw           []byte
 }

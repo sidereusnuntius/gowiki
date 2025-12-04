@@ -30,7 +30,7 @@ func (s *AppService) AlterArticle(ctx context.Context, title, summary, content s
 		}
 		return ap, err
 	}
-	uri, err := s.DB.UpdateArticle(ctx, prev, articleId, userId, summary, content)
+	uri, err := s.DB.UpdateArticle(ctx, prev, articleId, userId, summary, content, nil)
 	if err != nil {
 		return nil, err
 	}

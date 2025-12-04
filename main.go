@@ -117,9 +117,6 @@ func main() {
 
 	apMux.Post("/inbox", func(w http.ResponseWriter, r *http.Request) {
 		success, err := actor.PostInbox(r.Context(), w, r)
-		if r := recover(); r != nil {
-			zero.Error().Any("return", r).Msg("panic!")
-		}
 		e := zero.Debug().Bool("success", success)
 		if err != nil {
 			e.Err(err)

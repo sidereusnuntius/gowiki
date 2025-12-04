@@ -1,0 +1,23 @@
+[
+    {
+        "@context":"https://www.w3.org/ns/activitystreams",
+        "type":"Article",
+        "id":"https://test.wiki/a/Prism",
+        "attributedTo": "https://test.wiki/",
+        "to":[
+            "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "summary": "Test article",
+        "cc":[],
+        "url": "https://test.wiki/a/Prism",
+        "content": "<p>Hello, world!</p>",
+        "name":"Prism",
+        "mediaType":"text/html",
+        "source":{
+            "content": "Hello, world!",
+            "mediaType":"text/markdown"
+        },
+        "published":"2025-09-25T22:27:56.617343Z",
+        "updated":"2025-09-25T22:27:56.722186Z"
+    }
+]

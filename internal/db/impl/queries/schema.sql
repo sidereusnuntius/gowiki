@@ -116,7 +116,7 @@ CREATE TABLE revisions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ap_id VARCHAR(255),
     article_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
+    user_id INTEGER,
     summary TEXT,
     diff TEXT NOT NULL,
     -- reviewed remains false until another user reads and either rejects or approves it.

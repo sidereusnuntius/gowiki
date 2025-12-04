@@ -9,6 +9,7 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+// TODO: break down this monstrosity.
 type Fed interface {
 	GetActorInbox(ctx context.Context, actor *url.URL) (*url.URL, error)
 	ActorIdByInbox(ctx context.Context, iri *url.URL) (*url.URL, error)
@@ -36,4 +37,7 @@ type Fed interface {
 	GetUserPrivateKeyByURI(ctx context.Context, url *url.URL) (key crypto.PrivateKey, err error)
 	GetCollectionActivities(ctx context.Context, collectionIRI *url.URL, last int64) (activities []map[string]any, err error)
 	InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetched time.Time) error
+
+	// ---
+	PersistRemoteArticle(ctx context.Context, article domain.ArticleFed, articleRaw domain.FedObj) error
 }

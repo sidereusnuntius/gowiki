@@ -63,16 +63,24 @@ SELECT trusted FROM users where id = ?1 LIMIT 1;
 
 -- name: CreateArticle :one
 INSERT INTO articles (
+    local,
     ap_id,
+    author,
     attributed_to,
     url,
-    host,
     language,
     media_type,
     title,
+    host,
+    type,
+    protected,
+    summary,
     content,
-    published
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id;
+    published,
+    last_updated,
+    last_fetched
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id;
 
 -- name: EditArticle :one
 INSERT INTO revisions (
@@ -99,13 +107,14 @@ LIMIT 1;
 
 -- name: InsertRevision :one
 INSERT INTO revisions (
+    ap_id,
     article_id,
     user_id,
     summary,
     diff,
     published,
     prev
-) VALUES (?1, ?2, ?3, ?4, true, ?5)
+) VALUES (?1, ?2, ?3, ?4, ?5, true, ?6)
 RETURNING id;
 
 -- name: UpdateRevisionApId :exec
@@ -437,3 +446,6 @@ ON cache.ap_id = col.member_ap_id
 WHERE
     col.collection_ap_id = @collection_id
 ORDER BY cache.id DESC;
+
+-- name: GetUserId :one
+SELECT id FROM users where ap_id = ? LIMIT 1;

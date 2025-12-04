@@ -10,6 +10,7 @@ import (
 
 type ArticleCore struct {
 	Title       string
+	Host string
 	Summary     string
 	Content     string
 	Protected   bool
@@ -37,8 +38,6 @@ type Revision struct {
 	Username string
 	Created  int64
 }
-
-//InstanceID sql.NullInt64
 
 func (a *ArticleFed) ConvertToAp() vocab.ActivityStreamsArticle {
 	o := streams.NewActivityStreamsArticle()

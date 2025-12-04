@@ -371,21 +371,6 @@ func (mr *MockDBMockRecorder) GetFollowers(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFollowers", reflect.TypeOf((*MockDB)(nil).GetFollowers), ctx, id)
 }
 
-// GetInstanceIdOrCreate mocks base method.
-func (m *MockDB) GetInstanceIdOrCreate(ctx context.Context, hostname string) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInstanceIdOrCreate", ctx, hostname)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetInstanceIdOrCreate indicates an expected call of GetInstanceIdOrCreate.
-func (mr *MockDBMockRecorder) GetInstanceIdOrCreate(ctx, hostname any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstanceIdOrCreate", reflect.TypeOf((*MockDB)(nil).GetInstanceIdOrCreate), ctx, hostname)
-}
-
 // GetLastRevisionID mocks base method.
 func (m *MockDB) GetLastRevisionID(ctx context.Context, title string) (int64, *url.URL, int64, error) {
 	m.ctrl.T.Helper()
@@ -612,6 +597,20 @@ func (mr *MockDBMockRecorder) OutboxForInbox(ctx, inboxIRI any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OutboxForInbox", reflect.TypeOf((*MockDB)(nil).OutboxForInbox), ctx, inboxIRI)
 }
 
+// PersistRemoteArticle mocks base method.
+func (m *MockDB) PersistRemoteArticle(ctx context.Context, article domain.ArticleFed, articleRaw domain.FedObj) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PersistRemoteArticle", ctx, article, articleRaw)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PersistRemoteArticle indicates an expected call of PersistRemoteArticle.
+func (mr *MockDBMockRecorder) PersistRemoteArticle(ctx, article, articleRaw any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PersistRemoteArticle", reflect.TypeOf((*MockDB)(nil).PersistRemoteArticle), ctx, article, articleRaw)
+}
+
 // Save mocks base method.
 func (m *MockDB) Save(ctx context.Context, file domain.File) (int64, error) {
 	m.ctrl.T.Helper()
@@ -642,18 +641,18 @@ func (mr *MockDBMockRecorder) UpdateAp(ctx, id, rawJSON any) *gomock.Call {
 }
 
 // UpdateArticle mocks base method.
-func (m *MockDB) UpdateArticle(ctx context.Context, prevId, articleId, userId int64, summary, newContent string) (*url.URL, error) {
+func (m *MockDB) UpdateArticle(ctx context.Context, prevId, articleId, userId int64, summary, newContent string, apId *url.URL) (*url.URL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateArticle", ctx, prevId, articleId, userId, summary, newContent)
+	ret := m.ctrl.Call(m, "UpdateArticle", ctx, prevId, articleId, userId, summary, newContent, apId)
 	ret0, _ := ret[0].(*url.URL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateArticle indicates an expected call of UpdateArticle.
-func (mr *MockDBMockRecorder) UpdateArticle(ctx, prevId, articleId, userId, summary, newContent any) *gomock.Call {
+func (mr *MockDBMockRecorder) UpdateArticle(ctx, prevId, articleId, userId, summary, newContent, apId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateArticle", reflect.TypeOf((*MockDB)(nil).UpdateArticle), ctx, prevId, articleId, userId, summary, newContent)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateArticle", reflect.TypeOf((*MockDB)(nil).UpdateArticle), ctx, prevId, articleId, userId, summary, newContent, apId)
 }
 
 // UserExists mocks base method.
