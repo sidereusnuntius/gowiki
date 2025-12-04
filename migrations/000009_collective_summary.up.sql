@@ -1,0 +1,1 @@
+ALTER TABLE collectives ADD COLUMN summary TEXT;

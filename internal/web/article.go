@@ -1,12 +1,14 @@
 package web
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"github.com/sidereusnuntius/gowiki/internal/db"
 	"github.com/sidereusnuntius/gowiki/templates"
 )
@@ -48,126 +50,162 @@ func ArticleHistory(handler *Handler) http.HandlerFunc {
 	}
 }
 
+func (h *Handler) editArticle(ctx context.Context, w http.ResponseWriter, r *http.Request, title, author, host string) error {
+	u, ok := GetSession(ctx) // Validate ok
+	if !ok {
+
+	}
+
+	var newarticle bool
+	article, err := h.service.GetArticle(ctx, title, author, host)
+	if err != nil {
+		return err
+	}
+
+	err = r.ParseMultipartForm(MaxMemory)
+
+	var content, summary string
+	if err == nil {
+		content = r.Form.Get("content")
+		summary = r.Form.Get("summary")
+	}
+
+	var preview string
+	if content != "" {
+		preview = content
+	}
+
+	if content == "" {
+		content = article.Content
+	}
+
+	//TODO: parse content to produce preview
+
+	edit := r.URL.String()
+	// TODO: store article URL in database, use it to generate paths.
+	path, _ := url.Parse("/a/" + title)
+	hrefs := map[templates.Place]string{
+		templates.Edit: edit,
+	}
+	if !newarticle {
+		hrefs[templates.Read] = path.String()
+		hrefs[templates.History] = path.JoinPath("history").String()
+	}
+
+	return templates.Layout(templates.PageData{
+		Authenticated: ok,
+		Username:      u.Username,
+		ProfilePath:   "TODO",
+		PageTitle:     "Editing " + article.Title,
+		Place:         templates.Edit,
+		Path:          r.URL,
+		Hrefs:         hrefs,
+		IsArticle:     false,
+		Child:         templates.Editor(path.String(), edit, title, summary, preview, content),
+	}).Render(ctx, w)
+}
+
 // EditArticle renders the article editing screen, showing a textarea populated with the article's text and
 // a summary of the edit.
-func EditArticle(handler *Handler) http.HandlerFunc {
+func EditLocalArticle(handler *Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO: should I verify whether the user is logged in, or should I just assume that? I think I can't, since I need to use the user's username on the template.
 		// TODO: verify whether article exists.
 		// TODO: a revision can be based on a revision that is not the latest.
 		ctx := r.Context()
-		u, ok := GetSession(ctx) // Validate ok
-		if !ok {
-
-		}
-
-		var newarticle bool
 		title := chi.URLParam(r, "title")
-		article, err := handler.service.GetLocalArticle(ctx, title)
-		if err != nil {
-			if errors.Is(err, db.ErrNotFound) {
-				newarticle = true
-			} else {
-				http.Error(w, "internal error", http.StatusInternalServerError)
-				return
-			}
+		if err := handler.editArticle(ctx, w, r, title, handler.Config.Name, ""); err != nil {
+			log.Error().Err(err).Send()
+			http.Error(w, "", http.StatusInternalServerError)
 		}
-
-		err = r.ParseMultipartForm(MaxMemory)
-
-		var content, summary string
-		if err == nil {
-			content = r.Form.Get("content")
-			summary = r.Form.Get("summary")
-		}
-
-		var preview string
-		if content != "" {
-			preview = content
-		}
-
-		if content == "" {
-			content = article.Content
-		}
-
-		//TODO: parse content to produce preview
-
-		edit := r.URL.String()
-		// TODO: store article URL in database, use it to generate paths.
-		path, _ := url.Parse("/a/" + title)
-		hrefs := map[templates.Place]string{
-			templates.Edit: edit,
-		}
-		if !newarticle {
-			hrefs[templates.Read] = path.String()
-			hrefs[templates.History] = path.JoinPath("history").String()
-		}
-
-		templates.Layout(templates.PageData{
-			Authenticated: ok,
-			Username:      u.Username,
-			ProfilePath:   "TODO",
-			PageTitle:     "Editing " + article.Title,
-			Place:         templates.Edit,
-			Path:          r.URL,
-			Hrefs:         hrefs,
-			IsArticle:     false,
-			Child:         templates.Editor(path.String(), edit, title, summary, preview, content),
-		}).Render(ctx, w)
 	}
 }
 
-func GetArticle(handler *Handler) http.HandlerFunc {
+func EditRemoteArticle(handler *Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// TODO: should I verify whether the user is logged in, or should I just assume that? I think I can't, since I need to use the user's username on the template.
+		// TODO: verify whether article exists.
+		// TODO: a revision can be based on a revision that is not the latest.
+		ctx := r.Context()
+		title := chi.URLParam(r, "title")
+		author := chi.URLParam(r, "author")
+		host := chi.URLParam(r, "host")
+		if err := handler.editArticle(ctx, w, r, title, author, host); err != nil {
+			log.Error().Err(err).Send()
+			http.Error(w, "", http.StatusInternalServerError)
+		}
+	}
+}
+
+func (h *Handler) getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request, title, author, host string) error {
+	u, ok := GetSession(ctx)
+	article, err := h.service.GetArticle(ctx, title, author, host)
+
+	// TODO: deal with the case in which the article has not been created, which should redirect to the editor.
+	if err != nil {
+		// TODO: render template
+		if errors.Is(err, db.ErrNotFound) {
+			return templates.Layout(templates.PageData{
+				Authenticated: ok,
+				Username:      u.Username,
+				ProfilePath:   "TODO",
+				PageTitle:     title,
+				Place:         templates.Read,
+				Path:          r.URL,
+				IsArticle:     false,
+				Child:         templates.NonexistingArticle(r.URL.JoinPath("edit").String(), title),
+			}).Render(ctx, w)
+		} else {
+			return err
+		}
+	}
+
+	// Sanitize content!
+	return templates.Layout(templates.PageData{
+		Authenticated: ok,
+		Username:      u.Username,
+		ProfilePath:   "TODO",
+		PageTitle:     article.Title,
+		Place:         templates.Read,
+		Path:          r.URL,
+		Hrefs: map[templates.Place]string{
+			templates.Read:    r.URL.String(),
+			templates.Edit:    r.URL.JoinPath("edit").String(),
+			templates.History: r.URL.JoinPath("history").String(),
+		},
+		IsArticle: true,
+		Child: templates.Article(article),
+		Article: templates.ArticleData{
+			Title:    article.Title,
+			Domain:   "", //TODO
+			URL:      r.URL,
+			Content:  article.Content,
+			Language: article.Language,
+			License:  "", //TODO
+		},
+	}).Render(ctx, w)
+}
+
+func GetLocalArticle(handler *Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		title := chi.URLParam(r, "title")
+		if err := handler.getArticle(r.Context(), w, r, title, handler.Config.Name, ""); err != nil {
+			http.Error(w, "", http.StatusInternalServerError)
+		}
+	}
+}
+
+func GetRemoteArticle(handler *Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		u, ok := GetSession(ctx)
 		title := chi.URLParam(r, "title")
-		article, err := handler.service.GetLocalArticle(ctx, title)
-
-		// TODO: deal with the case in which the article has not been created, which should redirect to the editor.
-		if err != nil {
-			// TODO: render template
-			if errors.Is(err, db.ErrNotFound) {
-				templates.Layout(templates.PageData{
-					Authenticated: ok,
-					Username:      u.Username,
-					ProfilePath:   "TODO",
-					PageTitle:     title,
-					Place:         templates.Read,
-					Path:          r.URL,
-					IsArticle:     false,
-					Child:         templates.NonexistingArticle(r.URL.JoinPath("edit").String(), title),
-				}).Render(ctx, w)
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(err.Error()))
-			}
-			return
+		author := chi.URLParam(r, "author")
+		host := chi.URLParam(r, "host")
+		log.Debug().Str("title", title).Str("author", author).Str("host", host).Send()
+		if err := handler.getArticle(ctx, w, r, title, author, host); err != nil {
+			log.Error().Err(err).Msg("failed to display remote article")
+			http.Error(w, "", http.StatusInternalServerError)
 		}
-
-		// Sanitize content!
-		templates.Layout(templates.PageData{
-			Authenticated: ok,
-			Username:      u.Username,
-			ProfilePath:   "TODO",
-			PageTitle:     article.Title,
-			Place:         templates.Read,
-			Path:          r.URL,
-			Hrefs: map[templates.Place]string{
-				templates.Read:    r.URL.String(),
-				templates.Edit:    r.URL.JoinPath("edit").String(),
-				templates.History: r.URL.JoinPath("history").String(),
-			},
-			IsArticle: true,
-			Article: templates.ArticleData{
-				Title:    article.Title,
-				Domain:   "", //TODO
-				URL:      r.URL,
-				Content:  article.Content,
-				Language: article.Language,
-				License:  "", //TODO
-			},
-		}).Render(ctx, w)
 	}
 }
 

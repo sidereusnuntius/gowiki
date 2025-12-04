@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net/url"
 	"strings"
@@ -41,14 +42,26 @@ func (s *AppService) AlterArticle(ctx context.Context, title, summary, content s
 
 }
 
-func (s *AppService) GetLocalArticle(ctx context.Context, title string) (article domain.ArticleCore, err error) {
-	title = RemoveDuplicateSpaces(title)
+func (s *AppService) GetArticle(ctx context.Context, title, author, host string) (article domain.ArticleFed, err error) {
+	title = RemoveDuplicateSpaces(strings.ToLower(title))
 	err = validate.Title(title)
 	if err != nil {
 		return
 	}
 
-	article, err = s.DB.GetLocalArticle(ctx, title)
+	authorSql := sql.NullString{
+		Valid: true,
+		String: author,
+	}
+	if author == "" {
+		authorSql.String = s.Config.Name
+	}
+
+	article, err = s.DB.GetArticle(ctx, title, sql.NullString{
+		Valid: host != "",
+		String: host,
+	}, authorSql)
+
 	return
 }
 

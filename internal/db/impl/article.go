@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/sidereusnuntius/gowiki/internal/db"
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
@@ -122,16 +124,37 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 	})
 }
 
-func (d *dbImpl) GetLocalArticle(ctx context.Context, title string) (domain.ArticleCore, error) {
-	a, err := d.queries.GetLocalArticleByTitle(ctx, title)
-	return domain.ArticleCore{
-		Title:     a.Title,
-		Summary:   a.Summary.String,
-		Content:   a.Content,
-		Protected: a.Protected,
-		MediaType: a.MediaType,
-		License:   "", // TODO
-		Language:  a.Language,
+func (d *dbImpl) GetArticle(ctx context.Context, title string, host, author sql.NullString) (domain.ArticleFed, error) {
+	if host.Valid {
+		host.String = strings.ToLower(host.String)
+	}
+	a, err := d.queries.GetArticle(ctx, queries.GetArticleParams{
+		Host: host,
+		Username: author,
+    	Title: strings.ToLower(title),
+	})
+
+	var u *url.URL
+	if a.Url.Valid {
+		u, err = url.Parse(a.Url.String)
+		if err != nil {
+			return domain.ArticleFed{}, fmt.Errorf("%w: invalid url property: %s", db.ErrInternal, a.Url.String)
+		}
+	}
+
+	return domain.ArticleFed{
+		ArticleCore: domain.ArticleCore{
+			Title:     a.Title,
+			Host: a.Host.String,
+			Author: a.Author.String,
+			Summary:   a.Summary.String,
+			Content:   a.Content,
+			Protected: a.Protected,
+			MediaType: a.MediaType,
+			License:   "", // TODO
+			Language:  a.Language,
+		},
+		Url: u,
 	}, d.HandleError(err)
 }
 

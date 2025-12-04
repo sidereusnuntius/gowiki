@@ -1,0 +1,1 @@
+ALTER TABLE collectives DROP COLUMN summary;

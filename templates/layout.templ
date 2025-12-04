@@ -88,13 +88,7 @@ templ Layout(page PageData) {
 
         <main>
             @Bar(&page)
-            if page.IsArticle {
-                <article>
-                    @Article(page.Article.Title, page.Article.Content)
-                </article>
-            } else {
-                @page.Child
-            }
+            @page.Child
         </main>
 
         <footer>

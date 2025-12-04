@@ -436,6 +436,69 @@ func (q *Queries) GetApObject(ctx context.Context, apID string) (GetApObjectRow,
 	return i, err
 }
 
+const getArticle = `-- name: GetArticle :one
+SELECT
+    art.title,
+    art.summary,
+    art.content,
+    art.protected,
+    art.media_type,
+    art.language,
+    art.url,
+    art.published,
+    art.last_updated,
+    art.host,
+    att.name AS author
+FROM
+    articles AS art
+LEFT JOIN (
+    SELECT username AS name, ap_id AS id FROM users WHERE users.username = ?2
+    UNION
+    SELECT name AS name, url AS id FROM collectives WHERE collectives.name = ?2
+) AS att ON att.id = art.attributed_to
+where lower(art.title) = ?1 AND art.host = ?3
+LIMIT 1
+`
+
+type GetArticleParams struct {
+	Title    string
+	Username sql.NullString
+	Host     sql.NullString
+}
+
+type GetArticleRow struct {
+	Title       string
+	Summary     sql.NullString
+	Content     string
+	Protected   bool
+	MediaType   string
+	Language    string
+	Url         sql.NullString
+	Published   sql.NullInt64
+	LastUpdated int64
+	Host        sql.NullString
+	Author      sql.NullString
+}
+
+func (q *Queries) GetArticle(ctx context.Context, arg GetArticleParams) (GetArticleRow, error) {
+	row := q.db.QueryRowContext(ctx, getArticle, arg.Title, arg.Username, arg.Host)
+	var i GetArticleRow
+	err := row.Scan(
+		&i.Title,
+		&i.Summary,
+		&i.Content,
+		&i.Protected,
+		&i.MediaType,
+		&i.Language,
+		&i.Url,
+		&i.Published,
+		&i.LastUpdated,
+		&i.Host,
+		&i.Author,
+	)
+	return i, err
+}
+
 const getArticleByID = `-- name: GetArticleByID :one
 SELECT
     ap_id,
@@ -523,6 +586,26 @@ func (q *Queries) GetArticleIDS(ctx context.Context, title string) (GetArticleID
 	row := q.db.QueryRowContext(ctx, getArticleIDS, title)
 	var i GetArticleIDSRow
 	err := row.Scan(&i.ApID, &i.ArticleID, &i.RevID)
+	return i, err
+}
+
+const getAuthor = `-- name: GetAuthor :one
+SELECT username AS name, host, 'person' AS actor_type FROM users WHERE ap_id = ?1
+UNION
+SELECT name AS name, host, 'collective' AS actor_type FROM collectives WHERE url = ?1
+LIMIT 1
+`
+
+type GetAuthorRow struct {
+	Name      sql.NullString
+	Host      sql.NullString
+	ActorType string
+}
+
+func (q *Queries) GetAuthor(ctx context.Context, apID string) (GetAuthorRow, error) {
+	row := q.db.QueryRowContext(ctx, getAuthor, apID)
+	var i GetAuthorRow
+	err := row.Scan(&i.Name, &i.Host, &i.ActorType)
 	return i, err
 }
 
@@ -827,43 +910,6 @@ func (q *Queries) GetInstanceId(ctx context.Context, host string) (int64, error)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
-}
-
-const getLocalArticleByTitle = `-- name: GetLocalArticleByTitle :one
-SELECT
-    title,
-    summary,
-    content,
-    protected,
-    media_type,
-    language
-FROM
-    articles
-where local AND title = ?1
-LIMIT 1
-`
-
-type GetLocalArticleByTitleRow struct {
-	Title     string
-	Summary   sql.NullString
-	Content   string
-	Protected bool
-	MediaType string
-	Language  string
-}
-
-func (q *Queries) GetLocalArticleByTitle(ctx context.Context, title string) (GetLocalArticleByTitleRow, error) {
-	row := q.db.QueryRowContext(ctx, getLocalArticleByTitle, title)
-	var i GetLocalArticleByTitleRow
-	err := row.Scan(
-		&i.Title,
-		&i.Summary,
-		&i.Content,
-		&i.Protected,
-		&i.MediaType,
-		&i.Language,
-	)
-	return i, err
 }
 
 const getLocalUserData = `-- name: GetLocalUserData :one

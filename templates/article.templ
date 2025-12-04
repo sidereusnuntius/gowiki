@@ -1,11 +1,17 @@
 package templates
 
-templ Article(title, content string) {
+import "github.com/sidereusnuntius/gowiki/internal/domain"
+
+templ Article(article domain.ArticleFed) {
+    if article.Host != "" {
+        {{ at := "@" + article.Author + "@" + article.Host }}
+        <a href={"/" + at }>{ at }</a>
+    }
     <article>
         <!--
             The article's content must have been sanitized before rendering the template.
             Perhaps we should do it here, in the template?
         -->
-        @templ.Raw(content)
+        @templ.Raw(article.Content)
     </article>
 }

@@ -12,6 +12,7 @@ package mock_db
 import (
 	context "context"
 	crypto "crypto"
+	sql "database/sql"
 	url "net/url"
 	reflect "reflect"
 	time "time"
@@ -220,6 +221,21 @@ func (mr *MockDBMockRecorder) GetApObject(ctx, iri any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApObject", reflect.TypeOf((*MockDB)(nil).GetApObject), ctx, iri)
 }
 
+// GetArticle mocks base method.
+func (m *MockDB) GetArticle(ctx context.Context, title string, host, author sql.NullString) (domain.ArticleFed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArticle", ctx, title, host, author)
+	ret0, _ := ret[0].(domain.ArticleFed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArticle indicates an expected call of GetArticle.
+func (mr *MockDBMockRecorder) GetArticle(ctx, title, host, author any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArticle", reflect.TypeOf((*MockDB)(nil).GetArticle), ctx, title, host, author)
+}
+
 // GetArticleById mocks base method.
 func (m *MockDB) GetArticleById(ctx context.Context, id int64) (domain.ArticleFed, error) {
 	m.ctrl.T.Helper()
@@ -386,21 +402,6 @@ func (m *MockDB) GetLastRevisionID(ctx context.Context, title string) (int64, *u
 func (mr *MockDBMockRecorder) GetLastRevisionID(ctx, title any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastRevisionID", reflect.TypeOf((*MockDB)(nil).GetLastRevisionID), ctx, title)
-}
-
-// GetLocalArticle mocks base method.
-func (m *MockDB) GetLocalArticle(ctx context.Context, title string) (domain.ArticleCore, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLocalArticle", ctx, title)
-	ret0, _ := ret[0].(domain.ArticleCore)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetLocalArticle indicates an expected call of GetLocalArticle.
-func (mr *MockDBMockRecorder) GetLocalArticle(ctx, title any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLocalArticle", reflect.TypeOf((*MockDB)(nil).GetLocalArticle), ctx, title)
 }
 
 // GetProfile mocks base method.

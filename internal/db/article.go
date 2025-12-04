@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"net/url"
 
 	"github.com/sidereusnuntius/gowiki/internal/domain"
@@ -9,7 +10,7 @@ import (
 
 type Article interface {
 	GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error)
-	GetLocalArticle(ctx context.Context, title string) (domain.ArticleCore, error)
+	GetArticle(ctx context.Context, title string, host, author sql.NullString) (domain.ArticleFed, error)
 	// UpdateArticle creates a new revision and updates the article. apId is the IRI of the revision; it must only
 	// be set when the article has been updated by an activity received from a remote host, and that activity
 	// will have its own id. For local edits, apId is nil, and a new IRI is generated.

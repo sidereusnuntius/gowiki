@@ -45,17 +45,33 @@ ON a.user_id = u.id
 WHERE u.local AND u.username = ?1
 LIMIT 1;
 
--- name: GetLocalArticleByTitle :one
+-- name: GetArticle :one
 SELECT
-    title,
-    summary,
-    content,
-    protected,
-    media_type,
-    language
+    art.title,
+    art.summary,
+    art.content,
+    art.protected,
+    art.media_type,
+    art.language,
+    art.url,
+    art.published,
+    art.last_updated,
+    art.host,
+    att.name AS author
 FROM
-    articles
-where local AND title = ?1
+    articles AS art
+LEFT JOIN (
+    SELECT username AS name, ap_id AS id FROM users WHERE users.username = ?2
+    UNION
+    SELECT name AS name, url AS id FROM collectives WHERE collectives.name = ?2
+) AS att ON att.id = art.attributed_to
+where lower(art.title) = ?1 AND art.host = ?3
+LIMIT 1;
+
+-- name: GetAuthor :one
+SELECT username AS name, host, 'person' AS actor_type FROM users WHERE ap_id = ?1
+UNION
+SELECT name AS name, host, 'collective' AS actor_type FROM collectives WHERE url = ?1
 LIMIT 1;
 
 -- name: IsUserTrusted :one

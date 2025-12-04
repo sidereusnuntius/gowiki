@@ -8,8 +8,14 @@ import (
 	"code.superseriousbusiness.org/activity/streams/vocab"
 )
 
+type AuthorType string
+
 type ArticleCore struct {
 	Title       string
+	// Author is the preferredUsername of the actor to which the article is attributed, which might be a local
+	// or remote user, or a collective actor (group, organizatin etc.), in the case of wiki actors, since wikis
+	// don't have private authorship of articles.
+	Author string
 	Host string
 	Summary     string
 	Content     string

@@ -26,7 +26,7 @@ type Service interface {
 	// AlterArticle creates the article if it does not exists; otherwise it will modify the article,
 	// recording the edit in the article's history.
 	AlterArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error)
-	GetLocalArticle(ctx context.Context, title string) (article domain.ArticleCore, err error)
+	GetArticle(ctx context.Context, title, author, host string) (article domain.ArticleFed, err error)
 	CreateArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error)
 	GetUserProfile(ctx context.Context, username, domain string) (p domain.Profile, err error)
 	GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error)
