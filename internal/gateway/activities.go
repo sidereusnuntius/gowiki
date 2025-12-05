@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/sidereusnuntius/gowiki/internal/conversions"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
+	"github.com/sidereusnuntius/gowiki/internal/federation"
 )
 
 func (g *FedGatewayImpl) ProcessObject(ctx context.Context, asType vocab.Type) error {
@@ -35,8 +37,106 @@ func (g *FedGatewayImpl) ProcessObject(ctx context.Context, asType vocab.Type) e
 			return fmt.Errorf("failed to convert follow activity")
 		}
 		return g.processFollow(ctx, follow)
+	case streams.ActivityStreamsUpdateName:
+		update, ok := asType.(vocab.ActivityStreamsUpdate)
+		if !ok {
+			return fmt.Errorf("failed to convert update activity")
+		}
+		return g.processUpdate(ctx, update)
 	default:
 		return fmt.Errorf("%w: %s", errors.ErrUnsupported, asType.GetTypeName())
+	}
+}
+
+func (g *FedGatewayImpl) processUpdate(ctx context.Context, update vocab.ActivityStreamsUpdate) error {
+	id, err := g.processId(update.GetJSONLDId())
+	if err != nil {
+		return err
+	}
+
+	actor, err := g.processActor(update.GetActivityStreamsActor())
+	if err != nil {
+		return err
+	}
+
+	exists, err := g.db.Exists(ctx, actor)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		payload, err := streams.Serialize(update)
+		if err != nil {
+			return err
+		}
+		task := Task{
+			Type: Fetch,
+			To: actor.String(),
+			Next: &Task{
+				Type: Process,
+				Payload: payload,
+			},
+		}
+		_, err = g.queue.Add(task).Save()
+		return err
+	}
+	
+	objProp := update.GetActivityStreamsObject()
+	if objProp == nil || objProp.Len() == 0 {
+		return fmt.Errorf("%w: object", federation.ErrMissingProperty)
+	}
+
+	var summary string
+	if summaryProp := update.GetActivityStreamsSummary(); summaryProp != nil && summaryProp.Len() != 0 {
+		summary = summaryProp.Begin().GetXMLSchemaString()
+	}
+	
+	obj := objProp.Begin()
+	if obj.IsIRI() {
+		contentProp := update.GetActivityStreamsContent()
+		if contentProp == nil || contentProp.Len() == 0 {
+			return g.Fetch(obj.GetIRI())
+		}
+
+		//TODO: handle case when property is not an XMLSchemaString
+		content := contentProp.Begin().GetXMLSchemaString()
+
+
+		return g.db.UpdateFedArticle(ctx, obj.GetIRI(), id, actor, content, summary)
+	}
+
+	if t := obj.GetType(); t != nil {
+		return g.processUpdatedObject(ctx, t, actor, id, summary)
+	}
+
+	return fmt.Errorf("%w: updated object", federation.ErrUnprocessablePropValue)
+}
+
+// processUpdatedObject handles the object of an update activity, which typically will be an article or note.
+// Updating an article requires some extra logic that is not covered in the ProcessObject method, such as
+// inserting a revision having the update's IRI.
+func (g *FedGatewayImpl) processUpdatedObject(ctx context.Context, obj vocab.Type, actorIRI, updateIRI *url.URL, summary string) error {
+	switch obj.GetTypeName() {
+	case streams.ActivityStreamsArticleName:
+		article, err := conversions.ConvertArticle(obj)
+		if err != nil {
+			return err
+		}
+
+		exists, err := g.db.Exists(ctx, article.ApID)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			raw, err := conversions.SerializeActivity(obj)
+			if err != nil {
+				return err
+			}
+			return g.db.PersistRemoteArticle(ctx, article, raw)
+		}
+		
+		return g.db.UpdateFedArticle(ctx, article.ApID, updateIRI, actorIRI, article.Content, summary)
+	default:
+		return fmt.Errorf("%w: %s", federation.ErrUnsupported, obj.GetTypeName())
 	}
 }
 

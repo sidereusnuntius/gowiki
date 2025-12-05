@@ -20,6 +20,62 @@ import (
 
 const PageSize = 20
 
+func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, actorIRI *url.URL, newContent, summary string) error {
+	article, err := d.queries.GetArticleContentByIRI(ctx, articleIRI.String())
+	if err != nil {
+		return fmt.Errorf("%w: article with IRI %s", d.HandleError(err), articleIRI)
+	}
+	diff := d.getDiff(article.Content, newContent)
+
+	userId, err := d.queries.GetUserId(ctx, actorIRI.String())
+	if err != nil {
+		return fmt.Errorf("%w: user with IRI %s", d.HandleError(err), actorIRI)
+	}
+
+	return d.WithTx(func(tx *queries.Queries) error {
+		err = tx.UpdateArticleByIRI(ctx, queries.UpdateArticleByIRIParams{
+			Content: newContent,
+			ApID: articleIRI.String(),
+		})
+		if err != nil {
+			return err
+		}
+
+		revisionId, err := d.insertRevision(
+			ctx,
+			tx,
+			article.ID,
+			sql.NullInt64{
+				Valid: true,
+				Int64: userId,
+			},
+			sql.NullInt64{},
+			sql.NullString{
+				Valid: summary != "",
+				String: summary,
+			},
+			diff,
+			updateIRI,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert revision: %w", err)
+		}
+
+		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
+			    ApID: updateIRI.String(),
+    			LocalTable: sql.NullString{
+					Valid: true,
+					String: "revisions",
+				},
+    			LocalID: sql.NullInt64{
+					Valid: true,
+					Int64: revisionId,
+				},
+    			Type: "Update",
+		})
+	})
+}
+
 func (d *dbImpl) PersistRemoteArticle(ctx context.Context, article domain.ArticleFed, articleRaw domain.FedObj) error {
 	author := article.AttributedTo.String()
 	userId, err := d.queries.GetUserId(ctx, author)

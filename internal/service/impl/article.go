@@ -16,7 +16,7 @@ import (
 // AlterArticle modifies the article with the given title or creates it if the article does not exist; the operation
 // if the user does not have enough permissions to edit the wiki. If the operation succeeds, it returns the article's
 // URL and a nil error.
-func (s *AppService) AlterArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error) {
+func (s *AppService) AlterArticle(ctx context.Context, article domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error) {
 	//TODO: deal with variations in the capitalization of the article title.
 	//TODO: check if user has permission to edit the wiki and the article in question.
 	author, err := s.DB.GetUserURI(ctx, userId)
@@ -24,13 +24,14 @@ func (s *AppService) AlterArticle(ctx context.Context, title, summary, content s
 		return nil, err
 	}
 
-	articleId, ap, prev, err := s.DB.GetLastRevisionID(ctx, title)
+	articleId, ap, prev, err := s.DB.GetLastRevisionID(ctx, article)
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
-			ap, err = s.CreateArticle(ctx, title, summary, content, userId)
+			ap, err = s.CreateArticle(ctx, article, summary, content, userId)
 		}
 		return ap, err
 	}
+	// Deal with the case in which the article is remote.
 	uri, err := s.DB.UpdateArticle(ctx, prev, articleId, userId, summary, content, nil)
 	if err != nil {
 		return nil, err
@@ -62,24 +63,26 @@ func (s *AppService) GetArticle(ctx context.Context, title, author, host string)
 	return
 }
 
-func (s *AppService) CreateArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error) {
+func (s *AppService) CreateArticle(ctx context.Context, articleId domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error) {
 	// TODO: validate title.
 	user, err := s.DB.GetUserURI(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
-	title = RemoveDuplicateSpaces(title)
+	articleId.Title = RemoveDuplicateSpaces(articleId.Title)
 	summary = RemoveDuplicateSpaces(summary)
 
-	err = validate.Title(title)
+	err = validate.Title(articleId.Title)
 	if err != nil {
 		return nil, err
 	}
 
-	apId := s.Config.Url.JoinPath("a", title)
+	// Handle remote article creation.
+	apId := s.Config.Url.JoinPath("a", articleId.Title)
 	article := domain.ArticleFed{
 		ArticleCore: domain.ArticleCore{
-			Title:     title,
+			Title:     articleId.Title,
+			Author: s.Config.Name,
 			Host: s.Config.Domain,
 			Content:   content,
 			Language:  s.Config.Language,
@@ -110,8 +113,8 @@ func (s *AppService) CreateArticle(ctx context.Context, title, summary, content 
 	return apId, err
 }
 
-func (s *AppService) GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error) {
-	edits, err := s.DB.GetRevisionList(ctx, title)
+func (s *AppService) GetRevisionList(ctx context.Context, title, author, host string) ([]domain.Revision, error) {
+	edits, err := s.DB.GetRevisionList(ctx, title, author, host)
 	return edits, err
 }
 

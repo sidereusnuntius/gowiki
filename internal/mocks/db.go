@@ -388,9 +388,9 @@ func (mr *MockDBMockRecorder) GetFollowers(ctx, id any) *gomock.Call {
 }
 
 // GetLastRevisionID mocks base method.
-func (m *MockDB) GetLastRevisionID(ctx context.Context, title string) (int64, *url.URL, int64, error) {
+func (m *MockDB) GetLastRevisionID(ctx context.Context, article domain.ArticleIdentifier) (int64, *url.URL, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLastRevisionID", ctx, title)
+	ret := m.ctrl.Call(m, "GetLastRevisionID", ctx, article)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(*url.URL)
 	ret2, _ := ret[2].(int64)
@@ -399,9 +399,9 @@ func (m *MockDB) GetLastRevisionID(ctx context.Context, title string) (int64, *u
 }
 
 // GetLastRevisionID indicates an expected call of GetLastRevisionID.
-func (mr *MockDBMockRecorder) GetLastRevisionID(ctx, title any) *gomock.Call {
+func (mr *MockDBMockRecorder) GetLastRevisionID(ctx, article any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastRevisionID", reflect.TypeOf((*MockDB)(nil).GetLastRevisionID), ctx, title)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastRevisionID", reflect.TypeOf((*MockDB)(nil).GetLastRevisionID), ctx, article)
 }
 
 // GetProfile mocks base method.
@@ -420,18 +420,18 @@ func (mr *MockDBMockRecorder) GetProfile(ctx, name, host any) *gomock.Call {
 }
 
 // GetRevisionList mocks base method.
-func (m *MockDB) GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error) {
+func (m *MockDB) GetRevisionList(ctx context.Context, title, author, host string) ([]domain.Revision, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRevisionList", ctx, title)
+	ret := m.ctrl.Call(m, "GetRevisionList", ctx, title, author, host)
 	ret0, _ := ret[0].([]domain.Revision)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetRevisionList indicates an expected call of GetRevisionList.
-func (mr *MockDBMockRecorder) GetRevisionList(ctx, title any) *gomock.Call {
+func (mr *MockDBMockRecorder) GetRevisionList(ctx, title, author, host any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRevisionList", reflect.TypeOf((*MockDB)(nil).GetRevisionList), ctx, title)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRevisionList", reflect.TypeOf((*MockDB)(nil).GetRevisionList), ctx, title, author, host)
 }
 
 // GetUserApId mocks base method.
@@ -654,6 +654,20 @@ func (m *MockDB) UpdateArticle(ctx context.Context, prevId, articleId, userId in
 func (mr *MockDBMockRecorder) UpdateArticle(ctx, prevId, articleId, userId, summary, newContent, apId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateArticle", reflect.TypeOf((*MockDB)(nil).UpdateArticle), ctx, prevId, articleId, userId, summary, newContent, apId)
+}
+
+// UpdateFedArticle mocks base method.
+func (m *MockDB) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, actorIRI *url.URL, newContent, summary string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFedArticle", ctx, articleIRI, updateIRI, actorIRI, newContent, summary)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFedArticle indicates an expected call of UpdateFedArticle.
+func (mr *MockDBMockRecorder) UpdateFedArticle(ctx, articleIRI, updateIRI, actorIRI, newContent, summary any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFedArticle", reflect.TypeOf((*MockDB)(nil).UpdateFedArticle), ctx, articleIRI, updateIRI, actorIRI, newContent, summary)
 }
 
 // UserExists mocks base method.

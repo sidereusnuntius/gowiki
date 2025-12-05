@@ -61,7 +61,7 @@ SELECT
     att.name AS author
 FROM
     articles AS art
-LEFT JOIN (
+JOIN (
     SELECT username AS name, ap_id AS id FROM users WHERE users.username = ?2
     UNION
     SELECT name AS name, url AS id FROM collectives WHERE collectives.name = ?2
@@ -96,7 +96,7 @@ INSERT INTO articles (
     published,
     last_updated,
     last_fetched
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
 RETURNING id;
 
 -- name: EditArticle :one
@@ -114,11 +114,17 @@ INSERT INTO revisions (
 
 -- name: GetArticleIDS :one
 SELECT
-    a.ap_id,
-    a.id AS article_id,
+    art.id,
+    art.ap_id,
     r.id AS rev_id
-FROM articles a JOIN revisions r ON r.article_id = a.id
-WHERE lower(a.title) = lower(@title)
+FROM articles art
+JOIN (
+    SELECT username AS name, ap_id AS id FROM users WHERE users.username = @author
+    UNION
+    SELECT name AS name, url AS id FROM collectives WHERE collectives.name = @author
+) AS att ON att.id = art.attributed_to
+JOIN revisions r ON r.article_id = art.id
+WHERE LOWER(art.title) = LOWER(@title) AND art.host = @host
 ORDER BY r.created DESC
 LIMIT 1;
 
@@ -144,8 +150,18 @@ SET
     last_updated = (cast(strftime('%s','now') as int))
 WHERE id = ?2;
 
+-- name: UpdateArticleByIRI :exec
+UPDATE articles
+SET
+    content = ?,
+    last_updated = (cast(strftime('%s','now') as int))
+WHERE ap_id = ?;
+
 -- name: GetArticleContent :one
 SELECT content FROM articles WHERE id = ?;
+
+-- name: GetArticleContentByIRI :one
+SELECT id, content FROM articles WHERE ap_id = ?;
 
 -- name: GetRevisionList :many
 SELECT
@@ -156,7 +172,17 @@ SELECT
     u.username,
     r.created
 FROM (
-    SELECT id, title from articles WHERE lower(title) = lower(@title) LIMIT 1
+    SELECT
+        art.id,
+        art.title
+    FROM articles art
+    LEFT JOIN (
+        SELECT username AS name, ap_id AS id FROM users WHERE users.username = @author
+        UNION
+        SELECT name AS name, url AS id FROM collectives WHERE collectives.name = @author
+    ) AS att ON att.id = art.attributed_to
+    WHERE LOWER(art.title) = LOWER(@title) AND art.host = @host
+    LIMIT 1
 ) a
 JOIN revisions r ON r.article_id = a.id
 JOIN users u ON r.user_id = u.id
@@ -338,7 +364,7 @@ SELECT
 FROM articles where id = ?;
 
 -- name: ApExists :one
-SELECT EXISTS(SELECT TRUE FROM ap_object_cache WHERE ap_id = ?);
+SELECT EXISTS(SELECT TRUE FROM ap_object_cache WHERE ap_id = ?) AS BOOLEAN;
 
 -- name: UpdateAp :exec
 UPDATE ap_object_cache

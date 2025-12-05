@@ -19,6 +19,7 @@ var (
 	ErrMissingProperty        = errors.New("missing property")
 	ErrUnprocessablePropValue = errors.New("unprocessable")
 	ErrNotFoundIRI            = errors.New("unknown IRI")
+	ErrUnsupported = errors.New("unsupported")
 )
 
 type ApService struct {

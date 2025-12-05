@@ -53,14 +53,14 @@ func (q *Queries) AddToCollection(ctx context.Context, arg AddToCollectionParams
 }
 
 const apExists = `-- name: ApExists :one
-SELECT EXISTS(SELECT TRUE FROM ap_object_cache WHERE ap_id = ?)
+SELECT EXISTS(SELECT TRUE FROM ap_object_cache WHERE ap_id = ?) AS BOOLEAN
 `
 
 func (q *Queries) ApExists(ctx context.Context, apID string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, apExists, apID)
-	var column_1 int64
-	err := row.Scan(&column_1)
-	return column_1, err
+	var boolean int64
+	err := row.Scan(&boolean)
+	return boolean, err
 }
 
 const authUserByEmail = `-- name: AuthUserByEmail :one
@@ -218,7 +218,7 @@ INSERT INTO articles (
     published,
     last_updated,
     last_fetched
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
 RETURNING id
 `
 
@@ -506,7 +506,7 @@ SELECT
     att.name AS author
 FROM
     articles AS art
-LEFT JOIN (
+JOIN (
     SELECT username AS name, ap_id AS id FROM users WHERE users.username = ?2
     UNION
     SELECT name AS name, url AS id FROM collectives WHERE collectives.name = ?2
@@ -620,27 +620,55 @@ func (q *Queries) GetArticleContent(ctx context.Context, id int64) (string, erro
 	return content, err
 }
 
+const getArticleContentByIRI = `-- name: GetArticleContentByIRI :one
+SELECT id, content FROM articles WHERE ap_id = ?
+`
+
+type GetArticleContentByIRIRow struct {
+	ID      int64
+	Content string
+}
+
+func (q *Queries) GetArticleContentByIRI(ctx context.Context, apID string) (GetArticleContentByIRIRow, error) {
+	row := q.db.QueryRowContext(ctx, getArticleContentByIRI, apID)
+	var i GetArticleContentByIRIRow
+	err := row.Scan(&i.ID, &i.Content)
+	return i, err
+}
+
 const getArticleIDS = `-- name: GetArticleIDS :one
 SELECT
-    a.ap_id,
-    a.id AS article_id,
+    art.id,
+    art.ap_id,
     r.id AS rev_id
-FROM articles a JOIN revisions r ON r.article_id = a.id
-WHERE lower(a.title) = lower(?1)
+FROM articles art
+JOIN (
+    SELECT username AS name, ap_id AS id FROM users WHERE users.username = ?1
+    UNION
+    SELECT name AS name, url AS id FROM collectives WHERE collectives.name = ?1
+) AS att ON att.id = art.attributed_to
+JOIN revisions r ON r.article_id = art.id
+WHERE LOWER(art.title) = LOWER(?2) AND art.host = ?3
 ORDER BY r.created DESC
 LIMIT 1
 `
 
-type GetArticleIDSRow struct {
-	ApID      string
-	ArticleID int64
-	RevID     int64
+type GetArticleIDSParams struct {
+	Author sql.NullString
+	Title  string
+	Host   sql.NullString
 }
 
-func (q *Queries) GetArticleIDS(ctx context.Context, title string) (GetArticleIDSRow, error) {
-	row := q.db.QueryRowContext(ctx, getArticleIDS, title)
+type GetArticleIDSRow struct {
+	ID    int64
+	ApID  string
+	RevID int64
+}
+
+func (q *Queries) GetArticleIDS(ctx context.Context, arg GetArticleIDSParams) (GetArticleIDSRow, error) {
+	row := q.db.QueryRowContext(ctx, getArticleIDS, arg.Author, arg.Title, arg.Host)
 	var i GetArticleIDSRow
-	err := row.Scan(&i.ApID, &i.ArticleID, &i.RevID)
+	err := row.Scan(&i.ID, &i.ApID, &i.RevID)
 	return i, err
 }
 
@@ -1026,12 +1054,28 @@ SELECT
     u.username,
     r.created
 FROM (
-    SELECT id, title from articles WHERE lower(title) = lower(?1) LIMIT 1
+    SELECT
+        art.id,
+        art.title
+    FROM articles art
+    LEFT JOIN (
+        SELECT username AS name, ap_id AS id FROM users WHERE users.username = ?1
+        UNION
+        SELECT name AS name, url AS id FROM collectives WHERE collectives.name = ?1
+    ) AS att ON att.id = art.attributed_to
+    WHERE LOWER(art.title) = LOWER(?2) AND art.host = ?3
+    LIMIT 1
 ) a
 JOIN revisions r ON r.article_id = a.id
 JOIN users u ON r.user_id = u.id
 ORDER BY r.created DESC
 `
+
+type GetRevisionListParams struct {
+	Author sql.NullString
+	Title  string
+	Host   sql.NullString
+}
 
 type GetRevisionListRow struct {
 	ID       int64
@@ -1042,8 +1086,8 @@ type GetRevisionListRow struct {
 	Created  int64
 }
 
-func (q *Queries) GetRevisionList(ctx context.Context, title string) ([]GetRevisionListRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRevisionList, title)
+func (q *Queries) GetRevisionList(ctx context.Context, arg GetRevisionListParams) ([]GetRevisionListRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRevisionList, arg.Author, arg.Title, arg.Host)
 	if err != nil {
 		return nil, err
 	}
@@ -1566,6 +1610,24 @@ type UpdateArticleParams struct {
 
 func (q *Queries) UpdateArticle(ctx context.Context, arg UpdateArticleParams) error {
 	_, err := q.db.ExecContext(ctx, updateArticle, arg.Content, arg.ID)
+	return err
+}
+
+const updateArticleByIRI = `-- name: UpdateArticleByIRI :exec
+UPDATE articles
+SET
+    content = ?,
+    last_updated = (cast(strftime('%s','now') as int))
+WHERE ap_id = ?
+`
+
+type UpdateArticleByIRIParams struct {
+	Content string
+	ApID    string
+}
+
+func (q *Queries) UpdateArticleByIRI(ctx context.Context, arg UpdateArticleByIRIParams) error {
+	_, err := q.db.ExecContext(ctx, updateArticleByIRI, arg.Content, arg.ApID)
 	return err
 }
 

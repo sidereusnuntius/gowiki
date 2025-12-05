@@ -15,8 +15,18 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
-func (d *dbImpl) GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error) {
-	list, err := d.queries.GetRevisionList(ctx, title)
+func (d *dbImpl) GetRevisionList(ctx context.Context, title, author, host string) ([]domain.Revision, error) {
+	list, err := d.queries.GetRevisionList(ctx, queries.GetRevisionListParams{
+		Title: title,
+		Author: sql.NullString{
+			Valid: author != "",
+			String: author,
+		},
+		Host: sql.NullString{
+			Valid: host != "",
+			String: host,
+		},
+	})
 	if err != nil {
 		return nil, d.HandleError(err)
 	}
@@ -78,13 +88,23 @@ func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId in
 }
 
 // GetArticleIds returns the article's ID, ActivityPub ID and the ID of its last revision, if the article exists.
-func (d *dbImpl) GetLastRevisionID(ctx context.Context, title string) (int64, *url.URL, int64, error) {
-	a, err := d.queries.GetArticleIDS(ctx, title)
+func (d *dbImpl) GetLastRevisionID(ctx context.Context, article domain.ArticleIdentifier) (articleID int64, articleIRI *url.URL, lastRevisionID int64, error error) {
+	a, err := d.queries.GetArticleIDS(ctx, queries.GetArticleIDSParams{
+		Title: article.Title,
+		Author: sql.NullString{
+			Valid: true,
+			String: article.Author,
+		},
+		Host: sql.NullString{
+			Valid: true,
+			String: article.Host,
+		},
+	})
 	if err != nil {
 		return 0, nil, 0, d.HandleError(err)
 	}
 	iri, err := url.Parse(a.ApID)
-	return a.ArticleID, iri, a.RevID, d.HandleError(err)
+	return a.ID, iri, a.RevID, d.HandleError(err)
 }
 
 // CreateArticle creates a new local article, also inserting the article's first revision.
@@ -133,6 +153,10 @@ func (d *dbImpl) GetArticle(ctx context.Context, title string, host, author sql.
 		Username: author,
     	Title: strings.ToLower(title),
 	})
+	if err != nil {
+		log.Error().Err(err).Send()
+		return domain.ArticleFed{}, d.HandleError(err)
+	}
 
 	var u *url.URL
 	if a.Url.Valid {
@@ -277,7 +301,7 @@ func (d *dbImpl) insertRevision(ctx context.Context, tx *queries.Queries, articl
 		Prev: prevId,
 	})
 	if err != nil || URI.Valid {
-		return 0, err
+		return id, err
 	}
 
 

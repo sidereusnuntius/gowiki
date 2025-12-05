@@ -10,6 +10,12 @@ import (
 
 type AuthorType string
 
+type ArticleIdentifier struct {
+	Title string
+	Author string
+	Host string
+}
+
 type ArticleCore struct {
 	Title       string
 	// Author is the preferredUsername of the actor to which the article is attributed, which might be a local

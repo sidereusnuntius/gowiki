@@ -25,10 +25,10 @@ type Service interface {
 	CreateUser(ctx context.Context, username, password, email, reason string, admin bool, invitation string) error
 	// AlterArticle creates the article if it does not exists; otherwise it will modify the article,
 	// recording the edit in the article's history.
-	AlterArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error)
+	AlterArticle(ctx context.Context, article domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error)
 	GetArticle(ctx context.Context, title, author, host string) (article domain.ArticleFed, err error)
-	CreateArticle(ctx context.Context, title, summary, content string, userId int64) (*url.URL, error)
+	CreateArticle(ctx context.Context, articleId domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error)
 	GetProfile(ctx context.Context, name, host string) (p domain.Profile, err error)
-	GetRevisionList(ctx context.Context, title string) ([]domain.Revision, error)
+	GetRevisionList(ctx context.Context, title, author, host string) ([]domain.Revision, error)
 	IsAdmin(ctx context.Context, accountId int64) (bool, error)
 }

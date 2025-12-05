@@ -11,6 +11,7 @@ type TaskType uint8
 const (
 	Fetch TaskType = iota
 	Deliver
+	Process
 )
 
 type Task struct {
