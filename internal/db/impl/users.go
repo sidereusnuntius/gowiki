@@ -21,7 +21,7 @@ func (d *dbImpl) GetUserIdByIRI(ctx context.Context, IRI *url.URL) (int64, error
 func (d *dbImpl) GetProfile(ctx context.Context, name string, host sql.NullString) (p domain.Profile, err error) {
 	userRow, err := d.queries.GetActorData(ctx, queries.GetActorDataParams{
 		LOWER: name,
-		Host: host,
+		Host:  host,
 	})
 	if err != nil {
 		return
@@ -36,16 +36,16 @@ func (d *dbImpl) GetProfile(ctx context.Context, name string, host sql.NullStrin
 
 	u := domain.UserCore{
 		Username: userRow.Name.String,
-		Host: userRow.Host.String,
-		Summary: userRow.Summary.String,
-		URL: userURL,
+		Host:     userRow.Host.String,
+		Summary:  userRow.Summary.String,
+		URL:      userURL,
 	}
-	
+
 	articleRows, err := d.queries.GetArticlesByActorId(ctx, sql.NullString{
-		Valid: true,
+		Valid:  true,
 		String: userRow.ApID,
 	})
-	if err != nil && !errors.Is(err, sql.ErrNoRows){
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return domain.Profile{}, d.HandleError(err)
 	}
 

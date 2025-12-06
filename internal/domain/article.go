@@ -11,18 +11,18 @@ import (
 type AuthorType string
 
 type ArticleIdentifier struct {
-	Title string
+	Title  string
 	Author string
-	Host string
+	Host   string
 }
 
 type ArticleCore struct {
-	Title       string
+	Title string
 	// Author is the preferredUsername of the actor to which the article is attributed, which might be a local
 	// or remote user, or a collective actor (group, organizatin etc.), in the case of wiki actors, since wikis
 	// don't have private authorship of articles.
-	Author string
-	Host string
+	Author      string
+	Host        string
 	Summary     string
 	Content     string
 	Protected   bool

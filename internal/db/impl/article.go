@@ -27,11 +27,11 @@ func (d *dbImpl) GetRevisionList(ctx context.Context, title, author, host string
 	list, err := d.queries.GetRevisionList(ctx, queries.GetRevisionListParams{
 		Title: title,
 		Author: sql.NullString{
-			Valid: author != "",
+			Valid:  author != "",
 			String: author,
 		},
 		Host: sql.NullString{
-			Valid: host != "",
+			Valid:  host != "",
 			String: host,
 		},
 	})
@@ -77,7 +77,7 @@ func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId in
 				Int64: prevId,
 			},
 			sql.NullString{
-				Valid: summary != "",
+				Valid:  summary != "",
 				String: summary,
 			},
 			diff,
@@ -100,11 +100,11 @@ func (d *dbImpl) GetLastRevisionID(ctx context.Context, article domain.ArticleId
 	a, err := d.queries.GetArticleIDS(ctx, queries.GetArticleIDSParams{
 		Title: article.Title,
 		Author: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: article.Author,
 		},
 		Host: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: article.Host,
 		},
 	})
@@ -119,11 +119,11 @@ func (d *dbImpl) ArticleTitleExists(ctx context.Context, title string) (bool, er
 	exists, err := d.queries.ArticleTitleExists(ctx, queries.ArticleTitleExistsParams{
 		LOWER: title,
 		Author: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: d.Config.Name,
 		},
 		Host: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: d.Config.Domain,
 		},
 	})
@@ -142,10 +142,10 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 		Msg("creating article")
 	return d.WithTx(func(tx *queries.Queries) error {
 		articleId, err := insertArticleTx(tx, ctx, true, article, domain.FedObj{
-			Iri: article.ApID,
+			Iri:     article.ApID,
 			RawJSON: nil,
-			ApType: "Article",
-			Local: true,
+			ApType:  "Article",
+			Local:   true,
 		}, 0)
 		if err != nil {
 			return err
@@ -161,7 +161,7 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 			},
 			sql.NullInt64{},
 			sql.NullString{
-				Valid: initialEdit.Summary != "",
+				Valid:  initialEdit.Summary != "",
 				String: initialEdit.Summary,
 			},
 			initialEdit.Diff,
@@ -176,9 +176,9 @@ func (d *dbImpl) GetArticle(ctx context.Context, title string, host, author sql.
 		host.String = strings.ToLower(host.String)
 	}
 	a, err := d.queries.GetArticle(ctx, queries.GetArticleParams{
-		Host: host,
+		Host:     host,
 		Username: author,
-    	Title: strings.ToLower(title),
+		Title:    strings.ToLower(title),
 	})
 	if err != nil {
 		log.Error().Err(err).Send()
@@ -196,8 +196,8 @@ func (d *dbImpl) GetArticle(ctx context.Context, title string, host, author sql.
 	return domain.ArticleFed{
 		ArticleCore: domain.ArticleCore{
 			Title:     a.Title,
-			Host: a.Host.String,
-			Author: a.Author.String,
+			Host:      a.Host.String,
+			Author:    a.Author.String,
 			Summary:   a.Summary.String,
 			Content:   a.Content,
 			Protected: a.Protected,
@@ -300,21 +300,21 @@ func insertArticleTx(tx *queries.Queries, ctx context.Context, local bool, artic
 		attributedTo.String = article.AttributedTo.String()
 	}
 	id, err := tx.CreateArticle(ctx, queries.CreateArticleParams{
-		Local: local,
-		ApID: article.ApID.String(),
-		Author: attributedTo,
+		Local:        local,
+		ApID:         article.ApID.String(),
+		Author:       attributedTo,
 		AttributedTo: attributedTo,
-		Url: url,
-		Language: article.Language,
-		MediaType: article.MediaType,
-		Title: article.Title,
+		Url:          url,
+		Language:     article.Language,
+		MediaType:    article.MediaType,
+		Title:        article.Title,
 		Host: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: article.Host,
 		},
 		Type: raw.ApType,
 		Summary: sql.NullString{
-			Valid: article.Summary != "",
+			Valid:  article.Summary != "",
 			String: article.Summary,
 		},
 		Content: article.Content,
@@ -335,14 +335,14 @@ func insertArticleTx(tx *queries.Queries, ctx context.Context, local bool, artic
 	err = tx.InsertApObject(ctx, queries.InsertApObjectParams{
 		ApID: article.ApID.String(),
 		LocalTable: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: "articles",
 		},
 		LocalID: sql.NullInt64{
 			Valid: true,
 			Int64: id,
 		},
-		Type: raw.ApType,
+		Type:    raw.ApType,
 		RawJson: raw.RawJSON,
 		LastFetched: sql.NullInt64{
 			Valid: fetched != 0,
@@ -359,12 +359,12 @@ func (d *dbImpl) insertRevision(ctx context.Context, tx *queries.Queries, articl
 		URI.String = apId.String()
 	}
 	id, err := tx.InsertRevision(ctx, queries.InsertRevisionParams{
-		ApID: URI,
+		ApID:      URI,
 		ArticleID: articleId,
 		UserID:    userId,
-		Summary: summary,
-		Diff: diff,
-		Prev: prevId,
+		Summary:   summary,
+		Diff:      diff,
+		Prev:      prevId,
 	})
 	if err != nil || URI.Valid {
 		return id, apId, err
@@ -374,7 +374,7 @@ func (d *dbImpl) insertRevision(ctx context.Context, tx *queries.Queries, articl
 	URI.String = apId.String()
 	err = tx.UpdateRevisionApId(ctx, queries.UpdateRevisionApIdParams{
 		ApID: URI,
-		ID: id,
+		ID:   id,
 	})
 	return id, apId, err
 }

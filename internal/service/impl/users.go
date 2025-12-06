@@ -16,7 +16,7 @@ func (s *AppService) GetProfile(ctx context.Context, name, host string) (p domai
 	}
 
 	p, err = s.DB.GetProfile(ctx, name, sql.NullString{
-		Valid: true,
+		Valid:  true,
 		String: host,
 	})
 	return

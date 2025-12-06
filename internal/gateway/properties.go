@@ -54,7 +54,7 @@ func (g *FedGatewayImpl) processActor(prop vocab.ActivityStreamsActorProperty) (
 	if iter.IsIRI() {
 		return iter.GetIRI(), nil
 	}
-	
+
 	t := iter.GetType()
 	if t == nil {
 		return nil, fmt.Errorf("%w: actor has an unsupported value", federation.ErrUnprocessablePropValue)

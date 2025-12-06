@@ -86,7 +86,7 @@ func (d *dbImpl) InsertUser(ctx context.Context, user domain.UserFedInternal, ac
 				String: user.Username,
 			},
 			Host: sql.NullString{
-				Valid: user.Host != "",
+				Valid:  user.Host != "",
 				String: user.Host,
 			},
 			Name: sql.NullString{

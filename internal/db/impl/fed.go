@@ -32,10 +32,10 @@ func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, ac
 		return nil, fmt.Errorf("%w: user with IRI %s", d.HandleError(err), actorIRI)
 	}
 
-	err =  d.WithTx(func(tx *queries.Queries) error {
+	err = d.WithTx(func(tx *queries.Queries) error {
 		err = tx.UpdateArticleByIRI(ctx, queries.UpdateArticleByIRIParams{
 			Content: newContent,
-			ApID: articleIRI.String(),
+			ApID:    articleIRI.String(),
 		})
 		if err != nil {
 			return err
@@ -52,7 +52,7 @@ func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, ac
 			},
 			sql.NullInt64{},
 			sql.NullString{
-				Valid: summary != "",
+				Valid:  summary != "",
 				String: summary,
 			},
 			diff,
@@ -64,16 +64,16 @@ func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, ac
 
 		fmt.Printf("%s\n", updateIRI)
 		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
-			    ApID: updateIRI.String(),
-    			LocalTable: sql.NullString{
-					Valid: true,
-					String: "revisions",
-				},
-    			LocalID: sql.NullInt64{
-					Valid: true,
-					Int64: revisionId,
-				},
-    			Type: "Update",
+			ApID: updateIRI.String(),
+			LocalTable: sql.NullString{
+				Valid:  true,
+				String: "revisions",
+			},
+			LocalID: sql.NullInt64{
+				Valid: true,
+				Int64: revisionId,
+			},
+			Type: "Update",
 		})
 	})
 	return updateIRI, err
@@ -490,18 +490,18 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error
 		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
 			ApID: follow.IRI.String(),
 			LocalTable: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: "follows",
 			},
 			LocalID: sql.NullInt64{
 				Valid: true,
 				Int64: id,
 			},
-			Type: "Follow",
+			Type:    "Follow",
 			RawJson: follow.Raw,
 		})
 	})
-	
+
 	return id, err
 }
 
@@ -568,7 +568,7 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 				String: u.Name,
 			},
 			Host: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: u.ApId.Host,
 			},
 			Summary: sql.NullString{

@@ -29,7 +29,7 @@ type UserCore struct {
 	ID       int64
 	Username string
 	Name     string
-	Host   string
+	Host     string
 	Summary  string
 	URL      *url.URL
 }
@@ -54,7 +54,7 @@ type UserFedInternal struct {
 type Profile struct {
 	UserCore
 	Articles []ArticlePreview
-	Edits []Revision
+	Edits    []Revision
 }
 
 type ArticlePreview struct {

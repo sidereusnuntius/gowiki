@@ -50,7 +50,7 @@ func convertArticle(article vocab.ActivityStreamsArticle) (domain.ArticleFed, er
 	var err error
 	if source := article.GetActivityStreamsSource(); source != nil {
 		content, mediaType, err = processSourceProperty(source)
-	} else if contentProp := article.GetActivityStreamsContent(); contentProp != nil && contentProp.Len() != 0{
+	} else if contentProp := article.GetActivityStreamsContent(); contentProp != nil && contentProp.Len() != 0 {
 		content = contentProp.Begin().GetXMLSchemaString()
 		if mediaTypeProp := article.GetActivityStreamsMediaType(); mediaTypeProp != nil {
 			mediaType = mediaTypeProp.Get()
@@ -73,8 +73,8 @@ func convertArticle(article vocab.ActivityStreamsArticle) (domain.ArticleFed, er
 	if url := article.GetActivityStreamsUrl(); url != nil && url.Len() != 0 {
 		result.Url = url.Begin().GetIRI()
 	}
-    // TODO: protected, license,
-	
+	// TODO: protected, license,
+
 	if published := article.GetActivityStreamsPublished(); published != nil {
 		result.Published = published.Get()
 	}
@@ -109,6 +109,6 @@ func processSourceProperty(prop vocab.ActivityStreamsSourceProperty) (source, me
 	}
 
 	mediaType, _ = sourceMap["mediaType"].(string)
-	
+
 	return
 }

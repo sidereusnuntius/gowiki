@@ -28,10 +28,10 @@ func SerializeActivity(activity vocab.Type) (domain.FedObj, error) {
 	}
 
 	return domain.FedObj{
-		Iri: idProp.Get(),
+		Iri:     idProp.Get(),
 		RawJSON: serial,
-		ApType: activity.GetTypeName(),
-		Local: false,
+		ApType:  activity.GetTypeName(),
+		Local:   false,
 	}, nil
 }
 

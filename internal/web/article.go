@@ -39,7 +39,7 @@ func ArticleHistory(handler *Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		u, ok := GetSession(ctx)
-		
+
 		articleData := handler.getArticleData(r)
 
 		path := strings.TrimSuffix(r.URL.String(), "/history")
@@ -54,7 +54,7 @@ func ArticleHistory(handler *Handler) http.HandlerFunc {
 
 		history := r.URL.String()
 		// TODO: store article URL in database, use it to generate paths.
-		
+
 		//pathURL, _ := url.Parse(path)
 		templates.Layout(templates.PageData{
 			Authenticated: ok,
@@ -143,11 +143,11 @@ func EditArticle(handler *Handler) http.HandlerFunc {
 		title := chi.URLParam(r, "title")
 		author := chi.URLParam(r, "author")
 		host := chi.URLParam(r, "host")
-		
+
 		if author == "" {
 			author = handler.Config.Name
 		}
-		
+
 		if host == "" {
 			host = handler.Config.Domain
 		}
@@ -197,7 +197,7 @@ func (h *Handler) getArticle(ctx context.Context, w http.ResponseWriter, r *http
 			templates.History: r.URL.JoinPath("history").String(),
 		},
 		IsArticle: true,
-		Child: templates.Article(local, article),
+		Child:     templates.Article(local, article),
 		Article: templates.ArticleData{
 			Title:    article.Title,
 			Domain:   "", //TODO
@@ -249,9 +249,9 @@ func PostArticle(handler *Handler) http.HandlerFunc {
 		summary := r.Form.Get("summary")
 		content := r.Form.Get("content")
 		article := domain.ArticleIdentifier{
-			Title: title,
+			Title:  title,
 			Author: articleData.Author,
-			Host: articleData.Host,
+			Host:   articleData.Host,
 		}
 		//prev := r.Form.Get("")
 		id, err := handler.service.AlterArticle(ctx, article, summary, content, session.UserID)

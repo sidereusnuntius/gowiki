@@ -22,25 +22,25 @@ func TestConvertArticle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cases := []struct{
-		name string
+	cases := []struct {
+		name     string
 		expected domain.ArticleFed
 	}{
 		{
 			"valid article",
 			domain.ArticleFed{
 				ArticleCore: domain.ArticleCore{
-					Title: "Prism",
-					Host: "test.wiki",
-					Summary: "Test article",
-					Content: "Hello, world!",
-					MediaType: "text/markdown",
+					Title:       "Prism",
+					Host:        "test.wiki",
+					Summary:     "Test article",
+					Content:     "Hello, world!",
+					MediaType:   "text/markdown",
 					LastUpdated: toTime("2025-09-25T22:27:56.722186Z"),
-					Published: toTime("2025-09-25T22:27:56.617343Z"),
+					Published:   toTime("2025-09-25T22:27:56.617343Z"),
 				},
 				AttributedTo: toURL("https://test.wiki/"),
-				ApID: toURL("https://test.wiki/a/Prism"),
-				Url: toURL("https://test.wiki/a/Prism"),
+				ApID:         toURL("https://test.wiki/a/Prism"),
+				Url:          toURL("https://test.wiki/a/Prism"),
 			},
 		},
 	}

@@ -22,7 +22,7 @@ type FedGateway interface {
 
 	ProcessObject(ctx context.Context, asType vocab.Type) error
 	ProcessOutbox(ctx context.Context, asType vocab.Type) error
-	
+
 	// Perhaps move these to a Notifier interface?
 	CreateLocalArticle(ctx context.Context, article domain.ArticleFed, authorId *url.URL, summary string) error
 	UpdateLocalArticle(ctx context.Context, updateURI, author *url.URL, summary string, id int64) error

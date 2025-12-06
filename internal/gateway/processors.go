@@ -23,6 +23,7 @@ func (q *FedGatewayImpl) processTask() func(context.Context, Task) error {
 			return err
 		}
 
+		var obj vocab.Type
 		switch task.Type {
 		case Fetch:
 			err = q.fetch(ctx, to)
@@ -32,13 +33,13 @@ func (q *FedGatewayImpl) processTask() func(context.Context, Task) error {
 			}
 			err = q.deliver(ctx, to, from, task.Payload)
 		case Process:
-			obj, err := streams.ToType(ctx, task.Payload)
+			obj, err = streams.ToType(ctx, task.Payload)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal payload: %w", err)
 			}
 			err = q.ProcessObject(ctx, obj)
 		case ProcessOutbox:
-			obj, err := streams.ToType(ctx, task.Payload)
+			obj, err = streams.ToType(ctx, task.Payload)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal payload: %w", err)
 			}

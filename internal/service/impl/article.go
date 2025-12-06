@@ -51,12 +51,12 @@ func (s *AppService) GetArticle(ctx context.Context, title, author, host string)
 	}
 
 	authorSql := sql.NullString{
-		Valid: true,
+		Valid:  true,
 		String: author,
 	}
 
 	article, err = s.DB.GetArticle(ctx, title, sql.NullString{
-		Valid: host != "",
+		Valid:  host != "",
 		String: host,
 	}, authorSql)
 
@@ -82,8 +82,8 @@ func (s *AppService) CreateArticle(ctx context.Context, articleId domain.Article
 	article := domain.ArticleFed{
 		ArticleCore: domain.ArticleCore{
 			Title:     articleId.Title,
-			Author: s.Config.Name,
-			Host: s.Config.Domain,
+			Author:    s.Config.Name,
+			Host:      s.Config.Domain,
 			Content:   content,
 			Language:  s.Config.Language,
 			MediaType: s.Config.MediaType,

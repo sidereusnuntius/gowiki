@@ -84,7 +84,7 @@ func (g *FedGatewayImpl) processCreateOutbox(ctx context.Context, create vocab.A
 		if !errors.Is(err, db.ErrNotFound) {
 			return err
 		}
-		
+
 		payload, err := streams.Serialize(create)
 		if err != nil {
 			return err
@@ -92,9 +92,9 @@ func (g *FedGatewayImpl) processCreateOutbox(ctx context.Context, create vocab.A
 
 		task := Task{
 			Type: Fetch,
-			To: actorIRI.String(),
+			To:   actorIRI.String(),
 			Next: &Task{
-				Type: ProcessOutbox,
+				Type:    ProcessOutbox,
 				Payload: payload,
 			},
 		}
@@ -108,7 +108,7 @@ func (g *FedGatewayImpl) processCreateOutbox(ctx context.Context, create vocab.A
 	}
 
 	if article.Title == "" {
-		return fmt.Errorf("%w: name", federation.ErrMissingProperty)		
+		return fmt.Errorf("%w: name", federation.ErrMissingProperty)
 	}
 
 	exists, err := g.db.ArticleTitleExists(ctx, article.Title)
@@ -128,8 +128,8 @@ func (g *FedGatewayImpl) processCreateOutbox(ctx context.Context, create vocab.A
 	articleInternal := domain.ArticleFed{
 		ArticleCore: domain.ArticleCore{
 			Title:     article.Title,
-			Author: g.cfg.Name,
-			Host: g.cfg.Domain,
+			Author:    g.cfg.Name,
+			Host:      g.cfg.Domain,
 			Content:   article.Content,
 			MediaType: g.cfg.MediaType,
 			Published: time.Now(),
@@ -164,8 +164,8 @@ func (g *FedGatewayImpl) processCreateOutbox(ctx context.Context, create vocab.A
 }
 
 type TransientArticle struct {
-	Title string
-	IRI *url.URL
+	Title   string
+	IRI     *url.URL
 	Content string
 }
 
@@ -230,9 +230,9 @@ func (g *FedGatewayImpl) processUpdateOutbox(ctx context.Context, update vocab.A
 
 		task := Task{
 			Type: Fetch,
-			To: actorIRI.String(),
+			To:   actorIRI.String(),
 			Next: &Task{
-				Type: ProcessOutbox,
+				Type:    ProcessOutbox,
 				Payload: payload,
 			},
 		}
@@ -254,12 +254,12 @@ func (g *FedGatewayImpl) processUpdateOutbox(ctx context.Context, update vocab.A
 	if article.IRI == nil {
 		return fmt.Errorf("%w: article IRI", federation.ErrMissingProperty)
 	}
-	
+
 	exists, err = g.db.Exists(ctx, article.IRI)
 	if err != nil {
 		return err
 	}
-	
+
 	if !exists {
 		return fmt.Errorf("%w: %s", ErrNotExists, article.IRI)
 	}
@@ -300,16 +300,16 @@ func (g *FedGatewayImpl) processUpdate(ctx context.Context, update vocab.Activit
 		}
 		task := Task{
 			Type: Fetch,
-			To: actor.String(),
+			To:   actor.String(),
 			Next: &Task{
-				Type: Process,
+				Type:    Process,
 				Payload: payload,
 			},
 		}
 		_, err = g.queue.Add(task).Save()
 		return err
 	}
-	
+
 	// Handle multiple objects.
 	objProp := update.GetActivityStreamsObject()
 	if objProp == nil || objProp.Len() == 0 {
@@ -320,7 +320,7 @@ func (g *FedGatewayImpl) processUpdate(ctx context.Context, update vocab.Activit
 	if summaryProp := update.GetActivityStreamsSummary(); summaryProp != nil && summaryProp.Len() != 0 {
 		summary = summaryProp.Begin().GetXMLSchemaString()
 	}
-	
+
 	obj := objProp.Begin()
 	if obj.IsIRI() {
 		contentProp := update.GetActivityStreamsContent()
@@ -330,7 +330,6 @@ func (g *FedGatewayImpl) processUpdate(ctx context.Context, update vocab.Activit
 
 		//TODO: handle case when property is not an XMLSchemaString
 		content := contentProp.Begin().GetXMLSchemaString()
-
 
 		_, err = g.db.UpdateFedArticle(ctx, obj.GetIRI(), id, actor, content, summary)
 		return err
@@ -365,7 +364,7 @@ func (g *FedGatewayImpl) processUpdatedObject(ctx context.Context, obj vocab.Typ
 			}
 			return g.db.PersistRemoteArticle(ctx, article, raw)
 		}
-		
+
 		_, err = g.db.UpdateFedArticle(ctx, article.ApID, updateIRI, actorIRI, article.Content, summary)
 		return err
 	default:
@@ -388,7 +387,7 @@ func (g *FedGatewayImpl) processFollow(ctx context.Context, follow vocab.Activit
 	if err != nil {
 		return err
 	}
-	
+
 	props, err := streams.Serialize(follow)
 	if err != nil {
 		return err

@@ -20,7 +20,7 @@ func (h *Handler) profile(ctx context.Context, w http.ResponseWriter, r *http.Re
 	hrefs := map[templates.Place]string{
 		templates.Read: r.URL.String(),
 	}
-	
+
 	isAdmin, err := h.service.IsAdmin(ctx, u.AccountID)
 	if err != nil {
 		return err

@@ -159,7 +159,6 @@ func main() {
 			return
 		}
 
-
 		err = queue.ProcessOutbox(ctx, activity)
 		if err != nil {
 			zero.Error().Err(err).Msg("failed to post to outbox")
