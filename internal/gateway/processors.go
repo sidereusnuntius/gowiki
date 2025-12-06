@@ -37,6 +37,12 @@ func (q *FedGatewayImpl) processTask() func(context.Context, Task) error {
 				return fmt.Errorf("failed to unmarshal payload: %w", err)
 			}
 			err = q.ProcessObject(ctx, obj)
+		case ProcessOutbox:
+			obj, err := streams.ToType(ctx, task.Payload)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal payload: %w", err)
+			}
+			err = q.ProcessOutbox(ctx, obj)
 		default:
 			err = errors.New("unsupported task type")
 		}

@@ -10,7 +10,13 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
-
+func (d *dbImpl) GetUserIdByIRI(ctx context.Context, IRI *url.URL) (int64, error) {
+	id, err := d.queries.GetUserId(ctx, IRI.String())
+	if err != nil {
+		err = d.HandleError(err)
+	}
+	return id, err
+}
 
 func (d *dbImpl) GetProfile(ctx context.Context, name string, host sql.NullString) (p domain.Profile, err error) {
 	userRow, err := d.queries.GetActorData(ctx, queries.GetActorDataParams{

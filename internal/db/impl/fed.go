@@ -20,19 +20,19 @@ import (
 
 const PageSize = 20
 
-func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, actorIRI *url.URL, newContent, summary string) error {
+func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, actorIRI *url.URL, newContent, summary string) (*url.URL, error) {
 	article, err := d.queries.GetArticleContentByIRI(ctx, articleIRI.String())
 	if err != nil {
-		return fmt.Errorf("%w: article with IRI %s", d.HandleError(err), articleIRI)
+		return nil, fmt.Errorf("%w: article with IRI %s", d.HandleError(err), articleIRI)
 	}
 	diff := d.getDiff(article.Content, newContent)
 
 	userId, err := d.queries.GetUserId(ctx, actorIRI.String())
 	if err != nil {
-		return fmt.Errorf("%w: user with IRI %s", d.HandleError(err), actorIRI)
+		return nil, fmt.Errorf("%w: user with IRI %s", d.HandleError(err), actorIRI)
 	}
 
-	return d.WithTx(func(tx *queries.Queries) error {
+	err =  d.WithTx(func(tx *queries.Queries) error {
 		err = tx.UpdateArticleByIRI(ctx, queries.UpdateArticleByIRIParams{
 			Content: newContent,
 			ApID: articleIRI.String(),
@@ -41,7 +41,8 @@ func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, ac
 			return err
 		}
 
-		revisionId, err := d.insertRevision(
+		var revisionId int64
+		revisionId, updateIRI, err = d.insertRevision(
 			ctx,
 			tx,
 			article.ID,
@@ -61,6 +62,7 @@ func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, ac
 			return fmt.Errorf("failed to insert revision: %w", err)
 		}
 
+		fmt.Printf("%s\n", updateIRI)
 		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
 			    ApID: updateIRI.String(),
     			LocalTable: sql.NullString{
@@ -74,6 +76,7 @@ func (d *dbImpl) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, ac
     			Type: "Update",
 		})
 	})
+	return updateIRI, err
 }
 
 func (d *dbImpl) PersistRemoteArticle(ctx context.Context, article domain.ArticleFed, articleRaw domain.FedObj) error {
@@ -90,7 +93,7 @@ func (d *dbImpl) PersistRemoteArticle(ctx context.Context, article domain.Articl
 		}
 
 		diff := d.getDiff("", article.Content)
-		_, err = d.insertRevision(
+		_, _, err = d.insertRevision(
 			ctx,
 			tx,
 			id,
@@ -173,15 +176,21 @@ func (d *dbImpl) GetCollectionMemberIRIS(ctx context.Context, collectionIRI *url
 }
 
 func (d *dbImpl) AddOutbox(ctx context.Context, apType string, raw []byte, id, outbox *url.URL) error {
+	exists, err := d.Exists(ctx, id)
+	if err != nil {
+		return d.HandleError(err)
+	}
+	idStr := id.String()
 	return d.WithTx(func(tx *queries.Queries) error {
-		idStr := id.String()
-		err := tx.InsertApObject(ctx, queries.InsertApObjectParams{
-			ApID:    idStr,
-			Type:    apType,
-			RawJson: raw,
-		})
-		if err != nil {
-			return err
+		if !exists {
+			err := tx.InsertApObject(ctx, queries.InsertApObjectParams{
+				ApID:    idStr,
+				Type:    apType,
+				RawJson: raw,
+			})
+			if err != nil {
+				return err
+			}
 		}
 
 		_, err = tx.AddToCollection(ctx, queries.AddToCollectionParams{

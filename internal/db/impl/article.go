@@ -15,6 +15,14 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+func (d *dbImpl) GetArticleIdByIRI(ctx context.Context, IRI *url.URL) (int64, error) {
+	id, err := d.queries.GetArticleIdByIri(ctx, IRI.String())
+	if err != nil {
+		err = d.HandleError(err)
+	}
+	return id, err
+}
+
 func (d *dbImpl) GetRevisionList(ctx context.Context, title, author, host string) ([]domain.Revision, error) {
 	list, err := d.queries.GetRevisionList(ctx, queries.GetRevisionListParams{
 		Title: title,
@@ -56,7 +64,7 @@ func (d *dbImpl) UpdateArticle(ctx context.Context, prevId, articleId, userId in
 
 		diff := d.getDiff(content, newContent)
 
-		_, err = d.insertRevision(
+		_, _, err = d.insertRevision(
 			ctx,
 			tx,
 			articleId,
@@ -107,6 +115,25 @@ func (d *dbImpl) GetLastRevisionID(ctx context.Context, article domain.ArticleId
 	return a.ID, iri, a.RevID, d.HandleError(err)
 }
 
+func (d *dbImpl) ArticleTitleExists(ctx context.Context, title string) (bool, error) {
+	exists, err := d.queries.ArticleTitleExists(ctx, queries.ArticleTitleExistsParams{
+		LOWER: title,
+		Author: sql.NullString{
+			Valid: true,
+			String: d.Config.Name,
+		},
+		Host: sql.NullString{
+			Valid: true,
+			String: d.Config.Domain,
+		},
+	})
+	if err != nil {
+		err = d.HandleError(err)
+	}
+
+	return exists != 0, err
+}
+
 // CreateArticle creates a new local article, also inserting the article's first revision.
 func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article domain.ArticleFed, initialEdit domain.Revision) (err error) {
 	log.Debug().
@@ -124,7 +151,7 @@ func (d *dbImpl) CreateLocalArticle(ctx context.Context, userId int64, article d
 			return err
 		}
 
-		_, err = d.insertRevision(
+		_, _, err = d.insertRevision(
 			ctx,
 			tx,
 			articleId,
@@ -184,6 +211,45 @@ func (d *dbImpl) GetArticle(ctx context.Context, title string, host, author sql.
 
 func (d *dbImpl) GetArticleById(ctx context.Context, id int64) (domain.ArticleFed, error) {
 	a, err := d.queries.GetArticleByID(ctx, id)
+	if err != nil {
+		return domain.ArticleFed{}, d.HandleError(err)
+	}
+
+	var attributedTo *url.URL
+	if a.AttributedTo.Valid {
+		attributedTo, _ = url.Parse(a.AttributedTo.String)
+	}
+
+	iri, err := url.Parse(a.ApID)
+	if err != nil {
+		return domain.ArticleFed{}, err
+	}
+	uri, _ := url.Parse(a.Url.String)
+
+	return domain.ArticleFed{
+		ApID:         iri,
+		AttributedTo: attributedTo,
+		To: []*url.URL{
+			domain.Public,
+			d.Config.Url,
+		},
+		Url: uri,
+		ArticleCore: domain.ArticleCore{
+			Title:       a.Title,
+			Summary:     a.Summary.String,
+			Content:     a.Content,
+			Protected:   a.Protected,
+			MediaType:   a.MediaType,
+			License:     "", // TODO
+			Language:    a.Language,
+			Published:   time.Unix(a.Published.Int64, 0),
+			LastUpdated: time.Unix(a.LastUpdated, 0),
+		},
+	}, err
+}
+
+func (d *dbImpl) GetArticleByIRI(ctx context.Context, IRI *url.URL) (domain.ArticleFed, error) {
+	a, err := d.queries.GetArticleByIRI(ctx, IRI.String())
 	if err != nil {
 		return domain.ArticleFed{}, d.HandleError(err)
 	}
@@ -286,7 +352,7 @@ func insertArticleTx(tx *queries.Queries, ctx context.Context, local bool, artic
 	return id, err
 }
 
-func (d *dbImpl) insertRevision(ctx context.Context, tx *queries.Queries, articleId int64, userId, prevId sql.NullInt64, summary sql.NullString, diff string, apId *url.URL) (int64, error) {
+func (d *dbImpl) insertRevision(ctx context.Context, tx *queries.Queries, articleId int64, userId, prevId sql.NullInt64, summary sql.NullString, diff string, apId *url.URL) (int64, *url.URL, error) {
 	var URI sql.NullString
 	if apId != nil {
 		URI.Valid = true
@@ -301,15 +367,16 @@ func (d *dbImpl) insertRevision(ctx context.Context, tx *queries.Queries, articl
 		Prev: prevId,
 	})
 	if err != nil || URI.Valid {
-		return id, err
+		return id, apId, err
 	}
 
-
-	URI.String = d.Config.Url.JoinPath("revisions", strconv.FormatInt(id, 10)).String()
-	return id, tx.UpdateRevisionApId(ctx, queries.UpdateRevisionApIdParams{
+	apId = d.Config.Url.JoinPath("revisions", strconv.FormatInt(id, 10))
+	URI.String = apId.String()
+	err = tx.UpdateRevisionApId(ctx, queries.UpdateRevisionApIdParams{
 		ApID: URI,
 		ID: id,
 	})
+	return id, apId, err
 }
 
 func (d *dbImpl) getDiff(prev, new string) string {

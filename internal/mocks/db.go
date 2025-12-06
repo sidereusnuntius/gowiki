@@ -89,6 +89,21 @@ func (mr *MockDBMockRecorder) AddOutbox(ctx, apType, raw, id, outbox any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddOutbox", reflect.TypeOf((*MockDB)(nil).AddOutbox), ctx, apType, raw, id, outbox)
 }
 
+// ArticleTitleExists mocks base method.
+func (m *MockDB) ArticleTitleExists(ctx context.Context, title string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArticleTitleExists", ctx, title)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ArticleTitleExists indicates an expected call of ArticleTitleExists.
+func (mr *MockDBMockRecorder) ArticleTitleExists(ctx, title any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArticleTitleExists", reflect.TypeOf((*MockDB)(nil).ArticleTitleExists), ctx, title)
+}
+
 // CollectionContains mocks base method.
 func (m *MockDB) CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error) {
 	m.ctrl.T.Helper()
@@ -236,6 +251,21 @@ func (mr *MockDBMockRecorder) GetArticle(ctx, title, host, author any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArticle", reflect.TypeOf((*MockDB)(nil).GetArticle), ctx, title, host, author)
 }
 
+// GetArticleByIRI mocks base method.
+func (m *MockDB) GetArticleByIRI(ctx context.Context, IRI *url.URL) (domain.ArticleFed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArticleByIRI", ctx, IRI)
+	ret0, _ := ret[0].(domain.ArticleFed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArticleByIRI indicates an expected call of GetArticleByIRI.
+func (mr *MockDBMockRecorder) GetArticleByIRI(ctx, IRI any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArticleByIRI", reflect.TypeOf((*MockDB)(nil).GetArticleByIRI), ctx, IRI)
+}
+
 // GetArticleById mocks base method.
 func (m *MockDB) GetArticleById(ctx context.Context, id int64) (domain.ArticleFed, error) {
 	m.ctrl.T.Helper()
@@ -249,6 +279,21 @@ func (m *MockDB) GetArticleById(ctx context.Context, id int64) (domain.ArticleFe
 func (mr *MockDBMockRecorder) GetArticleById(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArticleById", reflect.TypeOf((*MockDB)(nil).GetArticleById), ctx, id)
+}
+
+// GetArticleIdByIRI mocks base method.
+func (m *MockDB) GetArticleIdByIRI(ctx context.Context, IRI *url.URL) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArticleIdByIRI", ctx, IRI)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArticleIdByIRI indicates an expected call of GetArticleIdByIRI.
+func (mr *MockDBMockRecorder) GetArticleIdByIRI(ctx, IRI any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArticleIdByIRI", reflect.TypeOf((*MockDB)(nil).GetArticleIdByIRI), ctx, IRI)
 }
 
 // GetAuthDataByEmail mocks base method.
@@ -479,6 +524,21 @@ func (mr *MockDBMockRecorder) GetUserFed(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserFed", reflect.TypeOf((*MockDB)(nil).GetUserFed), ctx, id)
 }
 
+// GetUserIdByIRI mocks base method.
+func (m *MockDB) GetUserIdByIRI(ctx context.Context, IRI *url.URL) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserIdByIRI", ctx, IRI)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserIdByIRI indicates an expected call of GetUserIdByIRI.
+func (mr *MockDBMockRecorder) GetUserIdByIRI(ctx, IRI any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserIdByIRI", reflect.TypeOf((*MockDB)(nil).GetUserIdByIRI), ctx, IRI)
+}
+
 // GetUserPrivateKey mocks base method.
 func (m *MockDB) GetUserPrivateKey(ctx context.Context, id int64) (*url.URL, crypto.PrivateKey, error) {
 	m.ctrl.T.Helper()
@@ -657,11 +717,12 @@ func (mr *MockDBMockRecorder) UpdateArticle(ctx, prevId, articleId, userId, summ
 }
 
 // UpdateFedArticle mocks base method.
-func (m *MockDB) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, actorIRI *url.URL, newContent, summary string) error {
+func (m *MockDB) UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, actorIRI *url.URL, newContent, summary string) (*url.URL, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateFedArticle", ctx, articleIRI, updateIRI, actorIRI, newContent, summary)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateFedArticle indicates an expected call of UpdateFedArticle.

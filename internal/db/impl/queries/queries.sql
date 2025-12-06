@@ -97,6 +97,20 @@ INSERT INTO articles (
     last_updated,
     last_fetched
 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+ON CONFLICT (ap_id) DO UPDATE
+SET
+    url = ?5,
+    language = ?6,
+    media_type = ?7,
+    title = ?8,
+    host = ?9,
+    type = ?10,
+    protected = ?11,
+    summary = ?12,
+    content = ?13,
+    published = ?14,
+    last_updated = ?15,
+    last_fetched = ?16
 RETURNING id;
 
 -- name: EditArticle :one
@@ -111,6 +125,16 @@ INSERT INTO revisions (
     prev,
     based_on
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id;
+
+-- name: GetArticleIdByIri :one
+SELECT id FROM articles WHERE ap_id = ? LIMIT 1;
+
+-- name: ArticleTitleExists :one
+SELECT EXISTS (
+    SELECT TRUE
+    FROM articles
+    WHERE lower(title) = lower(?) AND author = ? AND host = ?
+) AS BOOLEAN;
 
 -- name: GetArticleIDS :one
 SELECT
@@ -362,6 +386,23 @@ SELECT
     inserted_at,
     last_updated
 FROM articles where id = ?;
+
+-- name: GetArticleByIRI :one
+SELECT
+    ap_id,
+    attributed_to,
+    url,
+    host,
+    language,
+    media_type,
+    title,
+    protected,
+    summary,
+    content,
+    published,
+    inserted_at,
+    last_updated
+FROM articles where ap_id = ?;
 
 -- name: ApExists :one
 SELECT EXISTS(SELECT TRUE FROM ap_object_cache WHERE ap_id = ?) AS BOOLEAN;

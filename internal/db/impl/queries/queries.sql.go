@@ -63,6 +63,27 @@ func (q *Queries) ApExists(ctx context.Context, apID string) (int64, error) {
 	return boolean, err
 }
 
+const articleTitleExists = `-- name: ArticleTitleExists :one
+SELECT EXISTS (
+    SELECT TRUE
+    FROM articles
+    WHERE lower(title) = lower(?) AND author = ? AND host = ?
+) AS BOOLEAN
+`
+
+type ArticleTitleExistsParams struct {
+	LOWER  string
+	Author sql.NullString
+	Host   sql.NullString
+}
+
+func (q *Queries) ArticleTitleExists(ctx context.Context, arg ArticleTitleExistsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, articleTitleExists, arg.LOWER, arg.Author, arg.Host)
+	var boolean int64
+	err := row.Scan(&boolean)
+	return boolean, err
+}
+
 const authUserByEmail = `-- name: AuthUserByEmail :one
 SELECT
     u.id AS user_id,
@@ -219,6 +240,20 @@ INSERT INTO articles (
     last_updated,
     last_fetched
 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+ON CONFLICT (ap_id) DO UPDATE
+SET
+    url = ?5,
+    language = ?6,
+    media_type = ?7,
+    title = ?8,
+    host = ?9,
+    type = ?10,
+    protected = ?11,
+    summary = ?12,
+    content = ?13,
+    published = ?14,
+    last_updated = ?15,
+    last_fetched = ?16
 RETURNING id
 `
 
@@ -609,6 +644,61 @@ func (q *Queries) GetArticleByID(ctx context.Context, id int64) (GetArticleByIDR
 	return i, err
 }
 
+const getArticleByIRI = `-- name: GetArticleByIRI :one
+SELECT
+    ap_id,
+    attributed_to,
+    url,
+    host,
+    language,
+    media_type,
+    title,
+    protected,
+    summary,
+    content,
+    published,
+    inserted_at,
+    last_updated
+FROM articles where ap_id = ?
+`
+
+type GetArticleByIRIRow struct {
+	ApID         string
+	AttributedTo sql.NullString
+	Url          sql.NullString
+	Host         sql.NullString
+	Language     string
+	MediaType    string
+	Title        string
+	Protected    bool
+	Summary      sql.NullString
+	Content      string
+	Published    sql.NullInt64
+	InsertedAt   int64
+	LastUpdated  int64
+}
+
+func (q *Queries) GetArticleByIRI(ctx context.Context, apID string) (GetArticleByIRIRow, error) {
+	row := q.db.QueryRowContext(ctx, getArticleByIRI, apID)
+	var i GetArticleByIRIRow
+	err := row.Scan(
+		&i.ApID,
+		&i.AttributedTo,
+		&i.Url,
+		&i.Host,
+		&i.Language,
+		&i.MediaType,
+		&i.Title,
+		&i.Protected,
+		&i.Summary,
+		&i.Content,
+		&i.Published,
+		&i.InsertedAt,
+		&i.LastUpdated,
+	)
+	return i, err
+}
+
 const getArticleContent = `-- name: GetArticleContent :one
 SELECT content FROM articles WHERE id = ?
 `
@@ -670,6 +760,17 @@ func (q *Queries) GetArticleIDS(ctx context.Context, arg GetArticleIDSParams) (G
 	var i GetArticleIDSRow
 	err := row.Scan(&i.ID, &i.ApID, &i.RevID)
 	return i, err
+}
+
+const getArticleIdByIri = `-- name: GetArticleIdByIri :one
+SELECT id FROM articles WHERE ap_id = ? LIMIT 1
+`
+
+func (q *Queries) GetArticleIdByIri(ctx context.Context, apID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getArticleIdByIri, apID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getArticlesByActorId = `-- name: GetArticlesByActorId :many

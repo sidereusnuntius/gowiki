@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/gob"
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"code.superseriousbusiness.org/activity/pub"
+	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/httpsig"
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/chi/v5"
@@ -22,8 +24,8 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 	"github.com/sidereusnuntius/gowiki/internal/federation"
 	"github.com/sidereusnuntius/gowiki/internal/federation/fedb"
-	"github.com/sidereusnuntius/gowiki/internal/initialization"
 	"github.com/sidereusnuntius/gowiki/internal/gateway"
+	"github.com/sidereusnuntius/gowiki/internal/initialization"
 	service "github.com/sidereusnuntius/gowiki/internal/service/impl"
 	"github.com/sidereusnuntius/gowiki/internal/state"
 	"github.com/sidereusnuntius/gowiki/internal/web"
@@ -135,14 +137,35 @@ func main() {
 			return
 		}
 		success, err := actor.GetOutbox(r.Context(), w, r)
-		if r := recover(); r != nil {
-			zero.Error().Any("return", r).Msg("panic!")
-		}
 		e := zero.Debug().Bool("success", success)
 		if err != nil {
 			e.Err(err)
 		}
 		e.Msg("attempted to get outbox.")
+	})
+
+	apMux.Post("/outbox", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		decoder := json.NewDecoder(r.Body)
+		var raw map[string]any
+		err := decoder.Decode(&raw)
+		if err != nil {
+			http.Error(w, "invalid body", http.StatusBadRequest)
+			return
+		}
+		activity, err := streams.ToType(ctx, raw)
+		if err != nil {
+			http.Error(w, "invalid activity", http.StatusBadRequest)
+			return
+		}
+
+
+		err = queue.ProcessOutbox(ctx, activity)
+		if err != nil {
+			zero.Error().Err(err).Msg("failed to post to outbox")
+			http.Error(w, "", http.StatusInternalServerError)
+			return
+		}
 	})
 
 	apMux.NotFound(func(w http.ResponseWriter, r *http.Request) {

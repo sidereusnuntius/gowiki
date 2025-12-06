@@ -19,7 +19,7 @@ import (
 func (s *AppService) AlterArticle(ctx context.Context, article domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error) {
 	//TODO: deal with variations in the capitalization of the article title.
 	//TODO: check if user has permission to edit the wiki and the article in question.
-	author, err := s.DB.GetUserURI(ctx, userId)
+	_, err := s.DB.GetUserURI(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (s *AppService) AlterArticle(ctx context.Context, article domain.ArticleIde
 		return nil, err
 	}
 
-	err = s.gateway.UpdateLocalArticle(ctx, uri, author, summary, articleId)
+	err = s.gateway.UpdateLocalArticle(ctx, uri, s.Config.Url, summary, articleId)
 
 	return ap, err
 

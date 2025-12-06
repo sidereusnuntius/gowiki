@@ -40,5 +40,5 @@ type Fed interface {
 
 	// ---
 	PersistRemoteArticle(ctx context.Context, article domain.ArticleFed, articleRaw domain.FedObj) error
-	UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, actorIRI *url.URL, newContent, summary string) error
+	UpdateFedArticle(ctx context.Context, articleIRI, updateIRI, actorIRI *url.URL, newContent, summary string) (*url.URL, error)
 }

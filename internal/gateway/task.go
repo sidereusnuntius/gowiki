@@ -12,6 +12,7 @@ const (
 	Fetch TaskType = iota
 	Deliver
 	Process
+	ProcessOutbox
 )
 
 type Task struct {
