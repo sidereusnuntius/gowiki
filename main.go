@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -107,6 +108,7 @@ func main() {
 
 	ap := federation.ApService{
 		DB: dd,
+		Verifier: queue,
 	}
 	actor := pub.NewFederatingActor(&ap, &ap, &fd, Clock{})
 
@@ -184,7 +186,6 @@ func main() {
 		content := r.Header.Get("Content-Type")
 		// Change this. Please.
 		if strings.Contains(accept, "activity") || strings.Contains(content, "activity") || strings.Contains(accept, "ld") || strings.Contains(content, "ld") {
-			zero.Log().Str("url", r.URL.String()).Send()
 			apMux.ServeHTTP(w, r)
 		} else {
 			router.ServeHTTP(w, r)
@@ -196,7 +197,7 @@ func main() {
 	}
 
 	s := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + strconv.FormatUint(uint64(config.Port), 10),
 		Handler: contentRouter,
 	}
 

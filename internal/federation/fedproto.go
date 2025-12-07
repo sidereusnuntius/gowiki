@@ -24,8 +24,13 @@ var (
 	ErrForbidden              = errors.New("forbidden")
 )
 
+type Verifier interface {
+	Verify(ctx context.Context, r *http.Request) error
+}
+
 type ApService struct {
 	DB db.DB
+	Verifier Verifier
 }
 
 func (f ApService) GetCollection(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -63,9 +68,12 @@ func (f ApService) GetCollection(ctx context.Context, w http.ResponseWriter, r *
 }
 
 // AuthenticatePostInbox implements pub.FederatingProtocol.
-func (f ApService) AuthenticatePostInbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
+func (f ApService) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
+	out = ctx
 	log.Debug().Msg("at AuthenticatePostInbox()")
-	out = c
+	if err = f.Verifier.Verify(ctx, r); err != nil {
+		return
+	}
 	authenticated = true
 	return
 }

@@ -473,6 +473,12 @@ UNION
 SELECT private_key FROM collectives WHERE private_key IS NOT NULL AND url = ?1
 LIMIT 1;
 
+-- name: GetPublicKey :one
+SELECT public_key FROM users WHERE ap_id = ?1
+UNION
+SELECT public_key FROM collectives WHERE url = ?1
+LIMIT 1;
+
 -- name: InsertOrUpdateUser :one
 INSERT INTO users (
     local,
@@ -501,6 +507,23 @@ SET url = ?2,
     public_key = ?9,
     last_updated = cast(strftime('%s','now') as int),
     last_fetched = ?10
+RETURNING id;
+
+-- name: InsertOrUpdateCollective :one
+INSERT INTO collectives (
+    name,
+    host,
+    url,
+    summary,
+    public_key,
+    inbox,
+    outbox,
+    followers
+) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+ON CONFLICT (url) DO UPDATE
+SET name = ?1,
+    summary = ?3,
+    public_key = ?4
 RETURNING id;
 
 -- name: InsertOrUpdateApObject :exec

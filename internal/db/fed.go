@@ -44,8 +44,11 @@ type Fed interface {
 
 	GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error)
 	GetUserPrivateKeyByURI(ctx context.Context, url *url.URL) (key crypto.PrivateKey, err error)
+	GetPublicKeyByActorIRI(ctx context.Context, IRI *url.URL) (string, error)
+	
 	GetCollectionActivities(ctx context.Context, collectionIRI *url.URL, last int64) (activities []map[string]any, err error)
 	InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetched time.Time) error
+	InsertOrUpdateCollective(ctx context.Context, collective domain.Collective, fetched time.Time) error
 
 	// ---
 	PersistRemoteArticle(ctx context.Context, article domain.ArticleFed, articleRaw domain.FedObj) error

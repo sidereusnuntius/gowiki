@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams"
@@ -16,10 +17,13 @@ import (
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
+var ErrFailedConversion = errors.New("failed conversion")
+
 type FedGateway interface {
 	Fetch(iri *url.URL) error
 	Deliver(ctx context.Context, activity vocab.Type, to *url.URL, from *url.URL) error
 
+	Verify(ctx context.Context, r *http.Request) error
 	ProcessObject(ctx context.Context, asType vocab.Type) error
 	ProcessOutbox(ctx context.Context, asType vocab.Type) error
 

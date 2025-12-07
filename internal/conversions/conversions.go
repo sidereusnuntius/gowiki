@@ -74,6 +74,71 @@ func NewAccept(id, actor, object *url.URL) (a vocab.ActivityStreamsAccept) {
 	return
 }
 
+func IriPropertyProcess(prop IriProperty, propName string) (*url.URL, error) {
+	if prop == nil {
+		return nil, fmt.Errorf("%w: %s", federation.ErrMissingProperty, propName)
+	}
+	if !prop.IsIRI() {
+		return nil, fmt.Errorf("%w: %s", federation.ErrUnprocessablePropValue, propName)
+	}
+
+	return prop.GetIRI(), nil
+}
+
+func GroupToCollective(group vocab.ActivityStreamsGroup) (domain.Collective, error) {
+	collective := domain.Collective{}
+	collective.Type = group.GetTypeName()
+
+	idProp := group.GetJSONLDId()
+	if idProp == nil {
+		return domain.Collective{}, fmt.Errorf("%w: id", federation.ErrMissingProperty)
+	}
+	collective.Url = idProp.Get()
+	collective.Hostname = collective.Url.Host
+
+	username := group.GetActivityStreamsPreferredUsername()
+	if username == nil {
+		return domain.Collective{}, fmt.Errorf("%w: preferredUsername", federation.ErrMissingProperty)
+	}
+	collective.Name = username.GetXMLSchemaString()
+
+	if summary := group.GetActivityStreamsSummary(); summary != nil && summary.Len() != 0 {
+		collective.Summary = summary.Begin().GetXMLSchemaString()
+	}
+
+	var err error
+	collective.Inbox, err = IriPropertyProcess(group.GetActivityStreamsInbox(), "inbox")
+	if err != nil {
+		return domain.Collective{}, err
+	}
+
+	collective.Outbox, err = IriPropertyProcess(group.GetActivityStreamsInbox(), "outbox")
+	if err != nil {
+		return domain.Collective{}, err
+	}
+
+	collective.Followers, err = IriPropertyProcess(group.GetActivityStreamsInbox(), "followers")
+	if err != nil {
+		return domain.Collective{}, err
+	}
+
+	if key := group.GetW3IDSecurityV1PublicKey(); key != nil && key.Len() != 0 {
+		k := key.Begin().Get()
+		keyPem := k.GetW3IDSecurityV1PublicKeyPem()
+		collective.PublicKey = keyPem.Get()
+	}
+
+	if created := group.GetActivityStreamsPublished(); created != nil {
+		// Perhaps use it?
+	}
+
+	if updated := group.GetActivityStreamsUpdated(); updated != nil {
+
+	}
+
+	return collective, nil
+}
+
 func GroupToActor(g domain.Collective) vocab.Type {
 	obj := streams.NewActivityStreamsGroup()
 
@@ -101,7 +166,7 @@ func GroupToActor(g domain.Collective) vocab.Type {
 	key.SetJSONLDId(keyId)
 
 	keyPem := streams.NewW3IDSecurityV1PublicKeyPemProperty()
-	keyPem.Set(g.Public_key)
+	keyPem.Set(g.PublicKey)
 	key.SetW3IDSecurityV1PublicKeyPem(keyPem)
 
 	owner := streams.NewW3IDSecurityV1OwnerProperty()

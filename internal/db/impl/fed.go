@@ -634,6 +634,14 @@ func (d *dbImpl) GetUserPrivateKey(ctx context.Context, id int64) (owner *url.UR
 	return
 }
 
+func (d *dbImpl) GetPublicKeyByActorIRI(ctx context.Context, IRI *url.URL) (string, error) {
+	pubKey, err := d.queries.GetPublicKey(ctx, IRI.String())
+	if err != nil {
+		err = d.HandleError(err)
+	}
+	return pubKey, err
+}
+
 func (d *dbImpl) GetUserPrivateKeyByURI(ctx context.Context, url *url.URL) (key crypto.PrivateKey, err error) {
 	log.Debug().Str("id", url.String()).Send()
 	k, err := d.queries.GetPrivateKeyByID(ctx, url.String())
@@ -757,6 +765,63 @@ func (d *dbImpl) GetActorInbox(ctx context.Context, actor *url.URL) (*url.URL, e
 	return iri, err
 }
 
+func (d *dbImpl) InsertOrUpdateCollective(ctx context.Context, collective domain.Collective, fetched time.Time) error {
+	return d.WithTx(func(tx *queries.Queries) error {
+		id, err := tx.InsertOrUpdateCollective(ctx, queries.InsertOrUpdateCollectiveParams{
+			Name: sql.NullString{
+				Valid: collective.Name != "",
+				String: collective.Name,
+			},
+    		Host: collective.Hostname,
+    		Url: sql.NullString{
+				Valid: collective.Url != nil,
+				String: collective.Url.String(),
+			},
+    		Summary: sql.NullString{
+				Valid: collective.Summary != "",
+				String: collective.Summary,
+			},
+    		PublicKey: sql.NullString{
+				Valid: collective.PublicKey != "",
+				String: collective.PublicKey,
+			},
+    		Inbox: sql.NullString{
+				Valid: collective.Inbox != nil,
+				String: collective.Inbox.String(),
+			},
+    		Outbox: sql.NullString{
+				Valid: collective.Outbox != nil,
+				String: collective.Outbox.String(),
+			},
+    		Followers: sql.NullString{
+				Valid: collective.Followers != nil,
+				String: collective.Followers.String(),
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		return tx.InsertOrUpdateApObject(ctx, queries.InsertOrUpdateApObjectParams{
+			ApID: collective.Url.String(),
+			LocalTable: sql.NullString{
+				Valid: true,
+				String: "collectives",
+			},
+			LocalID: sql.NullInt64{
+				Valid: true,
+				Int64: id,
+			},
+			Type: collective.Type,
+			RawJson: nil,
+			LastFetched: sql.NullInt64{
+				Valid: !fetched.IsZero(),
+				Int64: fetched.Unix(),
+			},
+		})
+	})
+}
+
 func (d *dbImpl) GetCollectiveById(ctx context.Context, id int64) (c domain.Collective, err error) {
 	obj, err := d.queries.GetCollectiveByID(ctx, id)
 	if err != nil {
@@ -766,7 +831,7 @@ func (d *dbImpl) GetCollectiveById(ctx context.Context, id int64) (c domain.Coll
 		Type:       obj.Type,
 		Name:       obj.Name.String,
 		Hostname:   obj.Host,
-		Public_key: obj.PublicKey.String,
+		PublicKey: obj.PublicKey.String,
 	}
 
 	c.Inbox, err = url.Parse(obj.Inbox.String)

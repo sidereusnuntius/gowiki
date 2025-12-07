@@ -539,6 +539,21 @@ func (mr *MockDBMockRecorder) GetProfile(ctx, name, host any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockDB)(nil).GetProfile), ctx, name, host)
 }
 
+// GetPublicKeyByActorIRI mocks base method.
+func (m *MockDB) GetPublicKeyByActorIRI(ctx context.Context, IRI *url.URL) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPublicKeyByActorIRI", ctx, IRI)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPublicKeyByActorIRI indicates an expected call of GetPublicKeyByActorIRI.
+func (mr *MockDBMockRecorder) GetPublicKeyByActorIRI(ctx, IRI any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicKeyByActorIRI", reflect.TypeOf((*MockDB)(nil).GetPublicKeyByActorIRI), ctx, IRI)
+}
+
 // GetRevisionList mocks base method.
 func (m *MockDB) GetRevisionList(ctx context.Context, title, author, host string) ([]domain.Revision, error) {
 	m.ctrl.T.Helper()
@@ -658,6 +673,20 @@ func (m *MockDB) GetUserURI(ctx context.Context, id int64) (*url.URL, error) {
 func (mr *MockDBMockRecorder) GetUserURI(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserURI", reflect.TypeOf((*MockDB)(nil).GetUserURI), ctx, id)
+}
+
+// InsertOrUpdateCollective mocks base method.
+func (m *MockDB) InsertOrUpdateCollective(ctx context.Context, collective domain.Collective, fetched time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertOrUpdateCollective", ctx, collective, fetched)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertOrUpdateCollective indicates an expected call of InsertOrUpdateCollective.
+func (mr *MockDBMockRecorder) InsertOrUpdateCollective(ctx, collective, fetched any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOrUpdateCollective", reflect.TypeOf((*MockDB)(nil).InsertOrUpdateCollective), ctx, collective, fetched)
 }
 
 // InsertOrUpdateUser mocks base method.

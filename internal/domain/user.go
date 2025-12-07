@@ -9,8 +9,9 @@ type Collective struct {
 	Type       string
 	Name       string
 	Hostname   string
+	Summary string
 	Url        *url.URL
-	Public_key string
+	PublicKey string
 	Inbox      *url.URL
 	Outbox     *url.URL
 	Followers  *url.URL

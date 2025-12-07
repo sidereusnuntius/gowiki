@@ -1245,6 +1245,20 @@ func (q *Queries) GetPrivateKeyByID(ctx context.Context, apID string) (string, e
 	return private_key, err
 }
 
+const getPublicKey = `-- name: GetPublicKey :one
+SELECT public_key FROM users WHERE ap_id = ?1
+UNION
+SELECT public_key FROM collectives WHERE url = ?1
+LIMIT 1
+`
+
+func (q *Queries) GetPublicKey(ctx context.Context, apID string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getPublicKey, apID)
+	var public_key string
+	err := row.Scan(&public_key)
+	return public_key, err
+}
+
 const getRevisionList = `-- name: GetRevisionList :many
 SELECT
     r.id,
@@ -1642,6 +1656,51 @@ func (q *Queries) InsertOrUpdateApObject(ctx context.Context, arg InsertOrUpdate
 		arg.LastFetched,
 	)
 	return err
+}
+
+const insertOrUpdateCollective = `-- name: InsertOrUpdateCollective :one
+INSERT INTO collectives (
+    name,
+    host,
+    url,
+    summary,
+    public_key,
+    inbox,
+    outbox,
+    followers
+) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+ON CONFLICT (url) DO UPDATE
+SET name = ?1,
+    summary = ?3,
+    public_key = ?4
+RETURNING id
+`
+
+type InsertOrUpdateCollectiveParams struct {
+	Name      sql.NullString
+	Host      string
+	Url       sql.NullString
+	Summary   sql.NullString
+	PublicKey sql.NullString
+	Inbox     sql.NullString
+	Outbox    sql.NullString
+	Followers sql.NullString
+}
+
+func (q *Queries) InsertOrUpdateCollective(ctx context.Context, arg InsertOrUpdateCollectiveParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertOrUpdateCollective,
+		arg.Name,
+		arg.Host,
+		arg.Url,
+		arg.Summary,
+		arg.PublicKey,
+		arg.Inbox,
+		arg.Outbox,
+		arg.Followers,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const insertOrUpdateUser = `-- name: InsertOrUpdateUser :one

@@ -40,7 +40,7 @@ func (g *FedGatewayImpl) ProcessObject(ctx context.Context, asType vocab.Type) e
 	case streams.ActivityStreamsFollowName:
 		follow, ok := asType.(vocab.ActivityStreamsFollow)
 		if !ok {
-			return fmt.Errorf("failed to convert follow activity")
+			return ErrFailedConversion
 		}
 		return g.processFollow(ctx, follow)
 	case streams.ActivityStreamsUpdateName:
@@ -52,9 +52,32 @@ func (g *FedGatewayImpl) ProcessObject(ctx context.Context, asType vocab.Type) e
 	case streams.ActivityStreamsAcceptName:
 		accept, ok := asType.(vocab.ActivityStreamsAccept)
 		if !ok {
-			return fmt.Errorf("invalid accept activity")
+			return ErrFailedConversion
 		}
 		return g.processAccept(ctx, accept)
+	case streams.ActivityStreamsPersonName:
+		person, ok := asType.(vocab.ActivityStreamsPerson)
+		if !ok {
+			return ErrFailedConversion
+		}
+		var u domain.UserFed
+		u, err := conversions.ActorToUser(person)
+		if err != nil {
+			return err
+		}
+		return g.db.InsertOrUpdateUser(ctx, u, time.Now())
+	case streams.ActivityStreamsGroupName:
+		group, ok := asType.(vocab.ActivityStreamsGroup)
+		if !ok {
+			return ErrFailedConversion
+		}
+		
+		collective, err := conversions.GroupToCollective(group)
+		if err != nil {
+			return err
+		}
+
+		return g.db.InsertOrUpdateCollective(ctx, collective, time.Now())
 	default:
 		return fmt.Errorf("%w: %s", errors.ErrUnsupported, asType.GetTypeName())
 	}
@@ -86,7 +109,7 @@ func (g *FedGatewayImpl) processAccept(ctx context.Context, accept vocab.Activit
 	}
 
 	obj := objProp.Begin()
-
+	
 	var followIRI *url.URL
 	var err error
 	if obj.IsIRI() {
@@ -333,7 +356,7 @@ func (g *FedGatewayImpl) processUpdateOutbox(ctx context.Context, update vocab.A
 }
 
 func (g *FedGatewayImpl) processUpdate(ctx context.Context, update vocab.ActivityStreamsUpdate) error {
-	id, err := g.processId(update.GetJSONLDId())
+	_, err := g.processId(update.GetJSONLDId())
 	if err != nil {
 		return err
 	}
@@ -371,26 +394,18 @@ func (g *FedGatewayImpl) processUpdate(ctx context.Context, update vocab.Activit
 		return fmt.Errorf("%w: object", federation.ErrMissingProperty)
 	}
 
-	var summary string
-	if summaryProp := update.GetActivityStreamsSummary(); summaryProp != nil && summaryProp.Len() != 0 {
-		summary = summaryProp.Begin().GetXMLSchemaString()
-	}
+	//var summary string
+	//if summaryProp := update.GetActivityStreamsSummary(); summaryProp != nil && summaryProp.Len() != 0 {
+	//	summary = summaryProp.Begin().GetXMLSchemaString()
+	//}
 
 	obj := objProp.Begin()
 	if obj.IsIRI() {
-		contentProp := update.GetActivityStreamsContent()
-		if contentProp == nil || contentProp.Len() == 0 {
-			return g.Fetch(obj.GetIRI())
-		}
-
-		//TODO: handle case when property is not an XMLSchemaString
-		content := contentProp.Begin().GetXMLSchemaString()
-
-		_, err = g.db.UpdateFedArticle(ctx, obj.GetIRI(), id, actor, content, summary)
-		return err
+		return g.Fetch(obj.GetIRI())
 	}
 
 	if t := obj.GetType(); t != nil {
+		// TODO: properly handle an update to an article, inserting a revision with the update's IRI.
 		return g.ProcessObject(ctx, t)
 	}
 

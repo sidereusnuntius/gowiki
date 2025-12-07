@@ -5,14 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"time"
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/mikestefanello/backlite"
 	"github.com/rs/zerolog/log"
-	"github.com/sidereusnuntius/gowiki/internal/conversions"
-	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
 
 func (q *FedGatewayImpl) processTask() func(context.Context, Task) error {
@@ -59,28 +56,16 @@ func (q *FedGatewayImpl) processTask() func(context.Context, Task) error {
 	}
 }
 
-func (q *FedGatewayImpl) fetch(ctx context.Context, iri *url.URL) error {
+func (g *FedGatewayImpl) fetch(ctx context.Context, iri *url.URL) error {
 	log.Debug().Str("iri", iri.String()).Msg("fetching IRI")
 
-	fetchedAt := time.Now()
-	asType, err := q.client.Get(ctx, iri)
+	asType, err := g.client.Get(ctx, iri)
 	if err != nil {
 		log.Error().Err(err).Msg("fetch error")
 		return err
 	}
 
-	switch asType.GetTypeName() {
-	case streams.ActivityStreamsPersonName:
-		person, _ := asType.(vocab.ActivityStreamsPerson)
-		var u domain.UserFed
-		u, err = conversions.ActorToUser(person)
-		if err != nil {
-			return err
-		}
-		return q.db.InsertOrUpdateUser(ctx, u, fetchedAt)
-	default:
-		return errors.New("unprocessable entity")
-	}
+	return g.ProcessObject(ctx, asType)
 }
 
 func (q *FedGatewayImpl) deliver(ctx context.Context, to, from *url.URL, payload map[string]any) error {
