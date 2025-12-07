@@ -58,7 +58,7 @@ func (d *dbImpl) GetAuthDataByUsername(ctx context.Context, username string) (do
 	return domain.Account{
 		UserID:    u.UserID,
 		AccountID: u.AccountID,
-		ApId: apId,
+		ApId:      apId,
 		Username:  u.Username.String,
 		Password:  u.Password,
 		Admin:     u.Admin,
@@ -79,7 +79,7 @@ func (d *dbImpl) GetAuthDataByEmail(ctx context.Context, email string) (domain.A
 	return domain.Account{
 		UserID:    u.UserID,
 		AccountID: u.AccountID,
-		ApId: apId,
+		ApId:      apId,
 		Username:  u.Username.String,
 		Password:  u.Password,
 		Admin:     u.Admin,

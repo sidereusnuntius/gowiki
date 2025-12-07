@@ -41,7 +41,7 @@ type Fed interface {
 	GetFollowing(ctx context.Context, actorIRI *url.URL) ([]*url.URL, error)
 	// Follows returns whether the actor follows the object.
 	Follows(ctx context.Context, actor, object *url.URL) (bool, error)
-	
+
 	GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error)
 	GetUserPrivateKeyByURI(ctx context.Context, url *url.URL) (key crypto.PrivateKey, err error)
 	GetCollectionActivities(ctx context.Context, collectionIRI *url.URL, last int64) (activities []map[string]any, err error)

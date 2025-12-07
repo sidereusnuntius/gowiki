@@ -28,12 +28,12 @@ type Service interface {
 	AlterArticle(ctx context.Context, article domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error)
 	GetArticle(ctx context.Context, title, author, host string) (article domain.ArticleFed, err error)
 	CreateArticle(ctx context.Context, articleId domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error)
-	
+
 	GetActorIRI(ctx context.Context, name, host string) (*url.URL, error)
 	GetProfile(ctx context.Context, name, host string) (p domain.Profile, err error)
 	FollowRemote(ctx context.Context, followerIRI, followeeIRI *url.URL) error
 	Follows(ctx context.Context, actor, object *url.URL) (bool, error)
-	
+
 	GetRevisionList(ctx context.Context, title, author, host string) ([]domain.Revision, error)
 	IsAdmin(ctx context.Context, accountId int64) (bool, error)
 }

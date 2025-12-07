@@ -19,10 +19,6 @@ func (s *AppService) FollowRemote(ctx context.Context, followerIRI, followeeIRI 
 	if !exists {
 		return fmt.Errorf("IRI %s does not exist", followerIRI)
 	}
-	
-	if err != nil {
-		return fmt.Errorf("remote follow error: %w", err)
-	}
 
 	return s.gateway.FollowRemoteActor(ctx, followerIRI, followeeIRI)
 }

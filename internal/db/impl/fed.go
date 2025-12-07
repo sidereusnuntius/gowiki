@@ -503,14 +503,14 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, *url.
 		if err != nil {
 			return err
 		}
-		
+
 		if !followIRI.Valid {
 			follow.IRI = d.Config.Url.JoinPath("follows", strconv.FormatInt(followID, 10))
 			followIRI.String = follow.IRI.String()
 			followIRI.Valid = true
 			err = tx.UpdateFollowApId(ctx, queries.UpdateFollowApIdParams{
 				FollowApID: followIRI,
-				ID: followID,
+				ID:         followID,
 			})
 			if err != nil {
 				return err
@@ -547,7 +547,7 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, *url.
 
 func (d *dbImpl) GetFollow(ctx context.Context, followIRI *url.URL) (domain.Follow, error) {
 	f, err := d.queries.GetFollow(ctx, sql.NullString{
-		Valid: true,
+		Valid:  true,
 		String: followIRI.String(),
 	})
 	if err != nil {
@@ -563,9 +563,9 @@ func (d *dbImpl) GetFollow(ctx context.Context, followIRI *url.URL) (domain.Foll
 	if err != nil {
 		return domain.Follow{}, fmt.Errorf("%w: failed to parse followee's IRI: %s", db.ErrInternal, f.FolloweeApID)
 	}
-	
+
 	return domain.Follow{
-		IRI: followIRI,
+		IRI:      followIRI,
 		Follower: follower,
 		Followee: followee,
 	}, nil
@@ -579,14 +579,14 @@ func (d *dbImpl) Follows(ctx context.Context, actor, object *url.URL) (bool, err
 	if err != nil {
 		err = d.HandleError(err)
 	}
-	
+
 	return result != 0, err
 }
 
 func (d *dbImpl) ApproveFollow(ctx context.Context, followIRI *url.URL, accept domain.FedObj) error {
 	return d.WithTx(func(tx *queries.Queries) error {
 		err := tx.AcceptFollow(ctx, sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: followIRI.String(),
 		})
 		if err != nil {
@@ -598,9 +598,9 @@ func (d *dbImpl) ApproveFollow(ctx context.Context, followIRI *url.URL, accept d
 			Int64: time.Now().Unix(),
 		}
 		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
-			ApID: accept.Iri.String(),
-			Type: accept.ApType,
-			RawJson: accept.RawJSON,
+			ApID:        accept.Iri.String(),
+			Type:        accept.ApType,
+			RawJson:     accept.RawJSON,
 			LastUpdated: now,
 			LastFetched: now,
 		})
@@ -726,7 +726,7 @@ func (d *dbImpl) GetActorIRI(ctx context.Context, name, host string) (*url.URL, 
 	iriStr, err := d.queries.GetActorIRI(ctx, queries.GetActorIRIParams{
 		LOWER: name,
 		Host: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: host,
 		},
 	})

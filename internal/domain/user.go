@@ -17,7 +17,7 @@ type Collective struct {
 }
 
 type Account struct {
-	ApId *url.URL
+	ApId      *url.URL
 	UserID    int64
 	AccountID int64
 	Username  string
@@ -70,5 +70,5 @@ type Session struct {
 	UserID    int64
 	AccountID int64
 	Username  string
-	ApId *url.URL
+	ApId      *url.URL
 }

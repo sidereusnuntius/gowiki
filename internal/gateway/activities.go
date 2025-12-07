@@ -86,7 +86,7 @@ func (g *FedGatewayImpl) processAccept(ctx context.Context, accept vocab.Activit
 	}
 
 	obj := objProp.Begin()
-	
+
 	var followIRI *url.URL
 	var err error
 	if obj.IsIRI() {

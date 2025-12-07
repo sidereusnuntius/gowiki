@@ -44,10 +44,10 @@ func (s *AppService) AuthenticateUser(ctx context.Context, user, password string
 	}
 	authenticated = true
 	session = domain.Session{
-		UserID: account.UserID,
+		UserID:    account.UserID,
 		AccountID: account.AccountID,
-		Username: account.Username,
-		ApId: account.ApId,
+		Username:  account.Username,
+		ApId:      account.ApId,
 	}
 	return
 }

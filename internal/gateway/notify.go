@@ -14,13 +14,13 @@ import (
 
 func (g *FedGatewayImpl) FollowRemoteActor(ctx context.Context, follower, followee *url.URL) error {
 	inbox, err := g.db.GetActorInbox(ctx, followee)
-	if err != nil && !errors.Is(err, db.ErrNotFound){
+	if err != nil && !errors.Is(err, db.ErrNotFound) {
 		return err
 	}
 
 	_, followIRI, err := g.db.Follow(ctx, domain.Follow{
-		Follower: follower,
-		Followee: followee,
+		Follower:      follower,
+		Followee:      followee,
 		FollowerInbox: inbox,
 	})
 	if err != nil {

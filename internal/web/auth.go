@@ -53,7 +53,7 @@ func AuthenticatedMiddleware(handler *Handler) func(http.Handler) http.HandlerFu
 	return func(handler http.Handler) http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, ok := GetSession(r.Context())
-			
+
 			if ok {
 				handler.ServeHTTP(w, r)
 				return
@@ -133,7 +133,7 @@ func Login(handler *Handler) http.HandlerFunc {
 
 		user := r.Form.Get("user")
 		password := r.Form.Get("password")
-		
+
 		s, authenticated, err := handler.service.AuthenticateUser(ctx, user, password)
 		if err != nil {
 			//TODO: treat error.

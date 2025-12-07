@@ -35,7 +35,7 @@ func (h *Handler) profile(ctx context.Context, w http.ResponseWriter, r *http.Re
 		if iri, err = h.service.GetActorIRI(ctx, name, host); err != nil {
 			return err
 		}
-		
+
 		if followed, err = h.service.Follows(ctx, h.Config.Url, iri); err != nil {
 			return err
 		}
@@ -85,7 +85,6 @@ func InstanceFollow(h *Handler) http.HandlerFunc {
 		host := chi.URLParam(r, "host")
 
 		last := r.URL.Query().Get("last")
-		
 
 		iri, err := h.service.GetActorIRI(ctx, name, host)
 		if err != nil {

@@ -21,7 +21,7 @@ var (
 	ErrNotFoundIRI            = errors.New("unknown IRI")
 	ErrUnsupported            = errors.New("unsupported")
 	ErrConflict               = errors.New("conflict")
-	ErrForbidden = errors.New("forbidden")
+	ErrForbidden              = errors.New("forbidden")
 )
 
 type ApService struct {
