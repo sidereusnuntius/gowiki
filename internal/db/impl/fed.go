@@ -769,32 +769,32 @@ func (d *dbImpl) InsertOrUpdateCollective(ctx context.Context, collective domain
 	return d.WithTx(func(tx *queries.Queries) error {
 		id, err := tx.InsertOrUpdateCollective(ctx, queries.InsertOrUpdateCollectiveParams{
 			Name: sql.NullString{
-				Valid: collective.Name != "",
+				Valid:  collective.Name != "",
 				String: collective.Name,
 			},
-    		Host: collective.Hostname,
-    		Url: sql.NullString{
-				Valid: collective.Url != nil,
+			Host: collective.Hostname,
+			Url: sql.NullString{
+				Valid:  collective.Url != nil,
 				String: collective.Url.String(),
 			},
-    		Summary: sql.NullString{
-				Valid: collective.Summary != "",
+			Summary: sql.NullString{
+				Valid:  collective.Summary != "",
 				String: collective.Summary,
 			},
-    		PublicKey: sql.NullString{
-				Valid: collective.PublicKey != "",
+			PublicKey: sql.NullString{
+				Valid:  collective.PublicKey != "",
 				String: collective.PublicKey,
 			},
-    		Inbox: sql.NullString{
-				Valid: collective.Inbox != nil,
+			Inbox: sql.NullString{
+				Valid:  collective.Inbox != nil,
 				String: collective.Inbox.String(),
 			},
-    		Outbox: sql.NullString{
-				Valid: collective.Outbox != nil,
+			Outbox: sql.NullString{
+				Valid:  collective.Outbox != nil,
 				String: collective.Outbox.String(),
 			},
-    		Followers: sql.NullString{
-				Valid: collective.Followers != nil,
+			Followers: sql.NullString{
+				Valid:  collective.Followers != nil,
 				String: collective.Followers.String(),
 			},
 		})
@@ -805,14 +805,14 @@ func (d *dbImpl) InsertOrUpdateCollective(ctx context.Context, collective domain
 		return tx.InsertOrUpdateApObject(ctx, queries.InsertOrUpdateApObjectParams{
 			ApID: collective.Url.String(),
 			LocalTable: sql.NullString{
-				Valid: true,
+				Valid:  true,
 				String: "collectives",
 			},
 			LocalID: sql.NullInt64{
 				Valid: true,
 				Int64: id,
 			},
-			Type: collective.Type,
+			Type:    collective.Type,
 			RawJson: nil,
 			LastFetched: sql.NullInt64{
 				Valid: !fetched.IsZero(),
@@ -828,9 +828,9 @@ func (d *dbImpl) GetCollectiveById(ctx context.Context, id int64) (c domain.Coll
 		return domain.Collective{}, err
 	}
 	c = domain.Collective{
-		Type:       obj.Type,
-		Name:       obj.Name.String,
-		Hostname:   obj.Host,
+		Type:      obj.Type,
+		Name:      obj.Name.String,
+		Hostname:  obj.Host,
 		PublicKey: obj.PublicKey.String,
 	}
 

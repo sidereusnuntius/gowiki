@@ -6,15 +6,15 @@ import (
 )
 
 type Collective struct {
-	Type       string
-	Name       string
-	Hostname   string
-	Summary string
-	Url        *url.URL
+	Type      string
+	Name      string
+	Hostname  string
+	Summary   string
+	Url       *url.URL
 	PublicKey string
-	Inbox      *url.URL
-	Outbox     *url.URL
-	Followers  *url.URL
+	Inbox     *url.URL
+	Outbox    *url.URL
+	Followers *url.URL
 }
 
 type Account struct {

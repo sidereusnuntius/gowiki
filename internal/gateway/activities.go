@@ -71,7 +71,7 @@ func (g *FedGatewayImpl) ProcessObject(ctx context.Context, asType vocab.Type) e
 		if !ok {
 			return ErrFailedConversion
 		}
-		
+
 		collective, err := conversions.GroupToCollective(group)
 		if err != nil {
 			return err
@@ -109,7 +109,7 @@ func (g *FedGatewayImpl) processAccept(ctx context.Context, accept vocab.Activit
 	}
 
 	obj := objProp.Begin()
-	
+
 	var followIRI *url.URL
 	var err error
 	if obj.IsIRI() {

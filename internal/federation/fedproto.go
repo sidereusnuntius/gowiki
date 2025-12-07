@@ -29,7 +29,7 @@ type Verifier interface {
 }
 
 type ApService struct {
-	DB db.DB
+	DB       db.DB
 	Verifier Verifier
 }
 

@@ -107,7 +107,7 @@ func main() {
 	fh := pub.NewActivityStreamsHandler(&fd, Clock{})
 
 	ap := federation.ApService{
-		DB: dd,
+		DB:       dd,
 		Verifier: queue,
 	}
 	actor := pub.NewFederatingActor(&ap, &ap, &fd, Clock{})
