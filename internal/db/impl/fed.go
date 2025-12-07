@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -199,6 +200,26 @@ func (d *dbImpl) AddOutbox(ctx context.Context, apType string, raw []byte, id, o
 		})
 		return err
 	})
+}
+
+func (d *dbImpl) GetFollowing(ctx context.Context, actorIRI *url.URL) ([]*url.URL, error) {
+	result, err := d.queries.GetFollowing(ctx, actorIRI.String())
+	var following []*url.URL
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*url.URL{}, nil
+		}
+		return nil, d.HandleError(err)
+	}
+
+	following = make([]*url.URL, len(result))
+	for i, f := range result {
+		following[i], err = url.Parse(f)
+		if err != nil {
+			return nil, fmt.Errorf("%w: unable to parse IRI: %s", db.ErrInternal, f)
+		}
+	}
+	return following, nil
 }
 
 func (d *dbImpl) GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, error) {
@@ -455,17 +476,23 @@ func (d *dbImpl) GetUserByID(ctx context.Context, id int64) (user domain.UserFed
 	}, err
 }
 
-func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error) {
+func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, *url.URL, error) {
 	var inbox string
 	if follow.FollowerInbox != nil {
 		inbox = follow.FollowerInbox.String()
 	}
 
-	var id int64
+	var followIRI sql.NullString
+	if follow.IRI != nil {
+		followIRI.Valid = true
+		followIRI.String = follow.IRI.String()
+	}
+
+	var followID int64
 	err := d.WithTx(func(tx *queries.Queries) error {
 		var err error
-		id, err = tx.Follow(ctx, queries.FollowParams{
-			FollowApID:   follow.IRI.String(),
+		followID, err = tx.Follow(ctx, queries.FollowParams{
+			FollowApID:   followIRI,
 			FollowerApID: follow.Follower.String(),
 			FolloweeApID: follow.Followee.String(),
 			FollowerInboxUrl: sql.NullString{
@@ -475,6 +502,19 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error
 		})
 		if err != nil {
 			return err
+		}
+		
+		if !followIRI.Valid {
+			follow.IRI = d.Config.Url.JoinPath("follows", strconv.FormatInt(followID, 10))
+			followIRI.String = follow.IRI.String()
+			followIRI.Valid = true
+			err = tx.UpdateFollowApId(ctx, queries.UpdateFollowApIdParams{
+				FollowApID: followIRI,
+				ID: followID,
+			})
+			if err != nil {
+				return err
+			}
 		}
 
 		if follow.Followee.Hostname() == d.Config.Url.Hostname() {
@@ -488,21 +528,83 @@ func (d *dbImpl) Follow(ctx context.Context, follow domain.Follow) (int64, error
 		}
 
 		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
-			ApID: follow.IRI.String(),
+			ApID: followIRI.String,
 			LocalTable: sql.NullString{
 				Valid:  true,
 				String: "follows",
 			},
 			LocalID: sql.NullInt64{
 				Valid: true,
-				Int64: id,
+				Int64: followID,
 			},
 			Type:    "Follow",
 			RawJson: follow.Raw,
 		})
 	})
 
-	return id, err
+	return followID, follow.IRI, err
+}
+
+func (d *dbImpl) GetFollow(ctx context.Context, followIRI *url.URL) (domain.Follow, error) {
+	f, err := d.queries.GetFollow(ctx, sql.NullString{
+		Valid: true,
+		String: followIRI.String(),
+	})
+	if err != nil {
+		return domain.Follow{}, d.HandleError(err)
+	}
+
+	follower, err := url.Parse(f.FollowerApID)
+	if err != nil {
+		return domain.Follow{}, fmt.Errorf("%w: failed to parse follower's IRI: %s", db.ErrInternal, f.FollowerApID)
+	}
+
+	followee, err := url.Parse(f.FolloweeApID)
+	if err != nil {
+		return domain.Follow{}, fmt.Errorf("%w: failed to parse followee's IRI: %s", db.ErrInternal, f.FolloweeApID)
+	}
+	
+	return domain.Follow{
+		IRI: followIRI,
+		Follower: follower,
+		Followee: followee,
+	}, nil
+}
+
+func (d *dbImpl) Follows(ctx context.Context, actor, object *url.URL) (bool, error) {
+	result, err := d.queries.Follows(ctx, queries.FollowsParams{
+		FollowerApID: actor.String(),
+		FolloweeApID: object.String(),
+	})
+	if err != nil {
+		err = d.HandleError(err)
+	}
+	
+	return result != 0, err
+}
+
+func (d *dbImpl) ApproveFollow(ctx context.Context, followIRI *url.URL, accept domain.FedObj) error {
+	return d.WithTx(func(tx *queries.Queries) error {
+		err := tx.AcceptFollow(ctx, sql.NullString{
+			Valid: true,
+			String: followIRI.String(),
+		})
+		if err != nil {
+			return err
+		}
+
+		now := sql.NullInt64{
+			Valid: true,
+			Int64: time.Now().Unix(),
+		}
+		return tx.InsertApObject(ctx, queries.InsertApObjectParams{
+			ApID: accept.Iri.String(),
+			Type: accept.ApType,
+			RawJson: accept.RawJSON,
+			LastUpdated: now,
+			LastFetched: now,
+		})
+	})
 }
 
 func (d *dbImpl) GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error) {
@@ -620,10 +722,32 @@ func (d *dbImpl) InsertOrUpdateUser(ctx context.Context, u domain.UserFed, fetch
 	})
 }
 
+func (d *dbImpl) GetActorIRI(ctx context.Context, name, host string) (*url.URL, error) {
+	iriStr, err := d.queries.GetActorIRI(ctx, queries.GetActorIRIParams{
+		LOWER: name,
+		Host: sql.NullString{
+			Valid: true,
+			String: host,
+		},
+	})
+	if err != nil {
+		return nil, d.HandleError(err)
+	}
+
+	iri, err := url.Parse(iriStr)
+	if err != nil {
+		return nil, fmt.Errorf("%w: unable to parse IRI %s", db.ErrInternal, iriStr)
+	}
+	return iri, nil
+}
+
 func (d *dbImpl) GetActorInbox(ctx context.Context, actor *url.URL) (*url.URL, error) {
 	inbox, err := d.queries.GetInboxByActorId(ctx, actor.String())
 	if err != nil {
 		return nil, d.HandleError(err)
+	}
+	if inbox == "" {
+		return nil, fmt.Errorf("%w: empty inbox", db.ErrNotFound)
 	}
 
 	iri, err := url.Parse(inbox)

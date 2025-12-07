@@ -21,6 +21,7 @@ var (
 	ErrNotFoundIRI            = errors.New("unknown IRI")
 	ErrUnsupported            = errors.New("unsupported")
 	ErrConflict               = errors.New("conflict")
+	ErrForbidden = errors.New("forbidden")
 )
 
 type ApService struct {
@@ -82,11 +83,15 @@ func (f ApService) DefaultCallback(c context.Context, activity pub.Activity) err
 }
 
 // FederatingCallbacks implements pub.FederatingProtocol.
-func (f ApService) FederatingCallbacks(c context.Context) (wrapped pub.FederatingWrappedCallbacks, other []interface{}, err error) {
+func (f ApService) FederatingCallbacks(c context.Context) (wrapped pub.FederatingWrappedCallbacks, other []any, err error) {
 	log.Debug().Msg("at AuthenticatePostInbox()")
 	wrapped = pub.FederatingWrappedCallbacks{
 		Follow: func(ctx context.Context, asf vocab.ActivityStreamsFollow) error {
 			log.Info().Msg("Received a follow activity")
+			return nil
+		},
+		Accept: func(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
+			log.Info().Msg("received an accept activity")
 			return nil
 		},
 	}

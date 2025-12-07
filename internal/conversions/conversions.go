@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"time"
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
@@ -33,6 +34,27 @@ func SerializeActivity(activity vocab.Type) (domain.FedObj, error) {
 		ApType:  activity.GetTypeName(),
 		Local:   false,
 	}, nil
+}
+
+func NewFollow(followIRI, followerIRI, followeeIRI *url.URL) vocab.ActivityStreamsFollow {
+	follow := streams.NewActivityStreamsFollow()
+	id := streams.NewJSONLDIdProperty()
+	id.Set(followIRI)
+	follow.SetJSONLDId(id)
+
+	actor := streams.NewActivityStreamsActorProperty()
+	actor.AppendIRI(followerIRI)
+	follow.SetActivityStreamsActor(actor)
+
+	obj := streams.NewActivityStreamsObjectProperty()
+	obj.AppendIRI(followeeIRI)
+	follow.SetActivityStreamsObject(obj)
+
+	published := streams.NewActivityStreamsPublishedProperty()
+	published.Set(time.Now())
+	follow.SetActivityStreamsPublished(published)
+
+	return follow
 }
 
 func NewAccept(id, actor, object *url.URL) (a vocab.ActivityStreamsAccept) {

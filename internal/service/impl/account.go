@@ -20,14 +20,15 @@ func (s *AppService) IsAdmin(ctx context.Context, accountId int64) (bool, error)
 
 // AuthenticateUser confirms the user's identity and, if their credentials are correct, returns data to be put
 // in the login session, such as the user's name and id. user is either the user's Id or their
-func (s *AppService) AuthenticateUser(ctx context.Context, user, password string) (u domain.Account, authenticated bool, err error) {
+func (s *AppService) AuthenticateUser(ctx context.Context, user, password string) (session domain.Session, authenticated bool, err error) {
 	user = strings.ToLower(strings.TrimSpace(user))
 
 	err = validate.Email(user)
+	var account domain.Account
 	if err == nil {
-		u, err = s.DB.GetAuthDataByEmail(ctx, user)
+		account, err = s.DB.GetAuthDataByEmail(ctx, user)
 	} else if err = validate.Username(user); err == nil {
-		u, err = s.DB.GetAuthDataByUsername(ctx, user)
+		account, err = s.DB.GetAuthDataByUsername(ctx, user)
 	} else {
 		err = errors.New("invalid username or email")
 	}
@@ -38,8 +39,16 @@ func (s *AppService) AuthenticateUser(ctx context.Context, user, password string
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
-	authenticated = err == nil
+	if err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password)); err != nil {
+		return
+	}
+	authenticated = true
+	session = domain.Session{
+		UserID: account.UserID,
+		AccountID: account.AccountID,
+		Username: account.Username,
+		ApId: account.ApId,
+	}
 	return
 }
 

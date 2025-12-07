@@ -199,7 +199,7 @@ CREATE TABLE ap_collection_members (
 
 CREATE TABLE follows (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    follow_ap_id VARCHAR(255) NOT NULL,
+    follow_ap_id VARCHAR(255),
     follower_ap_id VARCHAR(255) NOT NULL,
     followee_ap_id VARCHAR(255) NOT NULL,
     follower_inbox_url VARCHAR(255),

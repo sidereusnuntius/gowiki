@@ -10,6 +10,17 @@ import (
 	"database/sql"
 )
 
+const acceptFollow = `-- name: AcceptFollow :exec
+UPDATE follows
+SET approved = TRUE
+WHERE follow_ap_id = ?
+`
+
+func (q *Queries) AcceptFollow(ctx context.Context, followApID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, acceptFollow, followApID)
+	return err
+}
+
 const actorIdByInbox = `-- name: ActorIdByInbox :one
 SELECT ap_id FROM users u WHERE u.inbox = ?1
 UNION
@@ -88,6 +99,7 @@ const authUserByEmail = `-- name: AuthUserByEmail :one
 SELECT
     u.id AS user_id,
     a.id AS account_id,
+    u.ap_id,
     u.username,
     a.password,
     a.admin
@@ -101,6 +113,7 @@ LIMIT 1
 type AuthUserByEmailRow struct {
 	UserID    int64
 	AccountID int64
+	ApID      string
 	Username  sql.NullString
 	Password  string
 	Admin     bool
@@ -112,6 +125,7 @@ func (q *Queries) AuthUserByEmail(ctx context.Context, email string) (AuthUserBy
 	err := row.Scan(
 		&i.UserID,
 		&i.AccountID,
+		&i.ApID,
 		&i.Username,
 		&i.Password,
 		&i.Admin,
@@ -123,6 +137,7 @@ const authUserByUsername = `-- name: AuthUserByUsername :one
 SELECT
     u.id AS user_id,
     a.id AS account_id,
+    u.ap_id,
     u.username,
     a.password,
     a.admin
@@ -136,6 +151,7 @@ LIMIT 1
 type AuthUserByUsernameRow struct {
 	UserID    int64
 	AccountID int64
+	ApID      string
 	Username  sql.NullString
 	Password  string
 	Admin     bool
@@ -147,6 +163,7 @@ func (q *Queries) AuthUserByUsername(ctx context.Context, username sql.NullStrin
 	err := row.Scan(
 		&i.UserID,
 		&i.AccountID,
+		&i.ApID,
 		&i.Username,
 		&i.Password,
 		&i.Admin,
@@ -425,7 +442,7 @@ RETURNING id
 `
 
 type FollowParams struct {
-	FollowApID       string
+	FollowApID       sql.NullString
 	FollowerApID     string
 	FolloweeApID     string
 	FollowerInboxUrl sql.NullString
@@ -441,6 +458,26 @@ func (q *Queries) Follow(ctx context.Context, arg FollowParams) (int64, error) {
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const follows = `-- name: Follows :one
+SELECT EXISTS(
+    SELECT TRUE
+    FROM follows
+    WHERE follower_ap_id = ? AND followee_ap_id = ?
+)
+`
+
+type FollowsParams struct {
+	FollowerApID string
+	FolloweeApID string
+}
+
+func (q *Queries) Follows(ctx context.Context, arg FollowsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, follows, arg.FollowerApID, arg.FolloweeApID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const getActorData = `-- name: GetActorData :one
@@ -493,6 +530,25 @@ func (q *Queries) GetActorData(ctx context.Context, arg GetActorDataParams) (Get
 		&i.Type,
 	)
 	return i, err
+}
+
+const getActorIRI = `-- name: GetActorIRI :one
+SELECT ap_id FROM users u WHERE username = lower(?1) AND u.host = ?2
+UNION
+SELECT url AS ap_id FROM collectives c WHERE c.name = lower(?1) AND c.host = ?2
+LIMIT 1
+`
+
+type GetActorIRIParams struct {
+	LOWER string
+	Host  sql.NullString
+}
+
+func (q *Queries) GetActorIRI(ctx context.Context, arg GetActorIRIParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, getActorIRI, arg.LOWER, arg.Host)
+	var ap_id string
+	err := row.Scan(&ap_id)
+	return ap_id, err
 }
 
 const getApObject = `-- name: GetApObject :one
@@ -1037,6 +1093,22 @@ func (q *Queries) GetFile(ctx context.Context, digest string) (GetFileRow, error
 	return i, err
 }
 
+const getFollow = `-- name: GetFollow :one
+SELECT follower_ap_id, followee_ap_id FROM follows WHERE follow_ap_id = ?1
+`
+
+type GetFollowRow struct {
+	FollowerApID string
+	FolloweeApID string
+}
+
+func (q *Queries) GetFollow(ctx context.Context, followApID sql.NullString) (GetFollowRow, error) {
+	row := q.db.QueryRowContext(ctx, getFollow, followApID)
+	var i GetFollowRow
+	err := row.Scan(&i.FollowerApID, &i.FolloweeApID)
+	return i, err
+}
+
 const getFollowers = `-- name: GetFollowers :many
 SELECT follower_ap_id FROM follows WHERE followee_ap_id = ?
 `
@@ -1054,6 +1126,33 @@ func (q *Queries) GetFollowers(ctx context.Context, followeeApID string) ([]stri
 			return nil, err
 		}
 		items = append(items, follower_ap_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFollowing = `-- name: GetFollowing :many
+SELECT followee_ap_id FROM follows WHERE follower_ap_id = ?
+`
+
+func (q *Queries) GetFollowing(ctx context.Context, followerApID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getFollowing, followerApID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var followee_ap_id string
+		if err := rows.Scan(&followee_ap_id); err != nil {
+			return nil, err
+		}
+		items = append(items, followee_ap_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -1729,6 +1828,22 @@ type UpdateArticleByIRIParams struct {
 
 func (q *Queries) UpdateArticleByIRI(ctx context.Context, arg UpdateArticleByIRIParams) error {
 	_, err := q.db.ExecContext(ctx, updateArticleByIRI, arg.Content, arg.ApID)
+	return err
+}
+
+const updateFollowApId = `-- name: UpdateFollowApId :exec
+UPDATE follows
+SET follow_ap_id = ?
+WHERE id = ?
+`
+
+type UpdateFollowApIdParams struct {
+	FollowApID sql.NullString
+	ID         int64
+}
+
+func (q *Queries) UpdateFollowApId(ctx context.Context, arg UpdateFollowApIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateFollowApId, arg.FollowApID, arg.ID)
 	return err
 }
 

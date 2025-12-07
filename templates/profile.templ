@@ -1,8 +1,9 @@
 package templates
 
 import "github.com/sidereusnuntius/gowiki/internal/domain"
+import "net/url"
 
-templ Profile(p domain.Profile) {
+templ Profile(p domain.Profile, path *url.URL, instanceFollow, followed bool) {
     <h2 class="handle">
     { p.Username }
     if p.Host != "" {
@@ -10,6 +11,21 @@ templ Profile(p domain.Profile) {
     }
     </h2>
     <p>
+    if instanceFollow {
+        {{ followPath := path.JoinPath("instance-follow") }}
+        {{ q := followPath.Query() }}
+        {{ q.Add("last", path.String()) }}
+        {{ followPath.RawQuery = q.Encode() }}
+        <form action={ followPath.String() } method="POST">
+            <button type="submit" >
+            if followed {
+                Unfollow
+            } else {
+                Follow
+            }
+            </button>
+        </form>
+    }
     if p.Summary == "" {
         Nothing to read here.
     } else {

@@ -63,6 +63,6 @@ func (f *ApService) GetOutbox(c context.Context, r *http.Request) (vocab.Activit
 }
 
 func (f *ApService) NewTransport(c context.Context, actorBoxIRI *url.URL, gofedAgent string) (t pub.Transport, err error) {
-	log.Debug().Msg("at NewTransport():")
+	log.Debug().Msg("at NewTransport")
 	return
 }

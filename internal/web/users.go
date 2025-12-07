@@ -2,7 +2,9 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -10,7 +12,7 @@ import (
 )
 
 func (h *Handler) profile(ctx context.Context, w http.ResponseWriter, r *http.Request, name, host string) error {
-	u, ok := GetSession(ctx)
+	s, ok := GetSession(ctx)
 
 	p, err := h.service.GetProfile(ctx, name, host)
 	if err != nil {
@@ -21,31 +23,43 @@ func (h *Handler) profile(ctx context.Context, w http.ResponseWriter, r *http.Re
 		templates.Read: r.URL.String(),
 	}
 
-	isAdmin, err := h.service.IsAdmin(ctx, u.AccountID)
-	if err != nil {
-		return err
+	var isAdmin, followed bool
+	if ok {
+		if isAdmin, err = h.service.IsAdmin(ctx, s.AccountID); err != nil {
+			return fmt.Errorf("cannot verify admin status for user %s: %w", s.Username, err)
+		}
+	}
+
+	if isAdmin {
+		var iri *url.URL
+		if iri, err = h.service.GetActorIRI(ctx, name, host); err != nil {
+			return err
+		}
+		
+		if followed, err = h.service.Follows(ctx, h.Config.Url, iri); err != nil {
+			return err
+		}
 	}
 
 	var editable bool
-	if ok && p.Name == u.Username {
+	if ok && p.Name == s.Username {
 		editable = true
 	}
 	if ok && p.Name == h.Config.Name && isAdmin {
 		editable = true
 	}
-
 	if editable {
 		hrefs[templates.Edit] = r.URL.JoinPath("edit").String()
 	}
 	return templates.Layout(templates.PageData{
 		Authenticated: ok,
-		Username:      u.Username,
+		Username:      s.Username,
 		ProfilePath:   r.URL.String(),
 		PageTitle:     p.Name,
 		Place:         templates.PlaceProfile,
 		Hrefs:         hrefs,
 		IsArticle:     false,
-		Child:         templates.Profile(p),
+		Child:         templates.Profile(p, r.URL, isAdmin, followed),
 		FixedArticles: nil, // TODO
 		Path:          r.URL,
 		Err:           nil,
@@ -59,5 +73,35 @@ func Profile(h *Handler) http.HandlerFunc {
 		if err := h.profile(r.Context(), w, r, name, host); err != nil {
 			log.Error().Err(err).Msg("error displaying profile")
 		}
+	}
+}
+
+// InstanceFollow allows an administrator to follow another actor, typically another wiki, on behalf of the wiki's
+// instance actor. This is the way two wikis "peer", making them send updates to each other.
+func InstanceFollow(h *Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		name := chi.URLParam(r, "name")
+		host := chi.URLParam(r, "host")
+
+		last := r.URL.Query().Get("last")
+		
+
+		iri, err := h.service.GetActorIRI(ctx, name, host)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		err = h.service.FollowRemote(r.Context(), h.Config.Url, iri)
+		if err != nil {
+			http.Error(w, "failed to follow actor", http.StatusInternalServerError)
+			return
+		}
+
+		if last == "" {
+			return
+		}
+		http.Redirect(w, r, last, http.StatusSeeOther)
 	}
 }

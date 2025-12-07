@@ -89,6 +89,20 @@ func (mr *MockDBMockRecorder) AddOutbox(ctx, apType, raw, id, outbox any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddOutbox", reflect.TypeOf((*MockDB)(nil).AddOutbox), ctx, apType, raw, id, outbox)
 }
 
+// ApproveFollow mocks base method.
+func (m *MockDB) ApproveFollow(ctx context.Context, followIRI *url.URL, accept domain.FedObj) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApproveFollow", ctx, followIRI, accept)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApproveFollow indicates an expected call of ApproveFollow.
+func (mr *MockDBMockRecorder) ApproveFollow(ctx, followIRI, accept any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApproveFollow", reflect.TypeOf((*MockDB)(nil).ApproveFollow), ctx, followIRI, accept)
+}
+
 // ArticleTitleExists mocks base method.
 func (m *MockDB) ArticleTitleExists(ctx context.Context, title string) (bool, error) {
 	m.ctrl.T.Helper()
@@ -192,18 +206,49 @@ func (mr *MockDBMockRecorder) FileExists(ctx, hash any) *gomock.Call {
 }
 
 // Follow mocks base method.
-func (m *MockDB) Follow(ctx context.Context, follow domain.Follow) (int64, error) {
+func (m *MockDB) Follow(ctx context.Context, follow domain.Follow) (int64, *url.URL, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Follow", ctx, follow)
 	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(*url.URL)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // Follow indicates an expected call of Follow.
 func (mr *MockDBMockRecorder) Follow(ctx, follow any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Follow", reflect.TypeOf((*MockDB)(nil).Follow), ctx, follow)
+}
+
+// Follows mocks base method.
+func (m *MockDB) Follows(ctx context.Context, actor, object *url.URL) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Follows", ctx, actor, object)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Follows indicates an expected call of Follows.
+func (mr *MockDBMockRecorder) Follows(ctx, actor, object any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Follows", reflect.TypeOf((*MockDB)(nil).Follows), ctx, actor, object)
+}
+
+// GetActorIRI mocks base method.
+func (m *MockDB) GetActorIRI(ctx context.Context, name, host string) (*url.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActorIRI", ctx, name, host)
+	ret0, _ := ret[0].(*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActorIRI indicates an expected call of GetActorIRI.
+func (mr *MockDBMockRecorder) GetActorIRI(ctx, name, host any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActorIRI", reflect.TypeOf((*MockDB)(nil).GetActorIRI), ctx, name, host)
 }
 
 // GetActorInbox mocks base method.
@@ -417,6 +462,21 @@ func (mr *MockDBMockRecorder) GetFile(ctx, hash any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFile", reflect.TypeOf((*MockDB)(nil).GetFile), ctx, hash)
 }
 
+// GetFollow mocks base method.
+func (m *MockDB) GetFollow(ctx context.Context, followIRI *url.URL) (domain.Follow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFollow", ctx, followIRI)
+	ret0, _ := ret[0].(domain.Follow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFollow indicates an expected call of GetFollow.
+func (mr *MockDBMockRecorder) GetFollow(ctx, followIRI any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFollow", reflect.TypeOf((*MockDB)(nil).GetFollow), ctx, followIRI)
+}
+
 // GetFollowers mocks base method.
 func (m *MockDB) GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, error) {
 	m.ctrl.T.Helper()
@@ -430,6 +490,21 @@ func (m *MockDB) GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, err
 func (mr *MockDBMockRecorder) GetFollowers(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFollowers", reflect.TypeOf((*MockDB)(nil).GetFollowers), ctx, id)
+}
+
+// GetFollowing mocks base method.
+func (m *MockDB) GetFollowing(ctx context.Context, actorIRI *url.URL) ([]*url.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFollowing", ctx, actorIRI)
+	ret0, _ := ret[0].([]*url.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFollowing indicates an expected call of GetFollowing.
+func (mr *MockDBMockRecorder) GetFollowing(ctx, actorIRI any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFollowing", reflect.TypeOf((*MockDB)(nil).GetFollowing), ctx, actorIRI)
 }
 
 // GetLastRevisionID mocks base method.

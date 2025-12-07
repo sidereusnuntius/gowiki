@@ -3,31 +3,57 @@ package web
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 
+	"github.com/rs/zerolog/log"
+	"github.com/sidereusnuntius/gowiki/internal/domain"
 	"github.com/sidereusnuntius/gowiki/templates"
 )
 
 const SessionKey = "user"
 
-type Session struct {
-	UserID    int64
-	AccountID int64
-	Username  string
-}
-
 type key struct{}
 
-func GetSession(ctx context.Context) (Session, bool) {
-	s, ok := ctx.Value(key{}).(Session)
+func GetSession(ctx context.Context) (domain.Session, bool) {
+	s, ok := ctx.Value(key{}).(domain.Session)
 	return s, ok
+}
+
+func AdminOnlyMiddleware(handler *Handler) func(http.Handler) http.HandlerFunc {
+	return func(next http.Handler) http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			s, ok := GetSession(ctx)
+			if !ok {
+				http.Error(w, "", http.StatusUnauthorized)
+				return
+			}
+
+			isAdmin, err := handler.service.IsAdmin(ctx, s.AccountID)
+			if err != nil {
+				log.Error().
+					Err(err).
+					Str("username", s.Username).
+					Int64("account id", s.AccountID).
+					Msg("unable to verify user's admin status")
+				http.Error(w, "", http.StatusInternalServerError)
+				return
+			}
+
+			if isAdmin {
+				next.ServeHTTP(w, r)
+				return
+			}
+			http.Error(w, "", http.StatusForbidden)
+		})
+	}
 }
 
 func AuthenticatedMiddleware(handler *Handler) func(http.Handler) http.HandlerFunc {
 	return func(handler http.Handler) http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, ok := GetSession(r.Context())
+			
 			if ok {
 				handler.ServeHTTP(w, r)
 				return
@@ -72,9 +98,9 @@ func Logout(handler *Handler) http.HandlerFunc {
 func SessionMiddleware(handler *Handler) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			zero := Session{}
+			zero := domain.Session{}
 			session := handler.SessionManager.Load(r)
-			var s Session
+			var s domain.Session
 			err := session.GetObject(SessionKey, &s)
 			if s != zero && err == nil {
 				ctx := r.Context()
@@ -107,7 +133,8 @@ func Login(handler *Handler) http.HandlerFunc {
 
 		user := r.Form.Get("user")
 		password := r.Form.Get("password")
-		u, authenticated, err := handler.service.AuthenticateUser(ctx, user, password)
+		
+		s, authenticated, err := handler.service.AuthenticateUser(ctx, user, password)
 		if err != nil {
 			//TODO: treat error.
 			log.Print(err)
@@ -127,11 +154,7 @@ func Login(handler *Handler) http.HandlerFunc {
 			return
 		}
 
-		err = session.PutObject(w, SessionKey, Session{
-			u.UserID,
-			u.AccountID,
-			u.Username,
-		})
+		err = session.PutObject(w, SessionKey, s)
 		if err != nil {
 			// Log error
 			w.WriteHeader(http.StatusInternalServerError)

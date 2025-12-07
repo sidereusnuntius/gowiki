@@ -49,6 +49,12 @@ func (g *FedGatewayImpl) ProcessObject(ctx context.Context, asType vocab.Type) e
 			return fmt.Errorf("failed to convert update activity")
 		}
 		return g.processUpdate(ctx, update)
+	case streams.ActivityStreamsAcceptName:
+		accept, ok := asType.(vocab.ActivityStreamsAccept)
+		if !ok {
+			return fmt.Errorf("invalid accept activity")
+		}
+		return g.processAccept(ctx, accept)
 	default:
 		return fmt.Errorf("%w: %s", errors.ErrUnsupported, asType.GetTypeName())
 	}
@@ -71,6 +77,55 @@ func (g *FedGatewayImpl) ProcessOutbox(ctx context.Context, asType vocab.Type) e
 	default:
 		return fmt.Errorf("%w: %s activity", federation.ErrUnsupported, asType.GetTypeName())
 	}
+}
+
+func (g *FedGatewayImpl) processAccept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
+	objProp := accept.GetActivityStreamsObject()
+	if objProp == nil || objProp.Len() == 0 {
+		return fmt.Errorf("%w: object", federation.ErrMissingProperty)
+	}
+
+	obj := objProp.Begin()
+	
+	var followIRI *url.URL
+	var err error
+	if obj.IsIRI() {
+		followIRI = obj.GetIRI()
+	} else if t := obj.GetType(); t != nil {
+		if t.GetTypeName() != streams.ActivityStreamsFollowName {
+			return fmt.Errorf("%w: accept %s", federation.ErrUnsupported, t.GetTypeName())
+		}
+		followIRI, err = g.processId(t.GetJSONLDId())
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("%w: object property", federation.ErrUnprocessablePropValue)
+	}
+
+	actorIRI, err := g.processActor(accept.GetActivityStreamsActor())
+	if err != nil {
+		return err
+	}
+
+	follow, err := g.db.GetFollow(ctx, followIRI)
+	if err != nil {
+		return err
+	}
+	if *actorIRI != *follow.Followee {
+		return fmt.Errorf(
+			"%w: actor (%s) is not the object of the follow activity (%s)",
+			federation.ErrForbidden,
+			actorIRI,
+			follow.Followee,
+		)
+	}
+
+	acceptInternal, err := conversions.SerializeActivity(accept)
+	if err != nil {
+		return err
+	}
+	return g.db.ApproveFollow(ctx, followIRI, acceptInternal)
 }
 
 func (g *FedGatewayImpl) processCreateOutbox(ctx context.Context, create vocab.ActivityStreamsCreate) error {
@@ -399,7 +454,7 @@ func (g *FedGatewayImpl) processFollow(ctx context.Context, follow vocab.Activit
 	}
 
 	fmt.Printf("Actor: %s\nObject: %s\n", actor, obj)
-	returnedId, err := g.db.Follow(ctx, domain.Follow{
+	returnedId, _, err := g.db.Follow(ctx, domain.Follow{
 		IRI:           id,
 		Follower:      actor,
 		Followee:      obj,

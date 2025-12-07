@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/sidereusnuntius/gowiki/internal/db"
 	"github.com/sidereusnuntius/gowiki/internal/db/impl/queries"
 	"github.com/sidereusnuntius/gowiki/internal/domain"
 )
@@ -50,9 +51,14 @@ func (d *dbImpl) GetAuthDataByUsername(ctx context.Context, username string) (do
 		return domain.Account{}, err
 	}
 
+	apId, err := url.Parse(u.ApID)
+	if err != nil {
+		return domain.Account{}, fmt.Errorf("%w: unable to parse IRI: %s", db.ErrInternal, u.ApID)
+	}
 	return domain.Account{
 		UserID:    u.UserID,
 		AccountID: u.AccountID,
+		ApId: apId,
 		Username:  u.Username.String,
 		Password:  u.Password,
 		Admin:     u.Admin,
@@ -66,9 +72,14 @@ func (d *dbImpl) GetAuthDataByEmail(ctx context.Context, email string) (domain.A
 		return domain.Account{}, err
 	}
 
+	apId, err := url.Parse(u.ApID)
+	if err != nil {
+		return domain.Account{}, fmt.Errorf("%w: unable to parse IRI: %s", db.ErrInternal, u.ApID)
+	}
 	return domain.Account{
 		UserID:    u.UserID,
 		AccountID: u.AccountID,
+		ApId: apId,
 		Username:  u.Username.String,
 		Password:  u.Password,
 		Admin:     u.Admin,

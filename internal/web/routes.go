@@ -10,6 +10,7 @@ import (
 
 func (h *Handler) Mount(r chi.Router) {
 	authenticated := AuthenticatedMiddleware(h)
+	adminOnly := AdminOnlyMiddleware(h)
 	r.Use(SessionMiddleware(h))
 
 	r.Route("/", func(r chi.Router) {
@@ -27,7 +28,10 @@ func (h *Handler) Mount(r chi.Router) {
 	// })
 
 	r.Get("/@{name}", Profile(h))
-	r.Get("/@{name}@{host}", Profile(h))
+	r.Route("/@{name}@{host}", func(r chi.Router) {
+		r.Get("/", Profile(h))
+		r.Post("/instance-follow", adminOnly(InstanceFollow(h)))
+	})
 
 	r.Route("/a/{title}", func(r chi.Router) {
 		r.Post("/", PostArticle(h))

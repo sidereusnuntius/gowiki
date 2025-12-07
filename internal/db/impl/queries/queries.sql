@@ -24,6 +24,7 @@ VALUES
 SELECT
     u.id AS user_id,
     a.id AS account_id,
+    u.ap_id,
     u.username,
     a.password,
     a.admin
@@ -37,6 +38,7 @@ LIMIT 1;
 SELECT
     u.id AS user_id,
     a.id AS account_id,
+    u.ap_id,
     u.username,
     a.password,
     a.admin
@@ -211,6 +213,12 @@ FROM (
 JOIN revisions r ON r.article_id = a.id
 JOIN users u ON r.user_id = u.id
 ORDER BY r.created DESC;
+
+-- name: GetActorIRI :one
+SELECT ap_id FROM users u WHERE username = lower(?1) AND u.host = ?2
+UNION
+SELECT url AS ap_id FROM collectives c WHERE c.name = lower(?1) AND c.host = ?2
+LIMIT 1;
 
 -- name: GetActorData :one
 SELECT
@@ -433,6 +441,29 @@ INSERT INTO follows (
 ) VALUES (?, ?, ?, ?)
 RETURNING id;
 
+-- name: Follows :one
+SELECT EXISTS(
+    SELECT TRUE
+    FROM follows
+    WHERE follower_ap_id = ? AND followee_ap_id = ?
+);
+
+-- name: GetFollow :one
+SELECT follower_ap_id, followee_ap_id FROM follows WHERE follow_ap_id = ?1;
+
+-- name: GetFollowing :many
+SELECT followee_ap_id FROM follows WHERE follower_ap_id = ?;
+
+-- name: AcceptFollow :exec
+UPDATE follows
+SET approved = TRUE
+WHERE follow_ap_id = ?;
+
+-- name: UpdateFollowApId :exec
+UPDATE follows
+SET follow_ap_id = ?
+WHERE id = ?;
+
 -- name: GetUserKeys :one
 SELECT ap_id, private_key FROM users WHERE local AND id = ?;
 
@@ -553,4 +584,4 @@ ORDER BY cache.id DESC;
 SELECT id FROM users where ap_id = ? LIMIT 1;
 
 -- name: IsAdmin :one
-SELECT admin FROM accounts a WHERE a.id = ?; 
+SELECT admin FROM accounts a WHERE a.id = ?;

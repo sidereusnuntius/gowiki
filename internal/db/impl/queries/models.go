@@ -109,7 +109,7 @@ type File struct {
 
 type Follow struct {
 	ID               int64
-	FollowApID       string
+	FollowApID       sql.NullString
 	FollowerApID     string
 	FolloweeApID     string
 	FollowerInboxUrl sql.NullString

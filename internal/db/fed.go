@@ -20,6 +20,7 @@ type Fed interface {
 	GetFollowers(ctx context.Context, id *url.URL) ([]*url.URL, error)
 	GetUserApId(ctx context.Context, username string) (*url.URL, error)
 	GetUserFed(ctx context.Context, id *url.URL) (user domain.UserFed, err error)
+	GetActorIRI(ctx context.Context, name, host string) (*url.URL, error)
 
 	GetApObject(ctx context.Context, iri *url.URL) (domain.FedObj, error)
 	CreateApObject(ctx context.Context, obj domain.FedObj, fetched int64) error
@@ -31,8 +32,16 @@ type Fed interface {
 	CollectionContains(ctx context.Context, collection, id *url.URL) (bool, error)
 	GetCollectionPage(ctx context.Context, iri *url.URL, last int64) (ids []*url.URL, err error)
 	GetCollectionStart(ctx context.Context, collectionIRI *url.URL) (size, start int64, err error)
-	// Follow registers that an actor has followed another.
-	Follow(ctx context.Context, follow domain.Follow) (int64, error)
+	// Follow registers that an actor has followed another. If the follow IRI is nil, the method will generate an ID.
+	Follow(ctx context.Context, follow domain.Follow) (int64, *url.URL, error)
+	GetFollow(ctx context.Context, followIRI *url.URL) (domain.Follow, error)
+	ApproveFollow(ctx context.Context, followIRI *url.URL, accept domain.FedObj) error
+	// GetFollowing returns the actors followed by actorIRI. If the actor specified follows no one, the method
+	// returns an empty slice and nil error.
+	GetFollowing(ctx context.Context, actorIRI *url.URL) ([]*url.URL, error)
+	// Follows returns whether the actor follows the object.
+	Follows(ctx context.Context, actor, object *url.URL) (bool, error)
+	
 	GetUserPrivateKey(ctx context.Context, id int64) (owner *url.URL, key crypto.PrivateKey, err error)
 	GetUserPrivateKeyByURI(ctx context.Context, url *url.URL) (key crypto.PrivateKey, err error)
 	GetCollectionActivities(ctx context.Context, collectionIRI *url.URL, last int64) (activities []map[string]any, err error)

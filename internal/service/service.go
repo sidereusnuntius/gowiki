@@ -19,7 +19,7 @@ type Service interface {
 	// AuthenticateUser takes the user's identifier, which may be their username of email address, and password
 	// and verifies if these credentials are correct. If authentication fails, authenticated is false and
 	// err is nil; a non nil error indicates that an internal, unexpected error has occured.
-	AuthenticateUser(ctx context.Context, user, password string) (u domain.Account, authenticated bool, err error)
+	AuthenticateUser(ctx context.Context, user, password string) (session domain.Session, authenticated bool, err error)
 	// CreateUser inserts a new, local user, also creating their corresponding account, for which the email and password
 	// are needed.
 	CreateUser(ctx context.Context, username, password, email, reason string, admin bool, invitation string) error
@@ -28,7 +28,12 @@ type Service interface {
 	AlterArticle(ctx context.Context, article domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error)
 	GetArticle(ctx context.Context, title, author, host string) (article domain.ArticleFed, err error)
 	CreateArticle(ctx context.Context, articleId domain.ArticleIdentifier, summary, content string, userId int64) (*url.URL, error)
+	
+	GetActorIRI(ctx context.Context, name, host string) (*url.URL, error)
 	GetProfile(ctx context.Context, name, host string) (p domain.Profile, err error)
+	FollowRemote(ctx context.Context, followerIRI, followeeIRI *url.URL) error
+	Follows(ctx context.Context, actor, object *url.URL) (bool, error)
+	
 	GetRevisionList(ctx context.Context, title, author, host string) ([]domain.Revision, error)
 	IsAdmin(ctx context.Context, accountId int64) (bool, error)
 }
