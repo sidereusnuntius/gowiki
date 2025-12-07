@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/url"
 
 	"github.com/rs/zerolog/log"
@@ -24,6 +25,10 @@ type fileServiceImpl struct {
 func (s *fileServiceImpl) CreateFile(ctx context.Context, content []byte, metadata domain.FileMetadata) (uri *url.URL, id int64, err error) {
 	hasher := sha256.New()
 	n, err := hasher.Write(content)
+	if err != nil {
+		err = fmt.Errorf("error writing file hash")
+		return
+	}
 	if n != int(metadata.SizeBytes) {
 		err = service.ErrInvalidInput
 		return
